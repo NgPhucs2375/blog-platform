@@ -1,0 +1,20 @@
+# Biến môi trường chứa secret/mật khẩu
+.env
+be/.env
+fe/frontend/.env.local
+
+# Thư viện tải về (Docker sẽ tự sinh bên trong container)
+be/vendor/
+fe/frontend/node_modules/
+fe/frontend/.next/
+fe/frontend/out/
+
+# Dữ liệu database cục bộ
+pgdata/
+redis_data/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
