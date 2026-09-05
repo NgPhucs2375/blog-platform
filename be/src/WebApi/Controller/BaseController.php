@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace src\Presentation\WebApi\Controllers;
+namespace src\WebApi\Controller;
 
-use src\Presentation\WebApi\Services\ResponseService;
+use src\WebApi\Services\ResponseService;
 
 abstract class BaseController
 {

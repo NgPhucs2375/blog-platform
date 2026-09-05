@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace src\Presentation\WebApi\Middleware;
+namespace src\WebApi\Middlewares;
 
-use src\Presentation\WebApi\Services\ResponseService;
+use src\WebApi\Services\ResponseService;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Exception;
@@ -11,8 +11,10 @@ use Exception;
 class AuthMiddleware
 {
     public function __construct(
-        private string $secretKey = 'enterprise_blog_secret_key_must_be_32_chars_long!!'
-    ) {}
+        private ?string $secretKey = null
+    ) {
+        $this->secretKey = $secretKey ?: (getenv('JWT_SECRET') ?: 'fallback-secret-key');
+    }
 
     public function handle(): array
     {

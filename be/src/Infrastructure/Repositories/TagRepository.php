@@ -36,17 +36,19 @@ class TagRepository extends AbstractRepository implements ITagRepository
         return array_map([$this, 'mapToEntity'], $stmt->fetchAll());
     }
 
-    public function save(object $entity): void
+    public function save(object $entity): int
     {
         if (!$entity instanceof Tag) throw new InvalidArgumentException("Input must be Tag Entity");
 
-        $sql = "INSERT INTO {$this->table} (name, slug, created_at) VALUES (:name, :slug, :created_at)";
+        $sql = "INSERT INTO {$this->table} (name, slug, created_at) VALUES (:name, :slug, :created_at) RETURNING id";
         $stmt = $this->db()->prepare($sql);
         $stmt->execute([
             ':name' => $entity->getName(),
             ':slug' => $entity->getSlug(),
             ':created_at' => $entity->getCreatedAt()->format('Y-m-d H:i:s'),
         ]);
+
+        return (int) $stmt->fetchColumn();
     }
 
     public function update(object $entity): void
@@ -108,7 +110,10 @@ class TagRepository extends AbstractRepository implements ITagRepository
             $row['name'],
             $row['slug'],
             (int)$row['id'],
-            new DateTimeImmutable($row['created_at'])
+            new DateTimeImmutable($row['created_at']),
+            createdBy: isset($row['created_by']) && $row['created_by'] !== null ? (int)$row['created_by'] : null,
+            updatedAt: !empty($row['updated_at']) ? new DateTimeImmutable($row['updated_at']) : null,
+            updatedBy: isset($row['updated_by']) && $row['updated_by'] !== null ? (int)$row['updated_by'] : null
         );
     }
 }

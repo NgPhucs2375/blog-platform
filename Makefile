@@ -1,6 +1,6 @@
 .PHONY: help up down restart build logs ps install update test backend-sh frontend-sh db-sh clean
 
-# Hiển thị danh sách các lệnh hỗ trợ
+# Hiển thị danh sách các lệnh hỗ trợ make help	
 help:
 	@echo "Danh sách lệnh quản trị hệ thống:"
 	@echo "  make up           - Khởi động toàn bộ cụm container ngầm"
@@ -18,16 +18,20 @@ help:
 	@echo "  make clean        - Xóa toàn bộ container và ổ đĩa volume (Reset DB)"
 
 # Quản lý Container
-up:
+up: 
+	@echo "chạy toàn bộ hệ thống - chạy đầu tiên"
 	docker compose up -d
 
-down:
+down: 
+	@echo "Dừng và gỡ bỏ nhưng giữ nguyên dữ liệu trong volume"
 	docker compose down
 
 restart:
+	@echo "Khởi động lại các container dùng khi đổi config hay reload service"
 	docker compose restart
 
 build:
+	@echo "Build lại images và khởi động hệ thống - dùng khi sửa Dockerfile hoặc package.json"
 	docker compose up -d --build
 
 logs:
@@ -58,4 +62,11 @@ db-sh:
 
 # Reset toàn bộ môi trường và dữ liệu
 clean:
+	@echo "Xóa toàn bộ container và ổ đĩa volume (Reset DB)"
 	docker compose down -v
+
+autoload:
+	docker compose exec backend composer dump-autoload
+
+test:
+	docker compose exec backend vendor/bin/phpunit

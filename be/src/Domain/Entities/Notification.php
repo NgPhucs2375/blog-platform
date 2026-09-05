@@ -7,7 +7,7 @@ use src\Domain\Enums\NotificationType;
 use InvalidArgumentException;
 use DateTimeImmutable;
 
-class Notification
+class Notification extends BaseEntity
 {
     public function __construct(
         private int $userId,
@@ -16,22 +16,27 @@ class Notification
         private string $content,
         private array $data = [],
         private bool $isRead = false,
-        private ?int $id = null,
-        private ?DateTimeImmutable $createdAt = null
+        ?int $id = null,
+        ?DateTimeImmutable $createdAt = null,
+        ?int $createdBy = null,
+        ?DateTimeImmutable $updatedAt = null,
+        ?int $updatedBy = null
     ) {
+        parent::__construct($id, $createdAt, $createdBy ?? $userId, $updatedAt, $updatedBy);
         $this->setTitle($title);
         $this->setContent($content);
-        $this->createdAt = $createdAt ?? new DateTimeImmutable();
     }
 
-    public function markAsRead(): void
+    public function markAsRead(?int $updatedBy = null): void
     {
         $this->isRead = true;
+        $this->markUpdated($updatedBy);
     }
 
-    public function markAsUnread(): void
+    public function markAsUnread(?int $updatedBy = null): void
     {
         $this->isRead = false;
+        $this->markUpdated($updatedBy);
     }
 
     private function setTitle(string $title): void
@@ -48,26 +53,22 @@ class Notification
         $this->content = $trimmed;
     }
 
-    public function getId(): ?int { return $this->id; }
     public function getUserId(): int { return $this->userId; }
     public function getType(): NotificationType { return $this->type; }
     public function getTitle(): string { return $this->title; }
     public function getContent(): string { return $this->content; }
     public function getData(): array { return $this->data; }
     public function getIsRead(): bool { return $this->isRead; }
-    public function getCreatedAt(): DateTimeImmutable { return $this->createdAt; }
 
     public function toArray(): array
     {
-        return [
-            'id' => $this->id,
+        return array_merge($this->baseArray(), [
             'userId' => $this->userId,
             'type' => $this->type->value,
             'title' => $this->title,
             'content' => $this->content,
             'data' => $this->data,
             'isRead' => $this->isRead,
-            'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
-        ];
+        ]);
     }
 }

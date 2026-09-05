@@ -30,12 +30,13 @@ class PostRepository extends AbstractRepository implements IPostRepository
         return $row ? $this->mapToEntity($row) : null;
     }
 
-    public function save(object $entity): void
+    public function save(object $entity): int
     {
         if (!$entity instanceof Post) throw new InvalidArgumentException("Input must be Post Entity");
 
         $sql = "INSERT INTO {$this->table} (title, slug, content, author_id, category_id, status, view_count, created_at, updated_at)
-                VALUES (:title, :slug, :content, :author_id, :category_id, :status, :view_count, :created_at, :updated_at)";
+                VALUES (:title, :slug, :content, :author_id, :category_id, :status, :view_count, :created_at, :updated_at)
+                RETURNING id";
         $stmt = $this->db()->prepare($sql);
         $stmt->execute([
             ':title' => $entity->getTitle(),
@@ -46,8 +47,10 @@ class PostRepository extends AbstractRepository implements IPostRepository
             ':status' => $entity->getStatus()->value,
             ':view_count' => $entity->getViewCount(),
             ':created_at' => $entity->getCreatedAt()->format('Y-m-d H:i:s'),
-            ':updated_at' => $entity->getUpdatedAt()->format('Y-m-d H:i:s'),
+            ':updated_at' => ($entity->getUpdatedAt() ?? new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
+
+        return (int) $stmt->fetchColumn();
     }
 
     public function update(object $entity): void
@@ -66,7 +69,7 @@ class PostRepository extends AbstractRepository implements IPostRepository
             ':category_id' => $entity->getCategoryId(),
             ':status' => $entity->getStatus()->value,
             ':view_count' => $entity->getViewCount(),
-            ':updated_at' => $entity->getUpdatedAt()->format('Y-m-d H:i:s'),
+            ':updated_at' => ($entity->getUpdatedAt() ?? new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
     }
 
@@ -153,7 +156,9 @@ class PostRepository extends AbstractRepository implements IPostRepository
             (int)($row['view_count'] ?? 0),
             (int)$row['id'],
             new DateTimeImmutable($row['created_at']),
-            isset($row['updated_at']) ? new DateTimeImmutable($row['updated_at']) : null
+            isset($row['updated_at']) && $row['updated_at'] ? new DateTimeImmutable($row['updated_at']) : null,
+            createdBy: isset($row['created_by']) && $row['created_by'] !== null ? (int)$row['created_by'] : null,
+            updatedBy: isset($row['updated_by']) && $row['updated_by'] !== null ? (int)$row['updated_by'] : null
         );
     }
 }

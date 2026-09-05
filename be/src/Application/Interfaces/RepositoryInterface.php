@@ -12,7 +12,7 @@ interface RepositoryInterface
     public function findById(int $id): ?object;
     
     /** @param T $entity */
-    public function save(object $entity): void;
+    public function save(object $entity): int;
     
     /** @param T $entity */
     public function update(object $entity): void;

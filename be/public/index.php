@@ -1,58 +1,28 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Front Controller — entry point duy nhất của API (nginx trỏ mọi /api/* về đây).
+ * Chỉ làm bootstrap: dựng Container → CORS → Router dispatch.
+ * Route, middleware, DI wiring nằm trong src/WebApi (xem Container::class).
+ */
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use src\WebApi\Container;
+use src\WebApi\Services\ResponseService;
+
 header('Content-Type: application/json; charset=utf-8');
 
-$response = [
-    'system' => 'Blog Platform API',
-    'status' => 'OK',
-    'timestamp' => date('Y-m-d H:i:s'),
-    'services' => []
-];
-
-// 1. Kiểm tra kết nối PostgreSQL
 try {
-    $host = getenv('DB_HOST') ?: 'postgres';
-    $port = getenv('DB_PORT') ?: '5432';
-    $db   = getenv('DB_DATABASE') ?: 'blog_db';
-    $user = getenv('DB_USERNAME') ?: 'blog_user';
-    $pass = getenv('DB_PASSWORD') ?: 'blog_secret';
+    $container = new Container();
 
-    $dsn = "pgsql:host={$host};port={$port};dbname={$db}";
-    $pdo = new PDO($dsn, $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-    ]);
-    
-    $response['services']['database'] = [
-        'status' => 'Connected',
-        'driver' => 'PostgreSQL 16'
-    ];
+    // Preflight OPTIONS kết thúc tại đây (204), request thường đi tiếp.
+    $container->cors()->handle();
+
+    $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $container->router()->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $uri);
 } catch (Throwable $e) {
-    $response['services']['database'] = [
-        'status' => 'Failed',
-        'error' => $e->getMessage()
-    ];
+    // Lưới an toàn cuối: lỗi boot (DB, JWT_SECRET, trùng route...) → JSON 500.
+    ResponseService::error('Lỗi hệ thống: ' . $e->getMessage(), 500);
 }
-
-// 2. Kiểm tra kết nối Redis
-try {
-    $redisHost = getenv('REDIS_HOST') ?: 'redis';
-    $redisPort = (int)(getenv('REDIS_PORT') ?: 6379);
-
-    $redis = new Redis();
-    $redis->connect($redisHost, $redisPort, 2.0);
-    $redis->set('ping_check', 'pong', 10);
-
-    $response['services']['cache'] = [
-        'status' => 'Connected',
-        'driver' => 'Redis 7.2',
-        'ping' => $redis->get('ping_check')
-    ];
-} catch (Throwable $e) {
-    $response['services']['cache'] = [
-        'status' => 'Failed',
-        'error' => $e->getMessage()
-    ];
-}
-
-echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);

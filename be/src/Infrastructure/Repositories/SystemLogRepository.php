@@ -6,6 +6,7 @@ namespace src\Infrastructure\Repositories;
 use src\Application\Interfaces\Repositories\ISystemLogRepository;
 use src\Domain\Entities\SystemLog;
 use src\Domain\Enums\LogAction;
+use src\Domain\Enums\LogTargetType;
 use src\Infrastructure\Context\DbContext;
 use DateTimeImmutable;
 use PDO;
@@ -31,7 +32,7 @@ class SystemLogRepository implements ISystemLogRepository
         $stmt->execute([
             ':user_id' => $log->getUserId(),
             ':action' => $log->getAction()->value,
-            ':target_type' => $log->getTargetType(),
+            ':target_type' => $log->getTargetType()->value,
             ':target_id' => $log->getTargetId(),
             ':old_value' => $log->getOldValue() !== null ? json_encode($log->getOldValue(), JSON_UNESCAPED_UNICODE) : null,
             ':new_value' => $log->getNewValue() !== null ? json_encode($log->getNewValue(), JSON_UNESCAPED_UNICODE) : null,
@@ -45,7 +46,7 @@ class SystemLogRepository implements ISystemLogRepository
     public function getLogs(
         ?int $userId = null, 
         ?LogAction $action = null, 
-        ?string $targetType = null, 
+        ?LogTargetType $targetType = null, 
         ?string $startDate = null, 
         ?string $endDate = null, 
         int $page = 1, 
@@ -64,7 +65,7 @@ class SystemLogRepository implements ISystemLogRepository
         }
         if ($targetType !== null) {
             $where[] = "target_type = :target_type";
-            $params[':target_type'] = $targetType;
+            $params[':target_type'] = $targetType->value;
         }
         if ($startDate !== null) {
             $where[] = "created_at >= :start_date";
@@ -108,7 +109,7 @@ class SystemLogRepository implements ISystemLogRepository
         return new SystemLog(
             (int)$row['user_id'],
             LogAction::from($row['action']),
-            $row['target_type'],
+            LogTargetType::from($row['target_type']),
             (int)$row['target_id'],
             $oldValueArray,
             $newValueArray,

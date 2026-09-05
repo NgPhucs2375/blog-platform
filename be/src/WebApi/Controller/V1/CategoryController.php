@@ -1,22 +1,21 @@
 <?php
 declare(strict_types=1);
 
-namespace src\Presentation\WebApi\Controllers\V1;
+namespace src\WebApi\Controller\V1;
 
-use src\Presentation\WebApi\Controllers\BaseController;
+use src\WebApi\Controller\BaseController;
 use src\Infrastructure\Repositories\CategoryRepository;
-use src\Presentation\WebApi\Middleware\AuthMiddleware;
-use src\Presentation\WebApi\Middleware\RoleMiddleware;
+use src\WebApi\Routing\Route;
 use src\Domain\Entities\Category;
 use Exception;
 
 class CategoryController extends BaseController
 {
     public function __construct(
-        private CategoryRepository $categoryRepository,
-        private AuthMiddleware $authMiddleware
+        private CategoryRepository $categoryRepository
     ) {}
 
+    #[Route('GET', '/api/v1/categories')]
     public function index(): void
     {
         $categories = $this->categoryRepository->getAllCategories();
@@ -24,11 +23,9 @@ class CategoryController extends BaseController
         $this->json($data, 200, "Lấy danh sách chuyên mục thành công.");
     }
 
-    public function create(): void
+    #[Route('POST', '/api/v1/categories', auth: true, roles: ['Admin'])]
+    public function create(array $user): void
     {
-        $user = $this->authMiddleware->handle();
-        RoleMiddleware::checkRole($user, ['Admin']);
-
         $data = $this->getJsonBody();
         if (empty($data['name']) || empty($data['slug'])) {
             $this->error("Tên và đường dẫn chuyên mục không được để trống.", 422);
@@ -54,11 +51,9 @@ class CategoryController extends BaseController
         }
     }
 
-    public function delete(int $id): void
+    #[Route('DELETE', '/api/v1/categories/{id}', auth: true, roles: ['Admin'])]
+    public function delete(array $user, int $id): void
     {
-        $user = $this->authMiddleware->handle();
-        RoleMiddleware::checkRole($user, ['Admin']);
-
         if ($this->categoryRepository->hasPosts($id)) {
             $this->error("Không thể xóa chuyên mục này vì đang có bài viết liên kết.", 400);
         }

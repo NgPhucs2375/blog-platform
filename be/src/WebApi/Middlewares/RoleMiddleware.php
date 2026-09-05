@@ -1,6 +1,6 @@
 <?php
 
-namespace src\WebApi\Middleware;
+namespace src\WebApi\Middlewares;
 
 use src\WebApi\Services\ResponseService;
 

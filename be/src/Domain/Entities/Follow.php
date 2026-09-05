@@ -6,32 +6,31 @@ namespace src\Domain\Entities;
 use InvalidArgumentException;
 use DateTimeImmutable;
 
-class Follow
+class Follow extends BaseEntity
 {
     public function __construct(
         private int $followerId,
         private int $followingId,
-        private ?int $id = null,
-        private ?DateTimeImmutable $createdAt = null
+        ?int $id = null,
+        ?DateTimeImmutable $createdAt = null,
+        ?int $createdBy = null,
+        ?DateTimeImmutable $updatedAt = null,
+        ?int $updatedBy = null
     ) {
         if ($followerId === $followingId) {
             throw new InvalidArgumentException("Người dùng không thể tự theo dõi chính mình.");
         }
-        $this->createdAt = $createdAt ?? new DateTimeImmutable();
+        parent::__construct($id, $createdAt, $createdBy ?? $followerId, $updatedAt, $updatedBy);
     }
 
-    public function getId(): ?int { return $this->id; }
     public function getFollowerId(): int { return $this->followerId; }
     public function getFollowingId(): int { return $this->followingId; }
-    public function getCreatedAt(): DateTimeImmutable { return $this->createdAt; }
 
     public function toArray(): array
     {
-        return [
-            'id' => $this->id,
+        return array_merge($this->baseArray(), [
             'followerId' => $this->followerId,
             'followingId' => $this->followingId,
-            'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
-        ];
+        ]);
     }
 }

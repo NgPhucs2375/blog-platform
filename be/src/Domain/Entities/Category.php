@@ -6,7 +6,7 @@ namespace src\Domain\Entities;
 use InvalidArgumentException;
 use DateTimeImmutable;
 
-class Category
+class Category extends BaseEntity
 {
     public function __construct(
         private string $name,
@@ -14,27 +14,32 @@ class Category
         private ?string $description = null,
         private int $sortOrder = 0,
         private int $displayOrder = 0,
-        private ?int $id = null,
-        private ?DateTimeImmutable $createdAt = null
+        ?int $id = null,
+        ?DateTimeImmutable $createdAt = null,
+        ?int $createdBy = null,
+        ?DateTimeImmutable $updatedAt = null,
+        ?int $updatedBy = null
     ) {
+        parent::__construct($id, $createdAt, $createdBy, $updatedAt, $updatedBy);
         $this->setName($name);
         $this->setSlug($slug);
-        $this->createdAt = $createdAt ?? new DateTimeImmutable();
     }
 
     // --- Phương thức nghiệp vụ ---
 
-    public function updateCategory(string $name, string $slug, ?string $description): void
+    public function updateCategory(string $name, string $slug, ?string $description, ?int $updatedBy = null): void
     {
         $this->setName($name);
         $this->setSlug($slug);
         $this->description = $description;
+        $this->markUpdated($updatedBy);
     }
 
-    public function updateDisplayOrder(int $sortOrder, int $displayOrder): void
+    public function updateDisplayOrder(int $sortOrder, int $displayOrder, ?int $updatedBy = null): void
     {
         $this->sortOrder = $sortOrder;
         $this->displayOrder = $displayOrder;
+        $this->markUpdated($updatedBy);
     }
 
     // --- Validation nội bộ ---
@@ -57,28 +62,24 @@ class Category
         $this->slug = $trimmed;
     }
 
-    // --- Getters ---
+    // --- Getters (id/audit kế thừa từ BaseEntity) ---
 
-    public function getId(): ?int { return $this->id; }
     public function getName(): string { return $this->name; }
     public function getSlug(): string { return $this->slug; }
     public function getDescription(): ?string { return $this->description; }
     public function getSortOrder(): int { return $this->sortOrder; }
     public function getDisplayOrder(): int { return $this->displayOrder; }
-    public function getCreatedAt(): DateTimeImmutable { return $this->createdAt; }
 
     // --- Mapping to Array ---
 
     public function toArray(): array
     {
-        return [
-            'id' => $this->id,
+        return array_merge($this->baseArray(), [
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
             'sortOrder' => $this->sortOrder,
             'displayOrder' => $this->displayOrder,
-            'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
-        ];
+        ]);
     }
 }

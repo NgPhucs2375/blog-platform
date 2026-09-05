@@ -7,29 +7,34 @@ use src\Domain\Enums\CommentStatus;
 use InvalidArgumentException;
 use DateTimeImmutable;
 
-class Comment
+class Comment extends BaseEntity
 {
     public function __construct(
         private int $postId,
         private int $userId,
         private string $content,
         private ?int $parentId = null,
-        private CommentStatus $status = CommentStatus::APPROVED,
-        private ?int $id = null,
-        private ?DateTimeImmutable $createdAt = null
+        private CommentStatus $status = CommentStatus::PENDING,
+        ?int $id = null,
+        ?DateTimeImmutable $createdAt = null,
+        ?int $createdBy = null,
+        ?DateTimeImmutable $updatedAt = null,
+        ?int $updatedBy = null
     ) {
+        parent::__construct($id, $createdAt, $createdBy ?? $userId, $updatedAt, $updatedBy);
         $this->setContent($content);
-        $this->createdAt = $createdAt ?? new DateTimeImmutable();
     }
 
-    public function approve(): void
+    public function approve(?int $updatedBy = null): void
     {
         $this->status = CommentStatus::APPROVED;
+        $this->markUpdated($updatedBy);
     }
 
-    public function hide(): void
+    public function hide(?int $updatedBy = null): void
     {
         $this->status = CommentStatus::HIDDEN;
+        $this->markUpdated($updatedBy);
     }
 
     public function isVisible(): bool
@@ -44,24 +49,20 @@ class Comment
         $this->content = $trimmed;
     }
 
-    public function getId(): ?int { return $this->id; }
     public function getPostId(): int { return $this->postId; }
     public function getUserId(): int { return $this->userId; }
     public function getContent(): string { return $this->content; }
     public function getParentId(): ?int { return $this->parentId; }
     public function getStatus(): CommentStatus { return $this->status; }
-    public function getCreatedAt(): DateTimeImmutable { return $this->createdAt; }
 
     public function toArray(): array
     {
-        return [
-            'id' => $this->id,
+        return array_merge($this->baseArray(), [
             'postId' => $this->postId,
             'userId' => $this->userId,
             'content' => $this->content,
             'parentId' => $this->parentId,
             'status' => $this->status->value,
-            'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
-        ];
+        ]);
     }
 }

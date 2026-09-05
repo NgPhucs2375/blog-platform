@@ -5,29 +5,28 @@ namespace src\Domain\Entities;
 
 use DateTimeImmutable;
 
-class Like
+class Like extends BaseEntity
 {
     public function __construct(
         private int $userId,
         private int $postId,
-        private ?int $id = null,
-        private ?DateTimeImmutable $createdAt = null
+        ?int $id = null,
+        ?DateTimeImmutable $createdAt = null,
+        ?int $createdBy = null,
+        ?DateTimeImmutable $updatedAt = null,
+        ?int $updatedBy = null
     ) {
-        $this->createdAt = $createdAt ?? new DateTimeImmutable();
+        parent::__construct($id, $createdAt, $createdBy ?? $userId, $updatedAt, $updatedBy);
     }
 
-    public function getId(): ?int { return $this->id; }
     public function getUserId(): int { return $this->userId; }
     public function getPostId(): int { return $this->postId; }
-    public function getCreatedAt(): DateTimeImmutable { return $this->createdAt; }
 
     public function toArray(): array
     {
-        return [
-            'id' => $this->id,
+        return array_merge($this->baseArray(), [
             'userId' => $this->userId,
             'postId' => $this->postId,
-            'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
-        ];
+        ]);
     }
 }

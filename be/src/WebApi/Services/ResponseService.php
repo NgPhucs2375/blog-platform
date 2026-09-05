@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace src\Presentation\WebApi\Services;
+namespace src\WebApi\Services;
 
 class ResponseService
 {

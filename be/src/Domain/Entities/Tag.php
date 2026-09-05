@@ -6,23 +6,27 @@ namespace src\Domain\Entities;
 use InvalidArgumentException;
 use DateTimeImmutable;
 
-class Tag
+class Tag extends BaseEntity
 {
     public function __construct(
         private string $name,
         private string $slug,
-        private ?int $id = null,
-        private ?DateTimeImmutable $createdAt = null
+        ?int $id = null,
+        ?DateTimeImmutable $createdAt = null,
+        ?int $createdBy = null,
+        ?DateTimeImmutable $updatedAt = null,
+        ?int $updatedBy = null
     ) {
+        parent::__construct($id, $createdAt, $createdBy, $updatedAt, $updatedBy);
         $this->setName($name);
         $this->setSlug($slug);
-        $this->createdAt = $createdAt ?? new DateTimeImmutable();
     }
 
-    public function updateTag(string $name, string $slug): void
+    public function updateTag(string $name, string $slug, ?int $updatedBy = null): void
     {
         $this->setName($name);
         $this->setSlug($slug);
+        $this->markUpdated($updatedBy);
     }
 
     private function setName(string $name): void
@@ -39,18 +43,14 @@ class Tag
         $this->slug = $trimmed;
     }
 
-    public function getId(): ?int { return $this->id; }
     public function getName(): string { return $this->name; }
     public function getSlug(): string { return $this->slug; }
-    public function getCreatedAt(): DateTimeImmutable { return $this->createdAt; }
 
     public function toArray(): array
     {
-        return [
-            'id' => $this->id,
+        return array_merge($this->baseArray(), [
             'name' => $this->name,
             'slug' => $this->slug,
-            'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
-        ];
+        ]);
     }
 }

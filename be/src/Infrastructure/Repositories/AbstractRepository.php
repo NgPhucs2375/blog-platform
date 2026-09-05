@@ -33,6 +33,6 @@ abstract class AbstractRepository implements RepositoryInterface
 
     // Các lớp con khi kế thừa BẮT BUỘC phải viết lại 3 hàm này với đúng kiểu dữ liệu
     abstract public function findById(int $id): ?object;
-    abstract public function save(object $entity): void;
+    abstract public function save(object $entity): int;
     abstract public function update(object $entity): void;
 }

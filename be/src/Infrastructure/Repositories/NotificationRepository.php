@@ -22,12 +22,13 @@ class NotificationRepository extends AbstractRepository implements INotification
         return $row ? $this->mapToEntity($row) : null;
     }
 
-    public function save(object $entity): void
+    public function save(object $entity): int
     {
         if (!$entity instanceof Notification) throw new InvalidArgumentException("Input must be Notification Entity");
 
         $sql = "INSERT INTO {$this->table} (user_id, type, title, content, data, is_read, created_at)
-                VALUES (:user_id, :type, :title, :content, :data, :is_read, :created_at)";
+                VALUES (:user_id, :type, :title, :content, :data, :is_read, :created_at)
+                RETURNING id";
         $stmt = $this->db()->prepare($sql);
         $stmt->execute([
             ':user_id' => $entity->getUserId(),
@@ -38,6 +39,8 @@ class NotificationRepository extends AbstractRepository implements INotification
             ':is_read' => $entity->getIsRead() ? 1 : 0,
             ':created_at' => $entity->getCreatedAt()->format('Y-m-d H:i:s'),
         ]);
+
+        return (int) $stmt->fetchColumn();
     }
 
     public function update(object $entity): void
@@ -89,7 +92,10 @@ class NotificationRepository extends AbstractRepository implements INotification
             $dataArray,
             (bool)$row['is_read'],
             (int)$row['id'],
-            new DateTimeImmutable($row['created_at'])
+            new DateTimeImmutable($row['created_at']),
+            createdBy: isset($row['created_by']) && $row['created_by'] !== null ? (int)$row['created_by'] : null,
+            updatedAt: !empty($row['updated_at']) ? new DateTimeImmutable($row['updated_at']) : null,
+            updatedBy: isset($row['updated_by']) && $row['updated_by'] !== null ? (int)$row['updated_by'] : null
         );
     }
 }

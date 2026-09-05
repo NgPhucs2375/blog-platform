@@ -8,7 +8,7 @@ use src\Domain\Enums\UserStatus;
 use InvalidArgumentException;
 use DateTimeImmutable;
 
-class User
+class User extends BaseEntity
 {
     public function __construct(
         private string $userName,
@@ -16,35 +16,42 @@ class User
         private string $passwordHash,
         private UserRole $role = UserRole::USER,
         private UserStatus $status = UserStatus::ACTIVE,
-        private ?int $id = null,
-        private ?DateTimeImmutable $createdAt = null
+        ?int $id = null,
+        ?DateTimeImmutable $createdAt = null,
+        ?int $createdBy = null,
+        ?DateTimeImmutable $updatedAt = null,
+        ?int $updatedBy = null
     ) {
+        parent::__construct($id, $createdAt, $createdBy, $updatedAt, $updatedBy);
         $this->setUserName($userName);
         $this->setEmail($email);
-        $this->createdAt = $createdAt ?? new DateTimeImmutable();
     }
 
     // --- Phương thức nghiệp vụ ---
 
-    public function lock(): void
+    public function lock(?int $updatedBy = null): void
     {
         $this->status = UserStatus::LOCKED;
+        $this->markUpdated($updatedBy);
     }
 
-    public function unlock(): void
+    public function unlock(?int $updatedBy = null): void
     {
         $this->status = UserStatus::ACTIVE;
+        $this->markUpdated($updatedBy);
     }
 
-    public function updateProfile(string $userName, string $email): void
+    public function updateProfile(string $userName, string $email, ?int $updatedBy = null): void
     {
         $this->setUserName($userName);
         $this->setEmail($email);
+        $this->markUpdated($updatedBy);
     }
 
-    public function changePassword(string $newPasswordHash): void
+    public function changePassword(string $newPasswordHash, ?int $updatedBy = null): void
     {
         $this->passwordHash = $newPasswordHash;
+        $this->markUpdated($updatedBy);
     }
 
     public function isAdmin(): bool
@@ -77,28 +84,24 @@ class User
         $this->email = $trimmed;
     }
 
-    // --- Getters ---
+    // --- Getters (id/createdAt/createdBy/updatedAt/updatedBy kế thừa từ BaseEntity) ---
 
-    public function getId(): ?int { return $this->id; }
     public function getUserName(): string { return $this->userName; }
     public function getEmail(): string { return $this->email; }
     public function getPasswordHash(): string { return $this->passwordHash; }
     public function getRole(): UserRole { return $this->role; }
     public function getStatus(): UserStatus { return $this->status; }
-    public function getCreatedAt(): DateTimeImmutable { return $this->createdAt; }
 
     // --- Mapping to Array ---
 
     public function toArray(): array
     {
-        return [
-            'id' => $this->id,
+        return array_merge($this->baseArray(), [
             'userName' => $this->userName,
             'email' => $this->email,
             'role' => $this->role->value,
             'status' => $this->status->value,
             'isActive' => $this->status->isActive(),
-            'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
-        ];
+        ]);
     }
 }

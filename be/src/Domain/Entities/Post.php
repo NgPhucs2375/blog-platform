@@ -7,7 +7,7 @@ use src\Domain\Enums\PostStatus;
 use InvalidArgumentException;
 use DateTimeImmutable;
 
-class Post
+class Post extends BaseEntity
 {
     public function __construct(
         private string $title,
@@ -17,44 +17,45 @@ class Post
         private int $categoryId,
         private PostStatus $status = PostStatus::DRAFT,
         private int $viewCount = 0,
-        private ?int $id = null,
-        private ?DateTimeImmutable $createdAt = null,
-        private ?DateTimeImmutable $updatedAt = null
+        ?int $id = null,
+        ?DateTimeImmutable $createdAt = null,
+        ?DateTimeImmutable $updatedAt = null,
+        ?int $createdBy = null,
+        ?int $updatedBy = null
     ) {
+        parent::__construct($id, $createdAt, $createdBy ?? $authorId, $updatedAt ?? new DateTimeImmutable(), $updatedBy);
         $this->setTitle($title);
         $this->setSlug($slug);
         $this->setContent($content);
         $this->viewCount = max(0, $viewCount);
-        $this->createdAt = $createdAt ?? new DateTimeImmutable();
-        $this->updatedAt = $updatedAt ?? new DateTimeImmutable();
     }
 
     // --- Business Methods ---
-    public function submitForReview(): void
+    public function submitForReview(?int $updatedBy = null): void
     {
         $this->status = PostStatus::PENDING;
-        $this->touch();
+        $this->markUpdated($updatedBy);
     }
 
-    public function approve(): void
+    public function approve(?int $updatedBy = null): void
     {
         $this->status = PostStatus::PUBLISHED;
-        $this->touch();
+        $this->markUpdated($updatedBy);
     }
 
-    public function reject(): void
+    public function reject(?int $updatedBy = null): void
     {
-        $this->status = PostStatus::DRAFT;
-        $this->touch();
+        $this->status = PostStatus::REJECT;
+        $this->markUpdated($updatedBy);
     }
 
-    public function updateContent(string $title, string $slug, string $content, int $categoryId): void
+    public function updateContent(string $title, string $slug, string $content, int $categoryId, ?int $updatedBy = null): void
     {
         $this->setTitle($title);
         $this->setSlug($slug);
         $this->setContent($content);
         $this->categoryId = $categoryId;
-        $this->touch();
+        $this->markUpdated($updatedBy);
     }
 
     public function incrementViewCount(): void
@@ -65,11 +66,6 @@ class Post
     public function isPublished(): bool
     {
         return $this->status === PostStatus::PUBLISHED;
-    }
-
-    private function touch(): void
-    {
-        $this->updatedAt = new DateTimeImmutable();
     }
 
     // --- Validation ---
@@ -94,8 +90,7 @@ class Post
         $this->content = $trimmed;
     }
 
-    // --- Getters ---
-    public function getId(): ?int { return $this->id; }
+    // --- Getters (id/createdAt/createdBy/updatedAt/updatedBy kế thừa từ BaseEntity) ---
     public function getTitle(): string { return $this->title; }
     public function getSlug(): string { return $this->slug; }
     public function getContent(): string { return $this->content; }
@@ -103,13 +98,10 @@ class Post
     public function getCategoryId(): int { return $this->categoryId; }
     public function getStatus(): PostStatus { return $this->status; }
     public function getViewCount(): int { return $this->viewCount; }
-    public function getCreatedAt(): DateTimeImmutable { return $this->createdAt; }
-    public function getUpdatedAt(): DateTimeImmutable { return $this->updatedAt; }
 
     public function toArray(): array
     {
-        return [
-            'id' => $this->id,
+        return array_merge($this->baseArray(), [
             'title' => $this->title,
             'slug' => $this->slug,
             'content' => $this->content,
@@ -117,8 +109,6 @@ class Post
             'categoryId' => $this->categoryId,
             'status' => $this->status->value,
             'viewCount' => $this->viewCount,
-            'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
-            'updatedAt' => $this->updatedAt->format('Y-m-d H:i:s'),
-        ];
+        ]);
     }
 }

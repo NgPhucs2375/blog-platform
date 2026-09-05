@@ -22,12 +22,13 @@ class CommentRepository extends AbstractRepository implements ICommentRepository
         return $row ? $this->mapToEntity($row) : null;
     }
 
-    public function save(object $entity): void
+    public function save(object $entity): int
     {
         if (!$entity instanceof Comment) throw new InvalidArgumentException("Input must be Comment Entity");
 
         $sql = "INSERT INTO {$this->table} (post_id, user_id, content, parent_id, status, created_at)
-                VALUES (:post_id, :user_id, :content, :parent_id, :status, :created_at)";
+                VALUES (:post_id, :user_id, :content, :parent_id, :status, :created_at)
+                RETURNING id";
         $stmt = $this->db()->prepare($sql);
         $stmt->execute([
             ':post_id' => $entity->getPostId(),
@@ -37,6 +38,8 @@ class CommentRepository extends AbstractRepository implements ICommentRepository
             ':status' => $entity->getStatus()->value,
             ':created_at' => $entity->getCreatedAt()->format('Y-m-d H:i:s'),
         ]);
+
+        return (int) $stmt->fetchColumn();
     }
 
     public function update(object $entity): void
@@ -120,10 +123,13 @@ class CommentRepository extends AbstractRepository implements ICommentRepository
             (int)$row['post_id'],
             (int)$row['user_id'],
             $row['content'],
-            isset($row['parent_id']) ? (int)$row['parent_id'] : null,
+            isset($row['parent_id']) && $row['parent_id'] !== null ? (int)$row['parent_id'] : null,
             CommentStatus::from($row['status']),
             (int)$row['id'],
-            new DateTimeImmutable($row['created_at'])
+            new DateTimeImmutable($row['created_at']),
+            createdBy: isset($row['created_by']) && $row['created_by'] !== null ? (int)$row['created_by'] : null,
+            updatedAt: !empty($row['updated_at']) ? new DateTimeImmutable($row['updated_at']) : null,
+            updatedBy: isset($row['updated_by']) && $row['updated_by'] !== null ? (int)$row['updated_by'] : null
         );
     }
 }

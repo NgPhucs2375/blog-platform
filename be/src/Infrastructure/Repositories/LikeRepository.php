@@ -21,17 +21,19 @@ class LikeRepository extends AbstractRepository implements ILikeRepository
         return $row ? $this->mapToEntity($row) : null;
     }
 
-    public function save(object $entity): void
+    public function save(object $entity): int
     {
         if (!$entity instanceof Like) throw new InvalidArgumentException("Input must be Like Entity");
 
-        $sql = "INSERT INTO {$this->table} (user_id, post_id, created_at) VALUES (:user_id, :post_id, :created_at)";
+        $sql = "INSERT INTO {$this->table} (user_id, post_id, created_at) VALUES (:user_id, :post_id, :created_at) RETURNING id";
         $stmt = $this->db()->prepare($sql);
         $stmt->execute([
             ':user_id' => $entity->getUserId(),
             ':post_id' => $entity->getPostId(),
             ':created_at' => $entity->getCreatedAt()->format('Y-m-d H:i:s'),
         ]);
+
+        return (int) $stmt->fetchColumn();
     }
 
     public function update(object $entity): void
@@ -86,7 +88,10 @@ class LikeRepository extends AbstractRepository implements ILikeRepository
             (int)$row['user_id'],
             (int)$row['post_id'],
             (int)$row['id'],
-            new DateTimeImmutable($row['created_at'])
+            new DateTimeImmutable($row['created_at']),
+            createdBy: isset($row['created_by']) && $row['created_by'] !== null ? (int)$row['created_by'] : null,
+            updatedAt: !empty($row['updated_at']) ? new DateTimeImmutable($row['updated_at']) : null,
+            updatedBy: isset($row['updated_by']) && $row['updated_by'] !== null ? (int)$row['updated_by'] : null
         );
     }
 }

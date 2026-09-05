@@ -5,6 +5,7 @@ namespace src\Application\Interfaces\Repositories;
 
 use src\Domain\Entities\SystemLog;
 use src\Domain\Enums\LogAction;
+use src\Domain\Enums\LogTargetType;
 
 /**
  * Khối lưu trữ Append-Only (Chỉ đọc và ghi thêm)
@@ -17,7 +18,7 @@ interface ISystemLogRepository
     public function getLogs(
         ?int $userId = null, 
         ?LogAction $action = null, 
-        ?string $targetType = null, 
+        ?LogTargetType $targetType = null, 
         ?string $startDate = null, 
         ?string $endDate = null, 
         int $page = 1, 

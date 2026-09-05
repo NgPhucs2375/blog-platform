@@ -54,6 +54,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost/api
       - NODE_ENV=development
+      - WATCHPACK_POLLING=true
     networks:
       - blog_network
 

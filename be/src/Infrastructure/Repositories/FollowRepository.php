@@ -21,18 +21,21 @@ class FollowRepository extends AbstractRepository implements IFollowRepository
         return $row ? $this->mapToEntity($row) : null;
     }
 
-    public function save(object $entity): void
+    public function save(object $entity): int
     {
         if (!$entity instanceof Follow) throw new InvalidArgumentException("Input must be Follow Entity");
 
         $sql = "INSERT INTO {$this->table} (follower_id, following_id, created_at)
-                VALUES (:follower_id, :following_id, :created_at)";
+                VALUES (:follower_id, :following_id, :created_at)
+                RETURNING id";
         $stmt = $this->db()->prepare($sql);
         $stmt->execute([
             ':follower_id' => $entity->getFollowerId(),
             ':following_id' => $entity->getFollowingId(),
             ':created_at' => $entity->getCreatedAt()->format('Y-m-d H:i:s'),
         ]);
+
+        return (int) $stmt->fetchColumn();
     }
 
     public function update(object $entity): void
@@ -106,7 +109,10 @@ class FollowRepository extends AbstractRepository implements IFollowRepository
             (int)$row['follower_id'],
             (int)$row['following_id'],
             (int)$row['id'],
-            new DateTimeImmutable($row['created_at'])
+            new DateTimeImmutable($row['created_at']),
+            createdBy: isset($row['created_by']) && $row['created_by'] !== null ? (int)$row['created_by'] : null,
+            updatedAt: !empty($row['updated_at']) ? new DateTimeImmutable($row['updated_at']) : null,
+            updatedBy: isset($row['updated_by']) && $row['updated_by'] !== null ? (int)$row['updated_by'] : null
         );
     }
 }

@@ -43,12 +43,13 @@ class CategoryRepository extends AbstractRepository implements ICategoryReposito
         return array_map([$this, 'mapToEntity'], $stmt->fetchAll());
     }
 
-    public function save(object $entity): void
+    public function save(object $entity): int
     {
         if (!$entity instanceof Category) throw new InvalidArgumentException("Input must be Category Entity");
 
         $sql = "INSERT INTO {$this->table} (name, slug, description, sort_order, display_order, created_at)
-                VALUES (:name, :slug, :description, :sort_order, :display_order, :created_at)";
+                VALUES (:name, :slug, :description, :sort_order, :display_order, :created_at)
+                RETURNING id";
         $stmt = $this->db()->prepare($sql);
         $stmt->execute([
             ':name' => $entity->getName(),
@@ -58,6 +59,8 @@ class CategoryRepository extends AbstractRepository implements ICategoryReposito
             ':display_order' => $entity->getDisplayOrder(),
             ':created_at' => $entity->getCreatedAt()->format('Y-m-d H:i:s'),
         ]);
+
+        return (int) $stmt->fetchColumn();
     }
 
     public function update(object $entity): void
@@ -109,7 +112,10 @@ class CategoryRepository extends AbstractRepository implements ICategoryReposito
             (int)($row['sort_order'] ?? 0),
             (int)($row['display_order'] ?? 0),
             (int)$row['id'],
-            new DateTimeImmutable($row['created_at'])
+            new DateTimeImmutable($row['created_at']),
+            createdBy: isset($row['created_by']) && $row['created_by'] !== null ? (int)$row['created_by'] : null,
+            updatedAt: !empty($row['updated_at']) ? new DateTimeImmutable($row['updated_at']) : null,
+            updatedBy: isset($row['updated_by']) && $row['updated_by'] !== null ? (int)$row['updated_by'] : null
         );
     }
 }
