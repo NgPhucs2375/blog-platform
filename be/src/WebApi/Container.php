@@ -97,7 +97,7 @@ class Container
 
     public function userController(): UserController
     {
-        return new UserController($this->users());
+        return new UserController($this->users(), $this->refreshTokens(), $this->systemLogs());
     }
 
     public function profileController(): ProfileController

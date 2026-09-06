@@ -13,6 +13,8 @@ if "%1"=="up" (
     docker compose exec backend composer update
 ) else if "%1"=="test" (
     docker compose exec backend vendor/bin/phpunit
+) else if "%1"=="migrate" (
+    docker compose exec backend php database/migrate.php
 ) else if "%1"=="autoload" (
     docker compose exec backend composer dump-autoload
 ) else if "%1"=="logs" (
@@ -35,14 +37,15 @@ if "%1"=="up" (
     echo   make build        - Build lai images va khoi dong he thong
     echo   make logs         - Theo doi nhat ky thoi gian thuc cua cac dich vu
     echo   make ps           - Kiem tra trang thai hoat dong cua cac container
-    echo   make install      - Cai dat thu vien Backend (Composer)
-    echo   make update       - Cap nhat thu vien Backend (Composer Update)
-    echo   make test         - Chay Unit Test kiem thu he thong (PHPUnit)
+    echo   make install      - Cai dat thu vien Backend ^(Composer^)
+    echo   make update       - Cap nhat thu vien Backend ^(Composer Update^)
+    echo   make test         - Chay Unit Test kiem thu he thong ^(PHPUnit^)
+    echo   make migrate      - Chay migration CSDL ^(tao/cap nhat bang^)
     echo   make autoload     - Tao lai autoload mapping cho Composer
     echo   make backend-sh   - Truy cap vao shell cua container PHP Backend
     echo   make frontend-sh  - Truy cap vao shell cua container Next.js Frontend
-    echo   make db-sh        - Mo cua so dong lenh PostgreSQL (psql)
-    echo   make clean        - Xoa toan bo container va o dia volume (Reset DB)
+    echo   make db-sh        - Mo cua so dong lenh PostgreSQL ^(psql^)
+    echo   make clean        - Xoa toan bo container va o dia volume ^(Reset DB^)
 ) else (
-    echo Lenh khong hop le. Cac lenh ho tro: up, down, build, restart, install, update, test, autoload, logs, ps, backend-sh, frontend-sh, db-sh, clean, help
+    echo Lenh khong hop le. Cac lenh ho tro: up, down, build, restart, install, update, test, migrate, autoload, logs, ps, backend-sh, frontend-sh, db-sh, clean, help
 )

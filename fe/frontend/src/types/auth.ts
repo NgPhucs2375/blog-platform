@@ -6,6 +6,12 @@ export interface User {
   status: "Active" | "Locked";
   isActive: boolean;
   createdAt: string;
+  createdBy?: number | null;
+  updatedAt?: string | null;
+  updatedBy?: number | null;
+  deletedAt?: string | null;
+  deletedBy?: number | null;
+  isDeleted?: boolean;
 }
 
 export interface LoginRequest {
@@ -79,6 +85,26 @@ export interface UserListParams {
   limit?: number;
   search?: string;
   role?: string;
+  status?: string;
+  sort?: string;
+  includeDeleted?: boolean;
+}
+
+export interface CreateUserRequest {
+  userName: string;
+  email: string;
+  password: string;
+  role?: "Admin" | "User";
+  status?: "Active" | "Locked";
+}
+
+export interface BulkIdsRequest {
+  ids: number[];
+}
+
+export interface BulkResult {
+  success: number[];
+  failed: Array<{ id: number; reason: string }>;
 }
 
 export interface UpdateRoleRequest {

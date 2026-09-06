@@ -46,6 +46,7 @@ export {
   TableLink,
 } from "@/components/ui/Table";
 export { Heading, Text, FormLabel } from "@/components/ui/Typography";
+export { Modal } from "@/components/ui/Modal";
 export {
   AuthHeader,
   AuthCard,

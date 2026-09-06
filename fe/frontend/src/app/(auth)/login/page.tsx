@@ -42,8 +42,8 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      await login({ email, password });
-      router.push("/");
+      const loggedUser = await login({ email, password });
+      router.push(loggedUser.role === "Admin" ? "/users" : "/");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
       setError(axiosErr?.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.");

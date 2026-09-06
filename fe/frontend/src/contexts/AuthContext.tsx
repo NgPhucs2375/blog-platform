@@ -18,7 +18,7 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (data: LoginRequest) => Promise<void>;
+  login: (data: LoginRequest) => Promise<User>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tokenStorage.save(res.access_token, res.refresh_token, res.user);
     setToken(res.access_token);
     setUser(res.user);
+    return res.user;
   }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {
