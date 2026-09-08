@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Settings, Users } from "lucide-react";
+import { ArrowLeft, BarChart3, FolderKanban, Settings, Users } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
   AdminBrand,
@@ -14,6 +14,8 @@ import {
 
 const NAV_ITEMS: readonly AdminNavItem[] = [
   { label: "Quản lý người dùng", href: "/users", icon: Users },
+  { label: "Quản lý chuyên mục", href: "/categories", icon: FolderKanban },
+  { label: "Báo cáo & Thống kê", href: "/reports", icon: BarChart3 },
 ];
 
 const HOME_ITEM: AdminNavItem = { label: "Về trang chủ", href: "/", icon: ArrowLeft };

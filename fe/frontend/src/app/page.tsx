@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   ArrowRight,
   BookOpen,
@@ -119,6 +120,11 @@ function Brand() {
 
 function TopBar() {
   const { user, isAuthenticated, logout } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <Box className="sticky top-0 z-20 border-b border-white/10 bg-black/70 backdrop-blur-xl">
@@ -136,10 +142,10 @@ function TopBar() {
               Bắt đầu
             </Button>
           </Inline>
-          {isAuthenticated ? (
+          {mounted && isAuthenticated ? (
             <Inline gap="sm" align="center">
               <Text variant="small" as="span" className="hidden text-zinc-300 md:block">
-                Xin chào, {user?.userName}
+                Xin chào, {user?.userName || user?.username}
               </Text>
               {user?.role === "Admin" ? (
                 <Button variant="secondary" size="sm" href="/users">
@@ -169,6 +175,11 @@ function TopBar() {
 
 function Hero() {
   const { user, isAuthenticated, logout } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <Container size="md">
@@ -189,7 +200,7 @@ function Hero() {
           bằng refresh token xoay vòng, phân quyền rõ ràng cho Admin và tác giả.
         </Text>
 
-        {isAuthenticated ? (
+        {mounted && isAuthenticated ? (
           <Inline justify="center" gap="sm">
             {user?.role === "Admin" ? (
               <Button variant="primary" href="/users">
@@ -331,6 +342,11 @@ function Roles() {
 
 function CtaBand() {
   const { isAuthenticated } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <Box id="start">
@@ -348,9 +364,9 @@ function CtaBand() {
                 Tạo tài khoản trong chưa đầy một phút. Mật khẩu được mã hóa bcrypt,
                 phiên đăng nhập duy trì 30 ngày an toàn.
               </Text>
-              {isAuthenticated ? (
-                <Button variant="primary" href="/login">
-                  Tiếp tục
+              {mounted && isAuthenticated ? (
+                <Button variant="primary" href="/profile">
+                  Quản lý hồ sơ
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               ) : (
