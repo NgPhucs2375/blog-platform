@@ -45,80 +45,71 @@ export default function DashboardPage() {
 
   const currentUserId = user?.id ?? (user as any)?.userId ?? (user as any)?.sub;
   const currentUsername = (user?.userName || (user as any)?.username || '').toLowerCase().trim();
+  const isAdmin = user?.role === 'Admin';
 
-  // Helper quản lý danh sách ID bài viết do người dùng này tạo trên trình duyệt
-  const getTrackedPostIds = useCallback((): string[] => {
-    if (!currentUserId && !currentUsername) return [];
-    try {
-      const key = `user_posts_${currentUserId || currentUsername}`;
-      return JSON.parse(localStorage.getItem(key) || '[]');
-    } catch {
-      return [];
+  // Hàm tải dữ liệu an toàn có cơ chế Fallback
+  const fetchDashboardData = useCallback(async () => {
+    if (!currentUserId && !currentUsername) {
+      setLoading(false);
+      return;
     }
-  }, [currentUserId, currentUsername]);
 
-  const addTrackedPostId = useCallback((id: string | number) => {
-    if (!id || (!currentUserId && !currentUsername)) return;
-    try {
-      const key = `user_posts_${currentUserId || currentUsername}`;
-      const list = JSON.parse(localStorage.getItem(key) || '[]');
-      if (!list.includes(String(id))) {
-        list.push(String(id));
-        localStorage.setItem(key, JSON.stringify(list));
-      }
-    } catch {}
-  }, [currentUserId, currentUsername]);
-
-  // 1. Tải danh sách bài viết & Lọc nghiêm ngặt cho người dùng
-  const loadDashboardData = useCallback(async () => {
-    if (!user) return;
     try {
       setLoading(true);
-      const [cats, allPosts] = await Promise.all([
-        postApi.getCategories().catch(() => [] as Category[]),
-        postApi.getPosts().catch(() => [] as PostItem[]),
-      ]);
 
+      // Tải danh mục
+      const cats = await postApi.getCategories().catch(() => [] as Category[]);
       setCategories(cats || []);
-      if (cats && cats.length > 0 && !newCategoryId) {
-        setNewCategoryId(cats[0].id);
+      if (cats && cats.length > 0) {
+        setNewCategoryId((prev) => (prev ? prev : cats[0].id));
       }
 
-      const trackedIds = getTrackedPostIds();
+      let myPosts: PostItem[] = [];
 
-      // Lọc bài viết thuộc quyền sở hữu của user
-      const myPosts = (allPosts || []).filter((p: any) => {
-        if (user?.role === 'Admin') return true;
+      // 1. Thử gọi API chuyên dụng /v1/posts/me
+      try {
+        if (typeof postApi.getMyPosts === 'function') {
+          const resMe = await postApi.getMyPosts();
+          if (Array.isArray(resMe) && resMe.length > 0) {
+            myPosts = resMe;
+          }
+        }
+      } catch (e) {
+        console.warn('Endpoint /v1/posts/me chưa sẵn sàng, chuyển sang chế độ dự phòng.');
+      }
 
-        // So khớp ID tác giả
-        const pAuthorId = p.author_id ?? p.authorId ?? p.user_id ?? p.userId ?? p.created_by ?? p.author?.id ?? p.user?.id;
-        if (currentUserId && pAuthorId && String(pAuthorId) === String(currentUserId)) return true;
+      // 2. Nếu API trên chưa có bài hoặc lỗi 500, fallback sang lấy danh sách chung rồi lọc
+      if (myPosts.length === 0) {
+        const allPosts = await postApi.getPosts().catch(() => [] as PostItem[]);
+        myPosts = (allPosts || []).filter((p: any) => {
+          if (isAdmin) return true; // Admin được xem toàn bộ bài viết hệ thống
 
-        // So khớp Username tác giả
-        const pAuthorName = (
-          p.author_name ?? p.authorName ?? p.author?.userName ?? p.author?.username ?? p.author?.name ?? ''
-        ).toLowerCase().trim();
-        if (currentUsername && pAuthorName && pAuthorName === currentUsername) return true;
+          const pAuthorId = p.author_id ?? p.authorId ?? p.user_id ?? p.userId ?? p.author?.id;
+          const pAuthorName = (
+            p.author_name ?? p.authorName ?? p.author?.userName ?? p.author?.username ?? ''
+          ).toLowerCase().trim();
 
-        // So khớp qua danh sách ID đã lưu vết tạo trong phiên
-        if (p?.id && trackedIds.includes(String(p.id))) return true;
+          const matchId = currentUserId && pAuthorId && String(pAuthorId) === String(currentUserId);
+          const matchName = currentUsername && pAuthorName && pAuthorName === currentUsername;
 
-        return false;
-      });
+          return matchId || matchName;
+        });
+      }
 
       setPosts(myPosts);
     } catch (err) {
-      console.error('Lỗi khi nạp dữ liệu dashboard:', err);
+      console.error('Lỗi nạp dữ liệu dashboard:', err);
     } finally {
       setLoading(false);
     }
-  }, [user, currentUserId, currentUsername, getTrackedPostIds, newCategoryId]);
+  }, [currentUserId, currentUsername, isAdmin]);
 
+  // Chỉ kích hoạt lại khi User ID thực sự thay đổi (Triệt tiêu vòng lặp vô tận)
   useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
-  // 2. Tự động tạo slug kèm hậu tố chống trùng Unique Constraint
+  // Tự động sinh Slug chống trùng
   const handleTitleChange = (val: string) => {
     setNewTitle(val);
     const baseSlug = val
@@ -134,11 +125,11 @@ export default function DashboardPage() {
     setNewSlug(baseSlug ? `${baseSlug}-${uniqueSuffix}` : '');
   };
 
-  // 3. Xử lý tạo bài viết chuẩn hóa
+  // Tạo bài viết
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || !newContent.trim()) {
-      setModalError('Vui lòng nhập đầy đủ tiêu đề và nội dung bài viết.');
+      setModalError('Vui lòng nhập đầy đủ tiêu đề và nội dung.');
       return;
     }
 
@@ -146,7 +137,7 @@ export default function DashboardPage() {
       setCreating(true);
       setModalError('');
 
-      const created = await postApi.createPost({
+      await postApi.createPost({
         title: newTitle.trim(),
         slug: newSlug.trim() || `post-${Date.now()}`,
         excerpt: newExcerpt.trim(),
@@ -154,18 +145,10 @@ export default function DashboardPage() {
         content: newContent.trim(),
         categoryId: Number(newCategoryId),
         category_id: Number(newCategoryId),
-        status: newStatus.toLowerCase(), // Luôn dùng chữ thường
+        status: newStatus.toUpperCase(),
         userId: currentUserId,
         authorId: currentUserId,
       });
-
-      if (created && created.id) {
-        addTrackedPostId(created.id);
-        // Đưa ngay bài viết hoàn chỉnh vào danh sách hiển thị
-        setPosts((prev) => [created, ...prev.filter((p) => p.id !== created.id)]);
-      }
-
-      await loadDashboardData();
 
       setIsModalOpen(false);
       setNewTitle('');
@@ -173,22 +156,21 @@ export default function DashboardPage() {
       setNewExcerpt('');
       setNewCoverImage('');
       setNewContent('');
-      setActionMessage('Đã xuất bản thành công ấn phẩm mới.');
+      setActionMessage('Đã tạo ấn phẩm mới thành công.');
       setTimeout(() => setActionMessage(null), 3500);
+
+      // Tải lại danh sách sau khi tạo
+      await fetchDashboardData();
     } catch (err: any) {
-      setModalError(
-        err?.response?.data?.message ||
-        err?.message ||
-        'Không thể tạo bài viết. Vui lòng thử lại!'
-      );
+      setModalError(err?.response?.data?.message || err?.message || 'Không thể tạo bài viết.');
     } finally {
       setCreating(false);
     }
   };
 
-  // 4. Xử lý xóa bài viết
+  // Xóa bài viết
   const handleDeletePost = async (id: number | string, title: string) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa bài viết: "${title}"?`)) return;
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa bài viết "${title}"?`)) return;
 
     try {
       await postApi.deletePost(id);
@@ -200,7 +182,7 @@ export default function DashboardPage() {
     }
   };
 
-  // 5. Thống kê số liệu
+  // Thống kê ấn phẩm
   const stats = useMemo(() => {
     const total = posts.length;
     const published = posts.filter(
@@ -214,7 +196,7 @@ export default function DashboardPage() {
     return { total, published, drafts, totalViews };
   }, [posts]);
 
-  // 6. Lọc tìm kiếm
+  // Bộ lọc bài viết
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
       const status = (post.status || '').toString().toLowerCase();
@@ -242,13 +224,11 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#06080e] dark:text-zinc-100 transition-colors duration-200 pb-20">
-      
-      {/* Glow Effect */}
       <div className="absolute inset-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.12),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.18),rgba(255,255,255,0))]" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 space-y-10">
         
-        {/* Header Tòa soạn */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-zinc-200/80 dark:border-white/[0.08] pb-8">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
@@ -259,7 +239,7 @@ export default function DashboardPage() {
               Bảng điều khiển tác giả
             </h1>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Xin chào, <span suppressHydrationWarning className="font-semibold text-indigo-600 dark:text-indigo-400">{username}</span>. Theo dõi chỉ số độc giả và quản lý các ấn phẩm bài viết của bạn.
+              Xin chào, <span suppressHydrationWarning className="font-semibold text-indigo-600 dark:text-indigo-400">{username}</span>. Theo dõi chỉ số và quản lý ấn phẩm của bạn.
             </p>
           </div>
 
@@ -282,23 +262,23 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Thông báo thao tác */}
+        {/* Thông báo */}
         {actionMessage && (
-          <div className="flex items-center justify-between rounded-2xl border border-emerald-500/30 bg-emerald-50 px-4 py-3 text-xs font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between rounded-2xl border border-emerald-500/30 bg-emerald-50 px-4 py-3 text-xs font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300 animate-in fade-in">
             <div className="flex items-center gap-2">
               <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               <span>{actionMessage}</span>
             </div>
-            <button onClick={() => setActionMessage(null)}><X className="h-4 w-4 text-zinc-400 hover:text-zinc-600" /></button>
+            <button onClick={() => setActionMessage(null)}><X className="h-4 w-4" /></button>
           </div>
         )}
 
-        {/* 3 Thẻ chỉ số cá nhân */}
+        {/* 3 Thẻ chỉ số */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.02]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                TỔNG ẤN PHẨM CỦA BẠN
+                TỔNG BÀI VIẾT
               </span>
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                 <FileText className="h-4 w-4" />
@@ -346,14 +326,12 @@ export default function DashboardPage() {
               <span className="text-3xl sm:text-4xl font-extrabold text-zinc-950 dark:text-white">
                 {stats.totalViews.toLocaleString()}
               </span>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                lượt xem
-              </span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">lượt xem</span>
             </div>
           </div>
         </div>
 
-        {/* Bộ lọc trạng thái & Tìm kiếm */}
+        {/* Bộ lọc & Tìm kiếm */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.02]">
           <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
             <button
@@ -400,7 +378,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Bảng Dữ liệu Quản lý Bài viết */}
+        {/* Bảng Dữ liệu */}
         <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm dark:border-white/[0.08] dark:bg-white/[0.02]">
           {loading ? (
             <div className="flex min-h-[30vh] flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
@@ -410,9 +388,9 @@ export default function DashboardPage() {
           ) : filteredPosts.length === 0 ? (
             <div className="p-16 text-center">
               <BookOpen className="mx-auto h-10 w-10 text-zinc-400 dark:text-zinc-600 mb-3" />
-              <h3 className="text-base font-bold text-zinc-900 dark:text-white">Bạn chưa có ấn phẩm nào</h3>
+              <h3 className="text-base font-bold text-zinc-900 dark:text-white">Chưa có bài viết nào</h3>
               <p className="text-xs text-zinc-500 mt-1">
-                Bấm vào nút &quot;Soạn bài mới&quot; phía trên để xuất bản câu chuyện đầu tiên!
+                Bấm vào nút &quot;Soạn bài mới&quot; để xuất bản ấn phẩm đầu tiên!
               </p>
             </div>
           ) : (
@@ -598,7 +576,7 @@ export default function DashboardPage() {
                   type="text"
                   value={newExcerpt}
                   onChange={(e) => setNewExcerpt(e.target.value)}
-                  placeholder="Mô tả tóm tắt nội dung bài viết trong 1-2 câu ngắn..."
+                  placeholder="Mô tả tóm tắt nội dung bài viết..."
                   className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
                 />
               </div>
@@ -627,7 +605,7 @@ export default function DashboardPage() {
                   rows={6}
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
-                  placeholder="Chia sẻ câu chuyện, ý tưởng hoặc góc nhìn của bạn tại đây..."
+                  placeholder="Chia sẻ nội dung hoặc câu chuyện của bạn..."
                   className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition leading-relaxed"
                   required
                 />

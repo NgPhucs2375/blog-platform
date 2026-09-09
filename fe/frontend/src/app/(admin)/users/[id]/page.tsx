@@ -130,7 +130,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     <Container size="lg">
       <Stack gap="lg">
         <Box>
-          <Button variant="ghost" size="sm" onClick={backToList}>
+          <Button variant="ghost" size="sm" onClick={backDst => backToList()}>
             <ArrowLeft className="h-4 w-4" />
             Quay lại danh sách
           </Button>
@@ -141,16 +141,17 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         {isSelf ? <Alert variant="info">Đây là tài khoản của bạn — các hành động tự khóa / tự xóa / tự hạ quyền bị chặn.</Alert> : null}
         {isDeleted ? <Alert variant="error">Tài khoản đã bị xóa mềm{user.deletedAt ? ` lúc ${fmtDate(user.deletedAt)}` : ""}. Hãy khôi phục trước khi đổi role / khóa.</Alert> : null}
 
-        <Card padding="md">
+        {/* Card Thông tin: Dùng lớp nền tương thích Sáng/Tối tự động từ hệ thống UI */}
+        <Card padding="md" className="bg-white text-zinc-900 dark:bg-[#0c121e]/80 dark:text-zinc-100 border border-zinc-200/80 dark:border-white/[0.08] shadow-sm">
           <CardHeader>
             <Inline justify="between" align="center">
               <Inline gap="md" align="center">
                 <Avatar name={user.userName} size="md" />
                 <Stack gap="xs">
-                  <Heading level={1} size="md">
+                  <Heading level={1} size="md" className="text-zinc-950 dark:text-white">
                     {user.userName}
                   </Heading>
-                  <Text variant="muted">{user.email}</Text>
+                  <Text variant="muted" className="text-zinc-500 dark:text-zinc-400">{user.email}</Text>
                 </Stack>
               </Inline>
               <Inline gap="xs">
@@ -171,26 +172,26 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
           <CardContent>
             <Grid columns={2}>
               <Stack gap="xs">
-                <Text variant="caption">ID</Text>
-                <Text variant="small" className="font-mono text-white">
+                <Text variant="caption" className="text-zinc-400">ID</Text>
+                <Text variant="small" className="font-mono text-zinc-900 dark:text-white">
                   {user.id}
                 </Text>
               </Stack>
               <Stack gap="xs">
-                <Text variant="caption">Ngày tạo</Text>
-                <Text variant="small" className="text-white">
+                <Text variant="caption" className="text-zinc-400">Ngày tạo</Text>
+                <Text variant="small" className="text-zinc-900 dark:text-white">
                   {fmtDate(user.createdAt)}
                 </Text>
               </Stack>
               <Stack gap="xs">
-                <Text variant="caption">Cập nhật lúc</Text>
-                <Text variant="small" className="text-white">
+                <Text variant="caption" className="text-zinc-400">Cập nhật lúc</Text>
+                <Text variant="small" className="text-zinc-900 dark:text-white">
                   {fmtDate(user.updatedAt)}
                 </Text>
               </Stack>
               <Stack gap="xs">
-                <Text variant="caption">Người tạo / sửa</Text>
-                <Text variant="small" className="text-white">
+                <Text variant="caption" className="text-zinc-400">Người tạo / sửa</Text>
+                <Text variant="small" className="text-zinc-900 dark:text-white">
                   {user.createdBy ?? "—"} / {user.updatedBy ?? "—"}
                 </Text>
               </Stack>
@@ -198,9 +199,10 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
           </CardContent>
         </Card>
 
-        <Card padding="md">
+        {/* Card Hành động quản trị */}
+        <Card padding="md" className="bg-white text-zinc-900 dark:bg-[#0c121e]/80 dark:text-zinc-100 border border-zinc-200/80 dark:border-white/[0.08] shadow-sm">
           <CardHeader>
-            <CardTitle>Hành động</CardTitle>
+            <CardTitle className="text-zinc-950 dark:text-white">Hành động</CardTitle>
           </CardHeader>
           <CardContent>
             <Stack gap="md">
@@ -301,7 +303,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         onConfirm={handleDelete}
         onClose={() => setDeleteOpen(false)}
       >
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-300">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
           <input
             type="checkbox"
             checked={permanent}

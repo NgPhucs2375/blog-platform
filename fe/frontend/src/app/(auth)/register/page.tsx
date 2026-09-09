@@ -69,7 +69,7 @@ export default function RegisterPage() {
             Tạo tài khoản
           </h1>
           <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-            Bắt đầu hành trình xuất bản và kết nối trên OpenBlog
+            Bắt đầu hành trình xuất bản và kết nối trên Blog Platform.
           </p>
         </div>
 

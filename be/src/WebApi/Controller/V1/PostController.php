@@ -48,17 +48,24 @@ class PostController extends BaseController
         }
 
         try {
+            // Nhận trạng thái xuất bản từ Frontend, nếu không có thì mặc định là DRAFT
+            $status = PostStatus::DRAFT;
+            if (!empty($data['status'])) {
+                $statusInput = strtoupper((string)$data['status']);
+                if ($statusInput === 'PUBLISHED') {
+                    $status = PostStatus::PUBLISHED;
+                }
+            }
+
             $post = new Post(
                 (string)$data['title'],
                 (string)$data['slug'],
                 (string)$data['content'],
                 (int)$user['sub'],
                 (int)$data['categoryId'],
-                PostStatus::DRAFT
+                $status
             );
 
-            // Lưu ý: Nếu dùng Auto-increment ID mà Base Repository không trả về ID, 
-            // có thể cần gọi hàm tìm theo slug để lấy ID ghi log nếu cần thiết.
             $this->postRepository->save($post);
             $savedPost = $this->postRepository->findBySlug($post->getSlug());
             $postId = $savedPost ? $savedPost->getId() : 0;
@@ -72,7 +79,20 @@ class PostController extends BaseController
                 $post->toArray()
             ));
 
-            $this->json(['postId' => $postId], 201, "Tạo bài viết thành công (trạng thái Nháp).");
+            // Trả về toàn bộ dữ liệu bài viết đã lưu để Frontend cập nhật bảng tức thì
+            $responseData = $savedPost ? $savedPost->toArray() : [
+                'id' => $postId,
+                'title' => $post->getTitle(),
+                'slug' => $post->getSlug(),
+                'content' => $post->getContent(),
+                'status' => $status->value,
+                'categoryId' => $post->getCategoryId(),
+                'authorId' => $post->getAuthorId(),
+                'viewCount' => 0,
+                'createdAt' => date('Y-m-d H:i:s'),
+            ];
+
+            $this->json($responseData, 201, "Tạo bài viết thành công.");
         } catch (Exception $e) {
             $this->error($e->getMessage(), 400);
         }

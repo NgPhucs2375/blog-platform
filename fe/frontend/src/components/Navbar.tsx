@@ -57,7 +57,7 @@ export default function Navbar() {
                             <Feather className="h-4 w-4" />
                         </div>
                         <span className="text-base font-extrabold tracking-tight text-zinc-950 dark:text-white">
-                            OpenBlog<span className="text-indigo-600 dark:text-indigo-400">.</span>
+                            Blog Platform<span className="text-indigo-600 dark:text-indigo-400">.</span>
                         </span>
                     </Link>
 

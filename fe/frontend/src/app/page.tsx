@@ -367,7 +367,7 @@ export default function HomePage() {
             Bạn có câu chuyện hay muốn chia sẻ cùng cộng đồng?
           </h3>
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
-            OpenBlog chào đón tất cả các góc nhìn đa dạng về phong cách sống, kiến thức chuyên ngành, trải nghiệm du lịch và những suy ngẫm đời thường.
+            Blog Platform chào đón tất cả các góc nhìn đa dạng về phong cách sống, kiến thức chuyên ngành, trải nghiệm du lịch và những suy ngẫm đời thường.
           </p>
           <div className="pt-2">
             <Link

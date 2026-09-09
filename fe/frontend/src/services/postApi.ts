@@ -67,19 +67,14 @@ export const postApi = {
 
   // Tạo bài viết mới (gửi song song cả camelCase và snake_case cho database)
   createPost: async (payload: any): Promise<PostItem> => {
-    const rawStatus = (payload.status || 'published').toString().toLowerCase();
+    const rawStatus = (payload.status || 'published').toString().toUpperCase();
     const formattedPayload = {
       title: payload.title,
       slug: payload.slug,
       content: payload.content,
       excerpt: payload.excerpt || '',
-      category_id: Number(payload.categoryId || payload.category_id || 1),
       categoryId: Number(payload.categoryId || payload.category_id || 1),
-      cover_image: payload.coverImage || payload.cover_image || '',
-      coverImage: payload.coverImage || payload.cover_image || '',
-      status: rawStatus, // Bắt buộc chữ thường 'published' hoặc 'draft'
-      user_id: payload.userId || payload.user_id,
-      author_id: payload.authorId || payload.author_id,
+      status: rawStatus === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT',
     };
 
     const res = await api.post('/v1/posts', formattedPayload);
@@ -121,7 +116,20 @@ export const postApi = {
       return [];
     }
   },
-
+  // Lấy toàn bộ bài viết cá nhân (cả Nháp lẫn Đã duyệt) qua route /v1/posts/me
+  getMyPosts: async (): Promise<PostItem[]> => {
+    try {
+      const res = await api.get('/v1/posts/me');
+      const payload = unwrapData(res.data);
+      if (Array.isArray(payload)) return payload;
+      if (Array.isArray(payload?.items)) return payload.items;
+      if (Array.isArray(payload?.posts)) return payload.posts;
+      return [];
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách bài viết cá nhân:', err);
+      return [];
+    }
+  },
   // Tăng lượt xem
   trackView: async (id: number | string): Promise<{ viewCount: number }> => {
     try {

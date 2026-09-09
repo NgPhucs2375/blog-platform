@@ -222,7 +222,7 @@ export default function ReportsPage() {
             Tổng quan Hoạt động Nền tảng
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-            Dữ liệu thống kê trực tiếp từ cơ sở dữ liệu hệ thống OpenBlog.
+            Dữ liệu thống kê trực tiếp từ cơ sở dữ liệu hệ thống Blog Platform.
           </p>
         </div>
 
