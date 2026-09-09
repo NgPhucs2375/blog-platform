@@ -1,273 +1,315 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { postApi, Category } from '@/services/postApi';
-import { ArrowLeft, Save, Send, Eye, Edit3 } from 'lucide-react';
+import {
+  ArrowLeft,
+  PenSquare,
+  Eye,
+  Send,
+  Save,
+  Loader2,
+  AlertCircle,
+  Check,
+  Image as ImageIcon,
+} from 'lucide-react';
+import { postApi, Category, PostItem } from '@/services/postApi';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface EditPostProps {
-  params: Promise<{ id: string }>;
-}
-
-export default function EditPostPage({ params }: EditPostProps) {
-  const resolvedParams = use(params);
-  const postId = resolvedParams.id;
+export default function EditPostPage() {
+  const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
+  const id = params?.id as string;
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [title, setTitle] = useState('');
-  const [slug, setSlug] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [excerpt, setExcerpt] = useState('');
-  const [content, setContent] = useState('');
-  const [featuredImage, setFeaturedImage] = useState('');
-  const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [previewMode, setPreviewMode] = useState(false);
+
+  // Form states
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [categoryId, setCategoryId] = useState<number>(1);
+  const [excerpt, setExcerpt] = useState('');
+  const [coverImage, setCoverImage] = useState('');
+  const [content, setContent] = useState('');
+  const [status, setStatus] = useState<'published' | 'draft'>('published');
 
   useEffect(() => {
-    const fetchData = async () => {
-      const [cats, post] = await Promise.all([
-        postApi.getCategories(),
-        postApi.getPostById(postId),
-      ]);
-      setCategories(cats);
-      if (post) {
-        setTitle(post.title || '');
-        setSlug(post.slug || '');
-        setCategoryId(String(post.category_id || cats[0]?.id || ''));
-        setExcerpt(post.excerpt || '');
-        setContent(post.content || '');
-        setFeaturedImage(post.featured_image || '');
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, [postId]);
+    async function loadData() {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const [cats, post] = await Promise.all([
+          postApi.getCategories(),
+          postApi.getPostById(id),
+        ]);
 
-  const handleUpdate = async (status: 'published' | 'draft') => {
+        setCategories(cats || []);
+
+        if (post) {
+          const raw = post as any;
+          setTitle(raw.title || '');
+          setSlug(raw.slug || '');
+          setCategoryId(Number(raw.categoryId || raw.category_id || (cats?.[0]?.id ?? 1)));
+          setExcerpt(raw.excerpt || '');
+          setCoverImage(raw.coverImage || raw.cover_image || raw.thumbnail || '');
+          setContent(raw.content || '');
+          setStatus((raw.status || '').toLowerCase() === 'draft' ? 'draft' : 'published');
+        }
+      } catch (err: any) {
+        setError('Không thể nạp thông tin bài viết.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [id]);
+
+  const handleUpdate = async (targetStatus?: 'published' | 'draft') => {
     if (!title.trim() || !content.trim()) {
-      setErrorMsg('Vui lòng điền tiêu đề và nội dung bài viết.');
+      setError('Vui lòng nhập đầy đủ tiêu đề và nội dung.');
       return;
     }
 
-    setSubmitting(true);
-    setErrorMsg(null);
+    const nextStatus = targetStatus || status;
 
     try {
-      await postApi.updatePost(postId, {
-        title,
-        slug,
-        category_id: categoryId,
-        excerpt,
-        content,
-        featured_image: featuredImage,
-        status,
-      });
-      router.push('/dashboard');
+      setSubmitting(true);
+      setError('');
+
+      await postApi.updatePost(id, {
+        title: title.trim(),
+        slug: slug.trim(),
+        categoryId: Number(categoryId),
+        excerpt: excerpt.trim(),
+        coverImage: coverImage.trim(),
+        content: content.trim(),
+        status: nextStatus.toUpperCase() as any,
+      } as any);
+
+      setStatus(nextStatus);
+      setSuccess(`Đã ${nextStatus === 'published' ? 'xuất bản' : 'lưu bản nháp'} thành công!`);
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || 'Không thể cập nhật bài viết.');
+      setError(err?.response?.data?.message || 'Cập nhật thất bại. Vui lòng thử lại!');
+    } finally {
       setSubmitting(false);
     }
   };
 
-  const selectedCategoryName =
-    categories.find((c) => String(c.id) === String(categoryId))?.name || 'Chung';
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-sm text-slate-500">
-        Đang tải dữ liệu bài viết...
+      <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 bg-zinc-50 dark:bg-[#06080e] text-zinc-500 dark:text-zinc-400 transition-colors">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+        <p className="text-xs font-medium">Đang tải bản thảo bài viết...</p>
       </div>
     );
   }
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-slate-950 text-slate-100 py-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800/80 pb-5">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/dashboard"
-                className="rounded-xl border border-slate-800 bg-slate-900/60 p-2 text-slate-400 hover:text-white transition"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-white">Chỉnh sửa bài viết</h1>
-                <p className="text-xs text-slate-400">ID bài viết: #{postId}</p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#06080e] dark:text-zinc-100 transition-colors duration-200 pb-24">
+      
+      {/* Glow effect */}
+      <div className="absolute inset-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.12),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.18),rgba(255,255,255,0))]" />
 
-            <div className="flex items-center gap-2">
-              <div className="flex rounded-xl border border-slate-800 bg-slate-900/60 p-1 mr-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('write')}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                    activeTab === 'write'
-                      ? 'bg-slate-800 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Edit3 className="h-3.5 w-3.5" />
-                  Soạn
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('preview')}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                    activeTab === 'preview'
-                      ? 'bg-slate-800 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  Xem trước
-                </button>
-              </div>
-
-              <button
-                type="button"
-                disabled={submitting}
-                onClick={() => handleUpdate('draft')}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-50"
-              >
-                <Save className="h-3.5 w-3.5" />
-                Lưu nháp
-              </button>
-
-              <button
-                type="button"
-                disabled={submitting}
-                onClick={() => handleUpdate('published')}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition disabled:opacity-50"
-              >
-                <Send className="h-3.5 w-3.5" />
-                Lưu & Xuất bản
-              </button>
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-10 space-y-8">
+        
+        {/* Header điều hướng & Nút thao tác */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 dark:border-white/[0.08] pb-6">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 shadow-sm hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400 dark:hover:text-white transition"
+              title="Quay lại Dashboard"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+                Chỉnh sửa bài viết
+              </h1>
+              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                Cập nhật nội dung bài viết và định dạng ấn phẩm trên OpenBlog.
+              </p>
             </div>
           </div>
 
-          {errorMsg && (
-            <div className="rounded-xl border border-rose-800/60 bg-rose-950/40 p-3.5 text-xs text-rose-300">
-              {errorMsg}
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPreviewMode(!previewMode)}
+              className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition ${
+                previewMode
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300'
+                  : 'border-zinc-200 bg-white text-zinc-700 shadow-sm hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300'
+              }`}
+            >
+              <Eye className="h-3.5 w-3.5" />
+              <span>{previewMode ? 'Tiếp tục soạn' : 'Xem trước'}</span>
+            </button>
 
-          {activeTab === 'write' ? (
-            <div className="space-y-5 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-6">
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={() => handleUpdate('draft')}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-semibold text-zinc-700 shadow-sm hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 transition"
+            >
+              <Save className="h-3.5 w-3.5" />
+              <span>Lưu nháp</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={() => handleUpdate('published')}
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-indigo-600/25 hover:bg-indigo-500 active:scale-95 disabled:opacity-50 transition"
+            >
+              {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+              <span>Xuất bản</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Thông báo thành công / Thất bại */}
+        {success && (
+          <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-50 px-4 py-3 text-xs font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300 animate-in fade-in">
+            <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <span>{success}</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-2xl border border-rose-500/30 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-800 dark:bg-rose-500/10 dark:text-rose-300 animate-in fade-in">
+            <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Form Chỉnh sửa hoặc Preview */}
+        {previewMode ? (
+          <div className="rounded-3xl border border-zinc-200/80 bg-white p-8 sm:p-12 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/80 space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-md bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase">
+              {categories.find((c) => c.id === categoryId)?.name || 'Chuyên mục'}
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold font-serif text-zinc-950 dark:text-white">
+              {title || 'Chưa đặt tiêu đề'}
+            </h2>
+            {excerpt && (
+              <p className="text-base text-zinc-500 dark:text-zinc-400 italic">
+                {excerpt}
+              </p>
+            )}
+            <div className="pt-4 border-t border-zinc-100 dark:border-white/10 text-base leading-relaxed text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">
+              {content || 'Chưa có nội dung bài viết.'}
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-zinc-200/80 bg-white p-6 sm:p-10 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/80 space-y-6">
+            
+            {/* Tiêu đề */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+                TIÊU ĐỀ BÀI VIẾT
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Nhập tiêu đề bài viết..."
+                required
+                className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+              />
+            </div>
+
+            {/* Slug & Chuyên mục */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Tiêu đề bài viết
+                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+                  ĐƯỜNG DẪN TĨNH (SLUG)
                 </label>
                 <input
                   type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-lg font-bold text-white outline-none focus:border-indigo-500 transition"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Đường dẫn tĩnh (Slug)
-                  </label>
-                  <input
-                    type="text"
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-300 outline-none focus:border-indigo-500 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Chuyên mục
-                  </label>
-                  <select
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-200 outline-none focus:border-indigo-500 transition"
-                  >
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Trích đoạn ngắn (Excerpt)
-                </label>
-                <textarea
-                  rows={2}
-                  value={excerpt}
-                  onChange={(e) => setExcerpt(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-xs text-slate-300 outline-none focus:border-indigo-500 transition resize-none"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  placeholder="tieu-de-bai-viet"
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  URL ảnh bìa
+                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+                  CHUYÊN MỤC
                 </label>
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(Number(e.target.value))}
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 focus:border-indigo-500 focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-white transition"
+                >
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Excerpt */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+                TRÍCH ĐOẠN NGẮN (EXCERPT)
+              </label>
+              <input
+                type="text"
+                value={excerpt}
+                onChange={(e) => setExcerpt(e.target.value)}
+                placeholder="Mô tả tóm tắt nội dung bài viết trong 1-2 câu..."
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+              />
+            </div>
+
+            {/* Cover Image */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+                URL ẢNH BÌA
+              </label>
+              <div className="relative">
+                <ImageIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                 <input
                   type="url"
-                  value={featuredImage}
-                  onChange={(e) => setFeaturedImage(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-300 outline-none focus:border-indigo-500 transition"
+                  value={coverImage}
+                  onChange={(e) => setCoverImage(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
                 />
               </div>
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Nội dung chi tiết
-                </label>
-                <textarea
-                  rows={14}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="w-full font-mono rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-200 outline-none focus:border-indigo-500 transition leading-relaxed"
-                />
-              </div>
+            {/* Nội dung chi tiết */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+                NỘI DUNG CHI TIẾT
+              </label>
+              <textarea
+                rows={12}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Nhập nội dung bài viết đầy đủ tại đây..."
+                required
+                className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition leading-relaxed font-mono"
+              />
             </div>
-          ) : (
-            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 space-y-6">
-              {featuredImage && (
-                <img
-                  src={featuredImage}
-                  alt="Cover preview"
-                  className="w-full max-h-72 object-cover rounded-xl border border-slate-800"
-                />
-              )}
-              <div className="space-y-3">
-                <span className="rounded-md border border-indigo-800/50 bg-indigo-950/80 px-2.5 py-1 text-xs font-medium text-indigo-300">
-                  {selectedCategoryName}
-                </span>
-                <h1 className="text-3xl font-extrabold text-white">{title}</h1>
-                {excerpt && (
-                  <p className="text-sm italic text-slate-400 border-l-2 border-indigo-500 pl-4 py-1">
-                    {excerpt}
-                  </p>
-                )}
-              </div>
-              <div className="border-t border-slate-800/80 pt-6 text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
-                {content}
-              </div>
-            </div>
-          )}
-        </div>
+
+          </div>
+        )}
+
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }

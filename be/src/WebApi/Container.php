@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace src\WebApi;
@@ -107,7 +108,11 @@ class Container
 
     public function postController(): PostController
     {
-        return new PostController($this->posts(), $this->systemLogs());
+        return new PostController(
+            $this->posts(),
+            $this->systemLogs(),
+            $this->users()
+        );
     }
 
     public function categoryController(): CategoryController

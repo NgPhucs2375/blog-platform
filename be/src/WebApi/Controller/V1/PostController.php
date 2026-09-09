@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace src\WebApi\Controller\V1;
@@ -12,13 +13,15 @@ use src\Domain\Entities\SystemLog;
 use src\Domain\Enums\PostStatus;
 use src\Domain\Enums\LogAction;
 use src\Domain\Enums\LogTargetType;
+use src\Infrastructure\Repositories\UserRepository;
 use Exception;
 
 class PostController extends BaseController
 {
     public function __construct(
         private PostRepository $postRepository,
-        private SystemLogRepository $logRepository
+        private SystemLogRepository $logRepository,
+        private UserRepository $userRepository
     ) {}
 
     #[Route('GET', '/api/v1/posts')]
@@ -97,5 +100,127 @@ class PostController extends BaseController
         ));
 
         $this->json($post->toArray(), 200, "Đã duyệt và xuất bản bài viết thành công.");
+    }
+    #[Route('GET', '/api/v1/posts/me', auth: true)]
+    public function myPosts(array $user): void
+    {
+        $posts = $this->postRepository->getPostsByAuthorId((int)$user['sub']);
+        $data = array_map(fn(Post $p) => $p->toArray(), $posts);
+
+        $this->json($data, 200, "Lấy danh sách bài viết cá nhân thành công.");
+    }
+
+    #[Route('GET', '/api/v1/posts/{id}')]
+    public function show(int $id): void
+    {
+        $post = $this->postRepository->findById($id);
+        if (!$post) {
+            $this->error("Không tìm thấy bài viết.", 404);
+        }
+
+        $data = $post->toArray();
+
+        // Lấy thông tin tác giả từ author_id
+        $author = $this->userRepository->findById($post->getAuthorId());
+        $data['author_name'] = $author ? $author->getUsername() : 'Ẩn danh';
+
+        $this->json($data, 200, "Lấy chi tiết bài viết thành công.");
+    }
+
+    #[Route('POST', '/api/v1/posts/{id}/view')]
+    public function recordView(int $id): void
+    {
+        $post = $this->postRepository->findById($id);
+        if (!$post) {
+            $this->error("Bài viết không tồn tại.", 404);
+        }
+
+        $post->incrementViewCount();
+        $this->postRepository->update($post);
+
+        $this->json(['viewCount' => $post->getViewCount()], 200, "Ghi nhận lượt xem thành công.");
+    }
+
+    #[Route('PUT', '/api/v1/posts/{id}', auth: true)]
+    public function update(array $user, int $id): void
+    {
+        $post = $this->postRepository->findById($id);
+        if (!$post) {
+            $this->error("Bài viết không tồn tại.", 404);
+        }
+
+        $userId = (int)($user['sub'] ?? $user['id'] ?? 0);
+        $role = $user['role'] ?? 'Member';
+
+        // Phân quyền: Chỉ Quản trị viên (Admin) hoặc chính Tác giả mới được sửa bài
+        if ($role !== 'Admin' && $post->getAuthorId() !== $userId) {
+            $this->error("Bạn không có quyền chỉnh sửa bài viết này.", 403);
+        }
+
+        $oldData = $post->toArray();
+        $data = $this->getJsonBody();
+
+        if (!empty($data['title'])) $post->setTitle((string)$data['title']);
+        if (!empty($data['slug'])) $post->setSlug((string)$data['slug']);
+        if (!empty($data['content'])) $post->setContent((string)$data['content']);
+        if (!empty($data['categoryId'])) $post->setCategoryId((int)$data['categoryId']);
+        if (!empty($data['status'])) {
+            $status = strtoupper($data['status']) === 'PUBLISHED' ? PostStatus::PUBLISHED : PostStatus::DRAFT;
+            $post->setStatus($status);
+        }
+
+        $this->postRepository->update($post);
+
+        // Ghi nhật ký vào bảng system_logs
+        try {
+            $this->logRepository->save(new SystemLog(
+                $userId,
+                LogAction::UPDATE,
+                LogTargetType::POSTS,
+                $id,
+                $oldData,
+                $post->toArray()
+            ));
+        } catch (\Throwable $e) {
+            // Không làm gián đoạn response nếu ghi log gặp lỗi phụ
+        }
+
+        $this->json($post->toArray(), 200, "Cập nhật bài viết thành công.");
+    }
+
+    #[Route('DELETE', '/api/v1/posts/{id}', auth: true)]
+    public function delete(array $user, int $id): void
+    {
+        $post = $this->postRepository->findById($id);
+        if (!$post) {
+            $this->error("Bài viết không tồn tại.", 404);
+        }
+
+        $userId = (int)($user['sub'] ?? $user['id'] ?? 0);
+        $role = $user['role'] ?? 'Member';
+
+        // Phân quyền: Chỉ Admin hoặc tác giả mới được xóa
+        if ($role !== 'Admin' && $post->getAuthorId() !== $userId) {
+            $this->error("Bạn không có quyền xóa bài viết này.", 403);
+        }
+
+        $oldData = $post->toArray();
+        $this->postRepository->delete($id);
+
+        // Ghi nhật ký hành động vào system_logs
+        try {
+            $this->logRepository->save(new SystemLog(
+                $userId,
+                LogAction::DELETE,
+                LogTargetType::POSTS,
+                $id,
+                $oldData,
+                null
+            ));
+        } catch (\Throwable $e) {
+            // Tránh ngắt quãng phản hồi nếu ghi log gặp lỗi phụ
+        }
+
+        $this->json(null, 200, "Đã xóa bài viết thành công.");
     }
 }

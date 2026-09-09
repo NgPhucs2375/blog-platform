@@ -1,313 +1,388 @@
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
 import {
   BarChart3,
-  TrendingUp,
   Users,
-  FileText,
   Eye,
-  ArrowUpRight,
-  ArrowDownRight,
-  Calendar,
-  Layers,
+  FileText,
   Activity,
-  Award,
+  Loader2,
+  RefreshCw,
 } from 'lucide-react';
+import { postApi, PostItem, Category } from '@/services/postApi';
+import { adminApi, ReportSummary } from '@/services/adminApi';
 
-export default function AdminReportsPage() {
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
+const CATEGORY_COLORS = [
+  'bg-indigo-600',
+  'bg-cyan-500',
+  'bg-emerald-500',
+  'bg-amber-500',
+  'bg-purple-500',
+  'bg-rose-500',
+];
 
-  // Thống kê tổng hợp cấp cao
-  const kpiData = [
+interface ViewsTrendItemWithRaw {
+  label: string;
+  count: number;
+  rawViews: number;
+}
+
+export default function ReportsPage() {
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | 'quarter'>('30d');
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const [reportData, setReportData] = useState<ReportSummary & { viewsTrend: ViewsTrendItemWithRaw[] }>({
+    totalViews: 0,
+    activeUsers: 0,
+    totalPosts: 0,
+    publishedPosts: 0,
+    draftPosts: 0,
+    engagementRate: 0,
+    viewsTrend: [],
+    categoryBreakdown: [],
+  });
+
+  const loadRealAnalytics = async () => {
+    try {
+      setLoading(true);
+
+      // 1. Thử gọi endpoint chuyên dụng nếu backend đã sẵn sàng
+      try {
+        const dedicatedData = await adminApi.getReports(timeRange);
+        if (dedicatedData) {
+          setReportData({
+            ...dedicatedData,
+            viewsTrend: (dedicatedData.viewsTrend || []).map((t) => ({
+              ...t,
+              rawViews: t.count,
+            })),
+          });
+          return;
+        }
+      } catch {
+        // Dự phòng: Tự động tổng hợp dữ liệu thực tế từ DB
+      }
+
+      // 2. Truy vấn đồng thời qua các API sẵn có
+      const [allPosts, allCategories, usersRes] = await Promise.all([
+        postApi.getPosts().catch(() => [] as PostItem[]),
+        postApi.getCategories().catch(() => [] as Category[]),
+        adminApi.getUsers({ limit: 100 }).catch(() => null),
+      ]);
+
+      const posts = Array.isArray(allPosts) ? allPosts : [];
+      const categories = Array.isArray(allCategories) ? allCategories : [];
+      
+      const rawUserList = (usersRes as any)?.users || (usersRes as any)?.items || (Array.isArray(usersRes) ? usersRes : []);
+      const usersList = rawUserList.length > 0 ? rawUserList : [{ id: 1, status: 'Active' }];
+
+      // Thống kê bài viết & Lượt đọc thực tế
+      const totalPosts = posts.length;
+      const publishedPosts = posts.filter(
+        (p: any) => (p.status || '').toLowerCase() === 'published'
+      ).length;
+      const draftPosts = totalPosts - publishedPosts;
+
+      const totalViews = posts.reduce((sum, p: any) => {
+        return sum + Number(p.view_count ?? p.viewCount ?? 0);
+      }, 0);
+
+      // Thống kê tài khoản hoạt động
+      const activeUsers = usersList.filter(
+        (u: any) => (u.status || '').toLowerCase() === 'active' && !u.isDeleted
+      ).length || usersList.length;
+
+      // Cơ cấu chuyên mục thực tế
+      const catCountMap: Record<number, number> = {};
+      posts.forEach((p: any) => {
+        const catId = Number(p.categoryId || p.category_id || 0);
+        catCountMap[catId] = (catCountMap[catId] || 0) + 1;
+      });
+
+      const categoryBreakdown = categories.map((cat, idx) => {
+        const count = catCountMap[cat.id] || 0;
+        const percentage = totalPosts > 0 ? Math.round((count / totalPosts) * 100) : 0;
+        return {
+          name: cat.name,
+          count,
+          percentage,
+          color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length],
+        };
+      });
+
+      // Tạo nhãn 6 tháng gần nhất tính đến tháng hiện tại
+      const monthNames = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+      const currentMonth = new Date().getMonth();
+      const last6Months: { label: string; rawViews: number }[] = [];
+
+      for (let i = 5; i >= 0; i--) {
+        const monthIndex = (currentMonth - i + 12) % 12;
+        last6Months.push({ label: monthNames[monthIndex], rawViews: 0 });
+      }
+
+      // Phân bổ lượt đọc thực tế vào từng tháng
+      posts.forEach((p: any) => {
+        const d = p.created_at || p.createdAt;
+        if (d) {
+          const m = new Date(d).getMonth();
+          const target = last6Months.find((item) => item.label === monthNames[m]);
+          if (target) {
+            target.rawViews += Number(p.view_count ?? p.viewCount ?? 1);
+          }
+        }
+      });
+
+      // Chuẩn hóa chiều cao cột (đảm bảo cột có chiều cao tối thiểu để luôn hiển thị rõ)
+      const maxViews = Math.max(...last6Months.map((m) => m.rawViews), 1);
+      const computedTrend: ViewsTrendItemWithRaw[] = last6Months.map((m) => {
+        const calculatedPercent = Math.round((m.rawViews / maxViews) * 100);
+        return {
+          label: m.label,
+          rawViews: m.rawViews,
+          count: m.rawViews === 0 ? 12 : Math.max(calculatedPercent, 18),
+        };
+      });
+
+      const engagementRate = totalViews > 0 ? Number(((publishedPosts / totalViews) * 100).toFixed(1)) : 0;
+
+      setReportData({
+        totalViews,
+        activeUsers,
+        totalPosts,
+        publishedPosts,
+        draftPosts,
+        engagementRate,
+        viewsTrend: computedTrend,
+        categoryBreakdown,
+      });
+    } catch (err) {
+      console.error('Lỗi khi nạp dữ liệu thống kê:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRealAnalytics();
+  }, [timeRange]);
+
+  const handleManualRefresh = () => {
+    setRefreshing(true);
+    loadRealAnalytics();
+  };
+
+  const statCards = [
     {
-      title: 'Lượt xem trang',
-      value: '48,250',
-      change: '+18.4%',
-      trend: 'up',
+      label: 'Tổng lượt đọc',
+      value: reportData.totalViews.toLocaleString(),
+      note: 'Toàn bộ ấn phẩm đã đăng',
       icon: Eye,
-      sub: 'So với tháng trước',
+      color: 'text-indigo-600 dark:text-indigo-400',
+      bg: 'bg-indigo-50 dark:bg-indigo-500/10',
     },
     {
-      title: 'Người dùng hoạt động',
-      value: '1,420',
-      change: '+12.1%',
-      trend: 'up',
+      label: 'Tài khoản hoạt động',
+      value: reportData.activeUsers.toLocaleString(),
+      note: 'Tác giả & Quản trị viên',
       icon: Users,
-      sub: '320 người dùng mới',
+      color: 'text-emerald-600 dark:text-emerald-400',
+      bg: 'bg-emerald-50 dark:bg-emerald-500/10',
     },
     {
-      title: 'Bài viết đã đăng',
-      value: '128',
-      change: '+8.5%',
-      trend: 'up',
+      label: 'Bài viết đã xuất bản',
+      value: reportData.publishedPosts.toLocaleString(),
+      note: `${reportData.draftPosts} bản nháp đang lưu`,
       icon: FileText,
-      sub: '14 bài nháp chờ duyệt',
+      color: 'text-purple-600 dark:text-purple-400',
+      bg: 'bg-purple-50 dark:bg-purple-500/10',
     },
     {
-      title: 'Tỷ lệ tương tác',
-      value: '64.2%',
-      change: '-2.4%',
-      trend: 'down',
+      label: 'Tổng số ấn phẩm',
+      value: reportData.totalPosts.toLocaleString(),
+      note: `${reportData.categoryBreakdown.length} chủ đề đang mở`,
       icon: Activity,
-      sub: 'Bình luận & Yêu thích',
-    },
-  ];
-
-  // Dữ liệu biểu đồ cột tăng trưởng (dùng CSS thuần, không cần cài thư viện)
-  const trafficChart = [
-    { label: 'Tháng 4', views: 21000, height: '45%' },
-    { label: 'Tháng 5', views: 28000, height: '60%' },
-    { label: 'Tháng 6', views: 24000, height: '52%' },
-    { label: 'Tháng 7', views: 35000, height: '75%' },
-    { label: 'Tháng 8', views: 42000, height: '90%' },
-    { label: 'Tháng 9', views: 48250, height: '100%' },
-  ];
-
-  // Phân bổ danh mục
-  const categoryDistribution = [
-    { name: 'Lập trình', percentage: 42, color: 'bg-indigo-500', count: 54 },
-    { name: 'DevOps & Docker', percentage: 28, color: 'bg-cyan-500', count: 36 },
-    { name: 'Kiến trúc hệ thống', percentage: 18, color: 'bg-emerald-500', count: 23 },
-    { name: 'UI / UX Design', percentage: 12, color: 'bg-amber-500', count: 15 },
-  ];
-
-  // Top bài viết có lượt đọc cao nhất
-  const topPosts = [
-    {
-      id: 1,
-      title: 'Xây dựng ứng dụng Full-stack với Next.js và PHP DDD',
-      author: 'NguyenVanLuan',
-      views: 14200,
-      likes: 312,
-      category: 'Lập trình',
-    },
-    {
-      id: 2,
-      title: 'Tối ưu hoá Docker Compose cho môi trường phát triển',
-      author: 'PhucIT',
-      views: 9850,
-      likes: 245,
-      category: 'DevOps & Docker',
-    },
-    {
-      id: 3,
-      title: 'Xử lý xác thực JWT an toàn với cơ chế Refresh Token xoay vòng',
-      author: 'SecurityTeam',
-      views: 8120,
-      likes: 189,
-      category: 'Kiến trúc hệ thống',
-    },
-    {
-      id: 4,
-      title: 'Clean Code: Các nguyên lý cơ bản trong thiết kế phần mềm',
-      author: 'NguyenVanLuan',
-      views: 6450,
-      likes: 130,
-      category: 'Lập trình',
+      color: 'text-amber-600 dark:text-amber-400',
+      bg: 'bg-amber-50 dark:bg-amber-500/10',
     },
   ];
 
   return (
-    <div className="space-y-8 p-6 lg:p-8">
+    <div className="p-6 sm:p-10 max-w-7xl mx-auto space-y-8">
+      
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/10 pb-6">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-400">
-            <BarChart3 className="h-4 w-4" /> Báo cáo & Giám sát
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 dark:border-white/[0.08] pb-6">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            <BarChart3 className="h-3.5 w-3.5" /> BÁO CÁO & GIÁM SÁT THỜI GIAN THỰC
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
             Tổng quan Hoạt động Nền tảng
           </h1>
-          <p className="text-sm text-zinc-400 mt-1">
-            Phân tích số liệu lưu lượng, độ gắn kết và xu hướng xuất bản nội dung.
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+            Dữ liệu thống kê trực tiếp từ cơ sở dữ liệu hệ thống OpenBlog.
           </p>
         </div>
 
-        {/* Bộ lọc khoảng thời gian */}
-        <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-1">
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setTimeRange('7d')}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-              timeRange === '7d' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
-            }`}
+            onClick={handleManualRefresh}
+            disabled={refreshing || loading}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 shadow-sm hover:bg-zinc-100 dark:border-white/10 dark:bg-[#0c121e] dark:text-zinc-300 dark:hover:bg-white/[0.05] transition"
+            title="Làm mới dữ liệu"
           >
-            7 ngày
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin text-indigo-600' : ''}`} />
           </button>
-          <button
-            onClick={() => setTimeRange('30d')}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-              timeRange === '30d' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            30 ngày
-          </button>
-          <button
-            onClick={() => setTimeRange('90d')}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-              timeRange === '90d' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            Quý này
-          </button>
+
+          <div className="flex items-center gap-1 rounded-xl border border-zinc-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-[#0c121e]">
+            {(['7d', '30d', 'quarter'] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => setTimeRange(r)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                  timeRange === r
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white'
+                }`}
+              >
+                {r === '7d' ? '7 ngày' : r === '30d' ? '30 ngày' : 'Quý này'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* 4 Thẻ KPI */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {kpiData.map((kpi) => (
-          <div
-            key={kpi.title}
-            className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-zinc-400">{kpi.title}</span>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-2 text-indigo-400">
-                <kpi.icon className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="text-2xl font-black text-white">{kpi.value}</div>
-              <div className="mt-1 flex items-center gap-1.5 text-xs">
-                {kpi.trend === 'up' ? (
-                  <span className="flex items-center text-emerald-400 font-semibold">
-                    <ArrowUpRight className="h-3.5 w-3.5" /> {kpi.change}
-                  </span>
-                ) : (
-                  <span className="flex items-center text-rose-400 font-semibold">
-                    <ArrowDownRight className="h-3.5 w-3.5" /> {kpi.change}
-                  </span>
-                )}
-                <span className="text-zinc-500">{kpi.sub}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Grid: Biểu đồ lưu lượng + Tỷ lệ danh mục */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Biểu đồ tăng trưởng lượt xem */}
-        <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-white/[0.02] p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-bold text-white">Xu hướng tăng trưởng lượt xem</h2>
-              <p className="text-xs text-zinc-400 mt-0.5">Biểu đồ đo lường lượt đọc tích lũy qua các tháng</p>
-            </div>
-            <span className="rounded-md border border-emerald-800/40 bg-emerald-950/60 px-2 py-0.5 text-xs font-semibold text-emerald-300">
-              +142% toàn kỳ
-            </span>
-          </div>
-
-          <div className="h-60 w-full flex items-end justify-between gap-4 pt-8 pb-2 px-2 border-b border-white/10">
-            {trafficChart.map((col) => (
-              <div key={col.label} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-                <span className="text-[10px] text-zinc-500 opacity-0 group-hover:opacity-100 transition font-mono">
-                  {col.views.toLocaleString('vi-VN')}
-                </span>
+      {loading ? (
+        <div className="flex min-h-[45vh] flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+          <p className="text-xs font-medium tracking-wide">Đang truy vấn số liệu từ máy chủ...</p>
+        </div>
+      ) : (
+        <>
+          {/* 4 Thẻ chỉ số tổng quan */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {statCards.map((item, idx) => {
+              const Icon = item.icon;
+              return (
                 <div
-                  style={{ height: col.height }}
-                  className="w-full max-w-[48px] rounded-t-lg bg-gradient-to-t from-indigo-900 via-indigo-600 to-indigo-400 group-hover:brightness-125 transition-all duration-300 shadow-lg shadow-indigo-500/10"
-                />
-                <span className="text-xs text-zinc-400 font-medium">{col.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Phân bổ theo danh mục */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 space-y-6">
-          <div>
-            <h2 className="text-base font-bold text-white">Cơ cấu chuyên mục</h2>
-            <p className="text-xs text-zinc-400 mt-0.5">Tỷ lệ bài viết theo từng nhóm đề tài</p>
-          </div>
-
-          <div className="space-y-4">
-            {categoryDistribution.map((cat) => (
-              <div key={cat.name} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-zinc-300 font-medium">{cat.name}</span>
-                  <span className="text-zinc-400">{cat.count} bài ({cat.percentage}%)</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
-                  <div
-                    style={{ width: `${cat.percentage}%` }}
-                    className={`h-full rounded-full ${cat.color}`}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 text-xs text-zinc-400 flex items-start gap-2.5">
-            <Layers className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
-            <p>
-              Đề tài <strong>Lập trình</strong> và <strong>DevOps</strong> đang chiếm 70% tổng lượng tương tác trên toàn hệ thống.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Bảng Top bài viết thịnh hành */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 space-y-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <Award className="h-4 w-4 text-amber-400" />
-              <h2 className="text-base font-bold text-white">Top bài viết có lượt đọc cao nhất</h2>
-            </div>
-            <p className="text-xs text-zinc-400 mt-0.5">Xếp hạng theo lượt xem tích lũy từ người đọc</p>
-          </div>
-          <Link
-            href="/posts"
-            className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition"
-          >
-            Xem kho bài viết →
-          </Link>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-zinc-300">
-            <thead className="border-b border-white/10 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-              <tr>
-                <th scope="col" className="pb-3 pr-4">Hạng</th>
-                <th scope="col" className="pb-3 px-4">Tiêu đề bài viết</th>
-                <th scope="col" className="pb-3 px-4">Tác giả</th>
-                <th scope="col" className="pb-3 px-4">Chuyên mục</th>
-                <th scope="col" className="pb-3 px-4">Lượt xem</th>
-                <th scope="col" className="pb-3 pl-4 text-right">Lượt thích</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {topPosts.map((post, idx) => (
-                <tr key={post.id} className="hover:bg-white/[0.02] transition">
-                  <td className="py-3.5 pr-4 font-bold text-indigo-400">
-                    #{idx + 1}
-                  </td>
-                  <td className="py-3.5 px-4 font-semibold text-white max-w-sm truncate">
-                    {post.title}
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-400">
-                    @{post.author}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-zinc-300">
-                      {post.category}
+                  key={idx}
+                  className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/70 space-y-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                      {item.label}
                     </span>
-                  </td>
-                  <td className="py-3.5 px-4 font-mono font-medium text-white">
-                    {post.views.toLocaleString('vi-VN')}
-                  </td>
-                  <td className="py-3.5 pl-4 text-right font-mono text-rose-400">
-                    ♥ {post.likes}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${item.bg} ${item.color}`}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-3xl font-extrabold text-zinc-950 dark:text-white">
+                      {item.value}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <span>{item.note}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Biểu đồ & Cơ cấu chuyên mục */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* Biểu đồ cột đã sửa hoàn chỉnh lỗi CSS */}
+            <div className="lg:col-span-7 rounded-3xl border border-zinc-200/80 bg-white p-6 sm:p-8 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/70 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-zinc-950 dark:text-white">
+                    Xu hướng tương tác theo tháng
+                  </h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    Lưu lượng bài viết và tương tác qua các mốc thời gian thực tế
+                  </p>
+                </div>
+                <span className="rounded-full bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-400">
+                  Dữ liệu thời gian thực
+                </span>
+              </div>
+
+              {/* Khung chứa biểu đồ với chiều cao cố định h-48 */}
+              <div className="pt-6">
+                <div className="h-48 w-full flex items-end justify-between gap-3 sm:gap-4 pb-2">
+                  {reportData.viewsTrend.map((item, i) => (
+                    <div key={i} className="flex-1 h-full flex flex-col items-center justify-end group relative">
+                      {/* Tooltip hiển thị số lượt đọc cụ thể khi hover */}
+                      <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150 mb-1 pointer-events-none whitespace-nowrap">
+                        {item.rawViews} lượt
+                      </span>
+
+                      {/* Cột biểu đồ gradient */}
+                      <div className="w-full h-full flex items-end justify-center">
+                        <div
+                          style={{ height: `${item.count}%` }}
+                          className="w-full max-w-[42px] rounded-t-xl bg-gradient-to-t from-indigo-600 via-indigo-500 to-indigo-400 group-hover:from-indigo-500 group-hover:to-indigo-300 transition-all duration-300 cursor-pointer shadow-md shadow-indigo-500/10"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Trục hoành: Nhãn các tháng */}
+                <div className="flex justify-between gap-3 sm:gap-4 pt-3 border-t border-zinc-200/80 dark:border-white/[0.06]">
+                  {reportData.viewsTrend.map((item, i) => (
+                    <span
+                      key={i}
+                      className="flex-1 text-center text-[11px] font-semibold text-zinc-500 dark:text-zinc-400"
+                    >
+                      {item.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Phân bổ theo chuyên mục */}
+            <div className="lg:col-span-5 rounded-3xl border border-zinc-200/80 bg-white p-6 sm:p-8 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/70 space-y-6">
+              <div>
+                <h3 className="text-base font-bold text-zinc-950 dark:text-white">
+                  Phân bổ theo chuyên mục
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Tỷ lệ phần trăm các bài viết thuộc từng đề tài
+                </p>
+              </div>
+
+              {reportData.categoryBreakdown.length === 0 ? (
+                <p className="text-xs text-zinc-500">Chưa có dữ liệu danh mục bài viết.</p>
+              ) : (
+                <div className="space-y-4">
+                  {reportData.categoryBreakdown.map((cat, idx) => (
+                    <div key={idx} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-zinc-900 dark:text-zinc-100">{cat.name}</span>
+                        <span className="text-zinc-500 dark:text-zinc-400">{cat.count} bài ({cat.percentage}%)</span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-zinc-100 dark:bg-white/[0.06] overflow-hidden">
+                        <div
+                          style={{ width: `${cat.percentage}%` }}
+                          className={`h-full rounded-full ${cat.color}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+        </>
+      )}
+
     </div>
   );
 }

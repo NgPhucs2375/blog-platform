@@ -1,99 +1,133 @@
-"use client";
+'use client';
 
-import { Suspense, useState, type FormEvent } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { KeyRound } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  Alert,
-  AuthCard,
-  AuthFooter,
-  AuthHeader,
-  Button,
-  Field,
-  FieldLabel,
-  Form,
-  Input,
-  PasswordInput,
-} from "@/components/ui";
-
-function RegisteredNotice() {
-  const searchParams = useSearchParams();
-  if (searchParams.get("registered") !== "1") return null;
-  return <Alert variant="success">Đăng ký thành công! Mời bạn đăng nhập.</Alert>;
-}
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { KeyRound, Eye, EyeOff, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-
-    if (!email || !password) {
-      setError("Vui lòng nhập đầy đủ email và mật khẩu.");
+    if (!email.trim() || !password) {
+      setErrorMessage('Vui lòng nhập đầy đủ email và mật khẩu.');
       return;
     }
 
-    setLoading(true);
     try {
-      const loggedUser = await login({ email, password });
-      router.push(loggedUser.role === "Admin" ? "/users" : "/");
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      setError(axiosErr?.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.");
+      setLoading(true);
+      setErrorMessage('');
+      await login({ email: email.trim(), password });
+      router.push('/');
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin!';
+      setErrorMessage(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>
-      <AuthHeader
-        icon={<KeyRound className="h-8 w-8 text-white" />}
-        title="Chào mừng trở lại"
-        subtitle="Đăng nhập để tiếp tục"
-      />
-      <AuthCard>
-        <Suspense fallback={null}>
-          <RegisteredNotice />
-        </Suspense>
-        {error ? <Alert variant="error">{error}</Alert> : null}
-        <Form onSubmit={handleSubmit}>
-          <Field>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
-            <Input
-              id="email"
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md space-y-8 rounded-3xl border border-zinc-200/80 bg-white p-8 shadow-xl dark:border-white/[0.08] dark:bg-[#0c121e]/80 dark:shadow-2xl backdrop-blur-xl transition-colors">
+        
+        {/* Header Form */}
+        <div className="text-center space-y-3">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 border border-indigo-200/60 text-indigo-600 dark:bg-indigo-500/15 dark:border-indigo-500/30 dark:text-indigo-400 shadow-sm">
+            <KeyRound className="h-6 w-6" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+            Chào mừng trở lại
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+            Đăng nhập để tiếp tục khám phá và xuất bản bài viết
+          </p>
+        </div>
+
+        {/* Thông báo lỗi */}
+        {errorMessage && (
+          <div className="flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 animate-in fade-in duration-200">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {/* Form Đăng nhập */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+              Địa chỉ Email
+            </label>
+            <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
               required
               autoComplete="email"
-              placeholder="you@example.com"
+              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
             />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
-            <PasswordInput
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              placeholder="••••••••"
-            />
-          </Field>
-          <Button type="submit" variant="primary" size="lg" loading={loading}>
-            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-          </Button>
-        </Form>
-      </AuthCard>
-      <AuthFooter prompt="Chưa có tài khoản?" linkHref="/register" linkLabel="Đăng ký ngay" />
-    </>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+              Mật khẩu
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                autoComplete="current-password"
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-4 pr-10 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-indigo-600/25 hover:bg-indigo-500 active:scale-[0.99] disabled:opacity-50 transition"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            <span>Đăng nhập</span>
+          </button>
+        </form>
+
+        {/* Chân trang chuyển hướng */}
+        <div className="text-center text-xs text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-100 dark:border-white/[0.06]">
+          Chưa có tài khoản?{' '}
+          <Link
+            href="/register"
+            className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-0.5"
+          >
+            Đăng ký ngay <ArrowRight className="h-3 w-3 inline" />
+          </Link>
+        </div>
+
+      </div>
+    </div>
   );
 }

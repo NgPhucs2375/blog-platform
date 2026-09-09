@@ -1,155 +1,134 @@
 import api from '@/lib/axios';
 
-export interface Category {
-  id: number | string;
-  name: string;
-  slug: string;
-}
-
 export interface PostItem {
   id: number | string;
   title: string;
-  slug?: string;
-  content?: string;
+  slug: string;
+  content: string;
   excerpt?: string;
-  category?: string;
-  category_id?: number | string;
-  featured_image?: string;
-  status: 'published' | 'draft' | 'Published' | 'Draft';
-  views?: number;
-  views_count?: number;
+  coverImage?: string;
+  cover_image?: string;
+  categoryId?: number;
+  category_id?: number;
+  status: 'published' | 'draft' | string;
+  viewCount?: number;
+  view_count?: number;
+  authorId?: number;
+  author_id?: number;
+  authorName?: string;
+  author_name?: string;
+  author?: { id?: number; userName?: string; username?: string };
   createdAt?: string;
   created_at?: string;
 }
 
-export interface SavePostPayload {
-  title: string;
-  slug?: string;
-  content: string;
-  excerpt?: string;
-  category_id?: number | string;
-  featured_image?: string;
-  status: 'published' | 'draft';
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
 }
 
-const STORAGE_KEY = 'blog_platform_posts';
-
-const getStoredPosts = (): PostItem[] => {
-  if (typeof window === 'undefined') return [];
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    const initial: PostItem[] = [
-      {
-        id: 1,
-        title: 'Xây dựng ứng dụng Full-stack với Next.js và PHP DDD',
-        slug: 'xay-dung-ung-dung-full-stack-nextjs-php-ddd',
-        content: 'Tìm hiểu cách kết hợp sức mạnh giao diện của Next.js với kiến trúc phân tầng Domain-Driven Design trong PHP.',
-        excerpt: 'Kiến trúc Clean Architecture kết hợp Next.js và PHP DDD.',
-        category: 'Lập trình',
-        category_id: 1,
-        status: 'published',
-        views: 820,
-        createdAt: '02 Th09, 2026',
-      },
-      {
-        id: 2,
-        title: 'Tối ưu hoá Docker Compose cho môi trường phát triển',
-        slug: 'toi-uu-hoa-docker-compose',
-        content: 'Các mẹo cấu hình container nhẹ hơn, nạp hot-reload mượt mà và quản lý tài nguyên hiệu quả.',
-        excerpt: 'Cấu hình container nhẹ và tối ưu tài nguyên.',
-        category: 'DevOps',
-        category_id: 2,
-        status: 'published',
-        views: 420,
-        createdAt: '28 Th08, 2026',
-      },
-    ];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
-    return initial;
-  }
-  return JSON.parse(raw);
-};
-
-const setStoredPosts = (posts: PostItem[]) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-  }
-};
+function unwrapData(resData: any) {
+  let payload = resData;
+  if (payload?.data) payload = payload.data;
+  if (payload?.data) payload = payload.data;
+  if (payload?.post) payload = payload.post;
+  return payload;
+}
 
 export const postApi = {
+  // Lấy danh sách bài viết
+  getPosts: async (): Promise<PostItem[]> => {
+    try {
+      const res = await api.get('/v1/posts');
+      const payload = unwrapData(res.data);
+      if (Array.isArray(payload)) return payload;
+      if (Array.isArray(payload?.items)) return payload.items;
+      if (Array.isArray(payload?.posts)) return payload.posts;
+      return [];
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách bài viết:', err);
+      return [];
+    }
+  },
+
+  // Lấy chi tiết một bài viết
+  getPostById: async (id: number | string): Promise<PostItem | null> => {
+    if (!id || id === 'undefined' || id === 'null') return null;
+    try {
+      const res = await api.get(`/v1/posts/${id}`);
+      return unwrapData(res.data);
+    } catch (err: any) {
+      console.error(`Lỗi khi tải bài viết ID ${id}:`, err?.message);
+      return null;
+    }
+  },
+
+  // Tạo bài viết mới (gửi song song cả camelCase và snake_case cho database)
+  createPost: async (payload: any): Promise<PostItem> => {
+    const rawStatus = (payload.status || 'published').toString().toLowerCase();
+    const formattedPayload = {
+      title: payload.title,
+      slug: payload.slug,
+      content: payload.content,
+      excerpt: payload.excerpt || '',
+      category_id: Number(payload.categoryId || payload.category_id || 1),
+      categoryId: Number(payload.categoryId || payload.category_id || 1),
+      cover_image: payload.coverImage || payload.cover_image || '',
+      coverImage: payload.coverImage || payload.cover_image || '',
+      status: rawStatus, // Bắt buộc chữ thường 'published' hoặc 'draft'
+      user_id: payload.userId || payload.user_id,
+      author_id: payload.authorId || payload.author_id,
+    };
+
+    const res = await api.post('/v1/posts', formattedPayload);
+    return unwrapData(res.data);
+  },
+
+  // Cập nhật bài viết
+  updatePost: async (id: number | string, payload: any): Promise<PostItem> => {
+    const rawStatus = (payload.status || 'published').toString().toLowerCase();
+    const formattedPayload = {
+      title: payload.title,
+      slug: payload.slug,
+      content: payload.content,
+      excerpt: payload.excerpt || '',
+      category_id: Number(payload.categoryId || payload.category_id || 1),
+      categoryId: Number(payload.categoryId || payload.category_id || 1),
+      cover_image: payload.coverImage || payload.cover_image || '',
+      coverImage: payload.coverImage || payload.cover_image || '',
+      status: rawStatus,
+    };
+
+    const res = await api.put(`/v1/posts/${id}`, formattedPayload);
+    return unwrapData(res.data);
+  },
+
+  // Xóa bài viết
+  deletePost: async (id: number | string): Promise<void> => {
+    await api.delete(`/v1/posts/${id}`);
+  },
+
+  // Lấy danh mục
   getCategories: async (): Promise<Category[]> => {
     try {
-      const res = await api.get('/categories');
-      return res.data?.data || res.data || [];
-    } catch {
-      return [
-        { id: 1, name: 'Lập trình', slug: 'lap-trinh' },
-        { id: 2, name: 'DevOps', slug: 'devops' },
-        { id: 3, name: 'Kiến trúc hệ thống', slug: 'kien-truc-he-thong' },
-        { id: 4, name: 'UI/UX Design', slug: 'ui-ux-design' },
-      ];
+      const res = await api.get('/v1/categories');
+      const payload = unwrapData(res.data);
+      return Array.isArray(payload) ? payload : [];
+    } catch (err) {
+      console.error('Lỗi khi tải chuyên mục:', err);
+      return [];
     }
   },
 
-  getMyPosts: async (): Promise<PostItem[]> => {
+  // Tăng lượt xem
+  trackView: async (id: number | string): Promise<{ viewCount: number }> => {
     try {
-      const res = await api.get('/posts/my-posts');
-      return res.data?.data || res.data || [];
+      const res = await api.post(`/v1/posts/${id}/view`);
+      return unwrapData(res.data) || { viewCount: 0 };
     } catch {
-      return getStoredPosts();
-    }
-  },
-
-  getPostById: async (id: number | string): Promise<PostItem | null> => {
-    try {
-      const res = await api.get(`/posts/${id}`);
-      return res.data?.data || res.data;
-    } catch {
-      const posts = getStoredPosts();
-      return posts.find((p) => String(p.id) === String(id)) || null;
-    }
-  },
-
-  createPost: async (payload: SavePostPayload): Promise<PostItem> => {
-    try {
-      const res = await api.post('/posts', payload);
-      return res.data?.data || res.data;
-    } catch {
-      const posts = getStoredPosts();
-      const newPost: PostItem = {
-        id: Date.now(),
-        ...payload,
-        views: 0,
-        createdAt: 'Vừa xong',
-      };
-      posts.unshift(newPost);
-      setStoredPosts(posts);
-      return newPost;
-    }
-  },
-
-  updatePost: async (id: number | string, payload: SavePostPayload): Promise<PostItem> => {
-    try {
-      const res = await api.put(`/posts/${id}`, payload);
-      return res.data?.data || res.data;
-    } catch {
-      const posts = getStoredPosts();
-      const idx = posts.findIndex((p) => String(p.id) === String(id));
-      if (idx !== -1) {
-        posts[idx] = { ...posts[idx], ...payload };
-        setStoredPosts(posts);
-        return posts[idx];
-      }
-      throw new Error('Bài viết không tồn tại.');
-    }
-  },
-
-  deletePost: async (id: number | string): Promise<void> => {
-    try {
-      await api.delete(`/posts/${id}`);
-    } catch {
-      const posts = getStoredPosts().filter((p) => String(p.id) !== String(id));
-      setStoredPosts(posts);
+      return { viewCount: 0 };
     }
   },
 };

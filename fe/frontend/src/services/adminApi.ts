@@ -10,7 +10,31 @@ import type {
   BulkResult,
 } from "@/types/auth";
 
+export interface ViewsTrendItem {
+  label: string;
+  count: number;
+}
+
+export interface CategoryBreakdownItem {
+  name: string;
+  count: number;
+  percentage: number;
+  color: string;
+}
+
+export interface ReportSummary {
+  totalViews: number;
+  activeUsers: number;
+  totalPosts: number;
+  publishedPosts: number;
+  draftPosts: number;
+  engagementRate: number;
+  viewsTrend: ViewsTrendItem[];
+  categoryBreakdown: CategoryBreakdownItem[];
+}
+
 export const adminApi = {
+  // --- Quản lý người dùng ---
   async getUsers(params: UserListParams = {}): Promise<UserListResponse> {
     const searchParams = new URLSearchParams();
     if (params.page) searchParams.set("page", String(params.page));
@@ -73,6 +97,7 @@ export const adminApi = {
     );
   },
 
+  // --- Thao tác hàng loạt ---
   async bulkLock(ids: number[]): Promise<BulkResult> {
     const res = await api.post<ApiResponse<BulkResult>>(
       `/v1/admin/users/bulk-lock`,
@@ -93,6 +118,14 @@ export const adminApi = {
     const res = await api.post<ApiResponse<BulkResult>>(
       `/v1/admin/users/bulk-delete`,
       { ids } satisfies BulkIdsRequest
+    );
+    return res.data.data;
+  },
+
+  // --- Báo cáo & Thống kê nền tảng ---
+  async getReports(timeRange = "30d"): Promise<ReportSummary> {
+    const res = await api.get<ApiResponse<ReportSummary>>(
+      `/v1/admin/reports?timeRange=${encodeURIComponent(timeRange)}`
     );
     return res.data.data;
   },
