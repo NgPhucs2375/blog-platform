@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace src\WebApi;
@@ -6,6 +7,9 @@ namespace src\WebApi;
 use RuntimeException;
 use src\Infrastructure\Context\DbContext;
 use src\Infrastructure\Repositories\CategoryRepository;
+use src\Infrastructure\Repositories\ModerationRuleRepository;
+use src\Application\Services\ContentModerationService;
+use src\WebApi\Controller\V1\ModerationRuleController;
 use src\Infrastructure\Repositories\PostRepository;
 use src\Infrastructure\Repositories\RefreshTokenRepository;
 use src\Infrastructure\Repositories\SystemLogRepository;
@@ -83,6 +87,16 @@ class Container
         return new SystemLogRepository($this->db());
     }
 
+    public function moderationRules(): ModerationRuleRepository
+    {
+        return new ModerationRuleRepository($this->db());
+    }
+
+    public function moderation(): ContentModerationService
+    {
+        return new ContentModerationService($this->moderationRules());
+    }
+
     public function refreshTokens(): RefreshTokenRepository
     {
         return new RefreshTokenRepository($this->db());
@@ -97,7 +111,7 @@ class Container
 
     public function userController(): UserController
     {
-        return new UserController($this->users());
+        return new UserController($this->users(), $this->refreshTokens(), $this->systemLogs());
     }
 
     public function profileController(): ProfileController
@@ -107,7 +121,17 @@ class Container
 
     public function postController(): PostController
     {
-        return new PostController($this->posts(), $this->systemLogs());
+        return new PostController(
+            $this->posts(),
+            $this->systemLogs(),
+            $this->users(),
+            $this->moderation()
+        );
+    }
+
+    public function moderationRuleController(): ModerationRuleController
+    {
+        return new ModerationRuleController($this->moderationRules(), $this->moderation());
     }
 
     public function categoryController(): CategoryController
@@ -130,6 +154,7 @@ class Container
             $this->router->register($this->userController());
             $this->router->register($this->profileController());
             $this->router->register($this->postController());
+            $this->router->register($this->moderationRuleController());
             $this->router->register($this->categoryController());
             $this->router->register($this->healthController());
         }

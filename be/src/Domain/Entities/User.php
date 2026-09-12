@@ -20,7 +20,9 @@ class User extends BaseEntity
         ?DateTimeImmutable $createdAt = null,
         ?int $createdBy = null,
         ?DateTimeImmutable $updatedAt = null,
-        ?int $updatedBy = null
+        ?int $updatedBy = null,
+        private ?DateTimeImmutable $deletedAt = null,
+        private ?int $deletedBy = null
     ) {
         parent::__construct($id, $createdAt, $createdBy, $updatedAt, $updatedBy);
         $this->setUserName($userName);
@@ -28,6 +30,12 @@ class User extends BaseEntity
     }
 
     // --- Phương thức nghiệp vụ ---
+
+    public function changeRole(UserRole $role, ?int $updatedBy = null): void
+    {
+        $this->role = $role;
+        $this->markUpdated($updatedBy);
+    }
 
     public function lock(?int $updatedBy = null): void
     {
@@ -52,6 +60,25 @@ class User extends BaseEntity
     {
         $this->passwordHash = $newPasswordHash;
         $this->markUpdated($updatedBy);
+    }
+
+    public function softDelete(?int $deletedBy = null): void
+    {
+        $this->deletedAt = new DateTimeImmutable();
+        $this->deletedBy = $deletedBy;
+        $this->markUpdated($deletedBy);
+    }
+
+    public function restore(?int $updatedBy = null): void
+    {
+        $this->deletedAt = null;
+        $this->deletedBy = null;
+        $this->markUpdated($updatedBy);
+    }
+
+    public function isDeleted(): bool
+    {
+        return $this->deletedAt !== null;
     }
 
     public function isAdmin(): bool
@@ -91,6 +118,8 @@ class User extends BaseEntity
     public function getPasswordHash(): string { return $this->passwordHash; }
     public function getRole(): UserRole { return $this->role; }
     public function getStatus(): UserStatus { return $this->status; }
+    public function getDeletedAt(): ?DateTimeImmutable { return $this->deletedAt; }
+    public function getDeletedBy(): ?int { return $this->deletedBy; }
 
     // --- Mapping to Array ---
 
@@ -102,6 +131,9 @@ class User extends BaseEntity
             'role' => $this->role->value,
             'status' => $this->status->value,
             'isActive' => $this->status->isActive(),
+            'deletedAt' => $this->deletedAt?->format('Y-m-d H:i:s'),
+            'deletedBy' => $this->deletedBy,
+            'isDeleted' => $this->deletedAt !== null,
         ]);
     }
 }

@@ -61,4 +61,39 @@ class CategoryController extends BaseController
         $this->categoryRepository->delete($id);
         $this->json(null, 200, "Xóa chuyên mục thành công.");
     }
+
+    #[Route('PUT', '/api/v1/categories/{id}', auth: true, roles: ['Admin'])]
+    public function update(array $user, int $id): void
+    {
+        $category = $this->categoryRepository->findById($id);
+        if (!$category) {
+            $this->error("Chuyên mục không tồn tại.", 404);
+        }
+
+        $data = $this->getJsonBody();
+        if (empty($data['name']) || empty($data['slug'])) {
+            $this->error("Tên và đường dẫn chuyên mục không được để trống.", 422);
+        }
+
+        // Kiểm tra trùng slug với chuyên mục khác
+        $existing = $this->categoryRepository->findBySlug($data['slug']);
+        if ($existing && $existing->getId() !== $id) {
+            $this->error("Đường dẫn slug chuyên mục đã tồn tại.", 409);
+        }
+
+        try {
+            // Sửa thành updateCategory theo đúng định nghĩa trong Entity Category
+            $category->updateCategory(
+                (string)$data['name'],
+                (string)$data['slug'],
+                isset($data['description']) ? (string)$data['description'] : null,
+                (int)($user['sub'] ?? $user['id'] ?? 0)
+            );
+
+            $this->categoryRepository->update($category);
+            $this->json($category->toArray(), 200, "Cập nhật chuyên mục thành công.");
+        } catch (Exception $e) {
+            $this->error($e->getMessage(), 400);
+        }
+    }
 }

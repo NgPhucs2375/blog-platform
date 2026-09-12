@@ -1,405 +1,385 @@
-"use client";
+'use client';
 
+import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import {
-  ArrowRight,
+  Search,
   BookOpen,
-  Check,
-  Fingerprint,
-  KeyRound,
-  LogOut,
-  PenLine,
-  RefreshCw,
-  Settings,
-  ShieldCheck,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  AmbientBackground,
-  Badge,
-  Box,
-  Button,
-  Card,
-  Center,
-  Container,
-  Divider,
-  Grid,
-  Heading,
-  Inline,
-  Stack,
-  StatusDot,
-  Text,
-} from "@/components/ui";
+  Eye,
+  Calendar,
+  Clock,
+  ArrowRight,
+  TrendingUp,
+  Sparkles,
+  Loader2,
+  Flame,
+  Newspaper,
+  PenSquare,
+  ChevronRight,
+} from 'lucide-react';
+import { postApi, PostItem, Category } from '@/services/postApi';
 
-// ---------------------------------------------------------------------------
-// Landing page — giới thiệu nền tảng, dùng 100% design-system (0 HTML thô).
-// ---------------------------------------------------------------------------
+export default function HomePage() {
+  const [posts, setPosts] = useState<PostItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState('');
 
-interface Feature {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  points: string[];
-}
+  useEffect(() => {
+    // Hiển thị ngày tháng theo định dạng báo chí điện tử
+    const now = new Date();
+    const formatted = new Intl.DateTimeFormat('vi-VN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(now);
+    setCurrentDate(formatted);
 
-const FEATURES: Feature[] = [
-  {
-    icon: PenLine,
-    title: "Viết & xuất bản",
-    description: "Soạn bài, gắn thẻ, phân loại và xuất bản chỉ trong vài bước.",
-    points: ["Trình soạn thảo gọn nhẹ", "Tag & category linh hoạt", "Bản nháp và xuất bản"],
-  },
-  {
-    icon: RefreshCw,
-    title: "Phiên đăng nhập bền vững",
-    description: "Access token ngắn hạn + refresh token xoay vòng, đăng nhập một lần.",
-    points: ["Tự gia hạn ngầm khi hết hạn", "Thu hồi từng thiết bị", "Phát hiện token bị đánh cắp"],
-  },
-  {
-    icon: ShieldCheck,
-    title: "Bảo mật chuẩn enterprise",
-    description: "Mật khẩu bcrypt, validate cả client lẫn server, phân quyền rõ ràng.",
-    points: ["Bcrypt + policy mạnh", "JWT HS256 chuẩn", "Khóa/mở tài khoản tức thì"],
-  },
-];
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const [cats, allPosts] = await Promise.all([
+          postApi.getCategories(),
+          postApi.getPosts(),
+        ]);
 
-interface RoleCard {
-  icon: LucideIcon;
-  badge: string;
-  badgeVariant: "solid" | "outline";
-  title: string;
-  description: string;
-  points: string[];
-  cta: string;
-  href: string;
-}
+        setCategories(cats || []);
+        const publishedPosts = (allPosts || []).filter(
+          (p) => (p.status || '').toLowerCase() === 'published'
+        );
+        setPosts(publishedPosts);
+      } catch (err) {
+        console.error('Lỗi khi tải dữ liệu bài viết:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-const ROLES: RoleCard[] = [
-  {
-    icon: Settings,
-    badge: "Admin",
-    badgeVariant: "solid",
-    title: "Dành cho quản trị viên",
-    description: "Toàn quyền vận hành nền tảng và kiểm soát người dùng.",
-    points: ["Quản lý, phân quyền người dùng", "Khóa / mở khóa tài khoản", "Theo dõi phiên đăng nhập"],
-    cta: "Mở bảng quản trị",
-    href: "/users",
-  },
-  {
-    icon: BookOpen,
-    badge: "Author",
-    badgeVariant: "outline",
-    title: "Dành cho tác giả",
-    description: "Tập trung sáng tạo nội dung, mọi thứ còn lại đã có nền tảng lo.",
-    points: ["Hồ sơ cá nhân", "Quản lý bài viết của mình", "Tương tác: like, bình luận, theo dõi"],
-    cta: "Tạo tài khoản",
-    href: "/register",
-  },
-];
+    fetchData();
+  }, []);
 
-const STATS = [
-  { value: "15 phút", label: "Vòng đời access token" },
-  { value: "30 ngày", label: "Phiên refresh bền vững" },
-  { value: "2 lớp", label: "Validate client + server" },
-];
+  // Lọc bài viết theo danh mục & từ khóa
+  const filteredPosts = useMemo(() => {
+    return posts.filter((post) => {
+      const postCatId = Number((post as any).categoryId || (post as any).category_id);
+      const matchCategory =
+        selectedCategory === 'all' || postCatId === Number(selectedCategory);
 
-function Brand() {
-  return (
-    <Inline gap="sm" align="center">
-      <Center className="h-9 w-9 rounded-xl border border-white/10 bg-gradient-to-br from-white/15 to-white/5">
-        <Fingerprint className="h-4 w-4 text-white" />
-      </Center>
-      <Text variant="small" as="span" className="font-bold text-white">
-        Blog Platform
-      </Text>
-    </Inline>
-  );
-}
+      const query = searchQuery.toLowerCase().trim();
+      const matchSearch =
+        !query ||
+        post.title.toLowerCase().includes(query) ||
+        post.content.toLowerCase().includes(query);
 
-function TopBar() {
-  const { user, isAuthenticated, logout } = useAuth();
+      return matchCategory && matchSearch;
+    });
+  }, [posts, selectedCategory, searchQuery]);
+
+  // Bài viết tiêu điểm (Lead Story)
+  const leadPost = useMemo(() => {
+    return filteredPosts.length > 0 ? filteredPosts[0] : null;
+  }, [filteredPosts]);
+
+  // Danh sách đọc nhiều / Xu hướng (Top 4 bài có lượt xem cao nhất)
+  const trendingPosts = useMemo(() => {
+    return [...posts]
+      .sort((a, b) => {
+        const viewA = Number((a as any).view_count ?? (a as any).viewCount ?? 0);
+        const viewB = Number((b as any).view_count ?? (b as any).viewCount ?? 0);
+        return viewB - viewA;
+      })
+      .slice(0, 4);
+  }, [posts]);
+
+  // Danh sách bài viết tiếp theo cho lưới chính
+  const mainGridPosts = useMemo(() => {
+    return filteredPosts.length > 1 ? filteredPosts.slice(1) : [];
+  }, [filteredPosts]);
+
+  const getCategoryName = (catId?: number) => {
+    if (!catId) return 'Đời sống & Xã hội';
+    const found = categories.find((c) => c.id === catId);
+    return found ? found.name : 'Đời sống & Xã hội';
+  };
+
+  const calculateReadTime = (content?: string) => {
+    if (!content) return 2;
+    const words = content.trim().split(/\s+/).length;
+    return Math.max(1, Math.ceil(words / 220));
+  };
 
   return (
-    <Box className="sticky top-0 z-20 border-b border-white/10 bg-black/70 backdrop-blur-xl">
-      <Container size="xl">
-        <Inline justify="between" align="center" className="py-4">
-          <Brand />
-          <Inline gap="xs" className="hidden sm:flex">
-            <Button variant="ghost" size="sm" href="#features">
-              Tính năng
-            </Button>
-            <Button variant="ghost" size="sm" href="#roles">
-              Vai trò
-            </Button>
-            <Button variant="ghost" size="sm" href="#start">
-              Bắt đầu
-            </Button>
-          </Inline>
-          {isAuthenticated ? (
-            <Inline gap="sm" align="center">
-              <Text variant="small" as="span" className="hidden text-zinc-300 md:block">
-                Xin chào, {user?.userName}
-              </Text>
-              {user?.role === "Admin" ? (
-                <Button variant="secondary" size="sm" href="/users">
-                  Quản trị
-                </Button>
-              ) : null}
-              <Button variant="ghost" size="sm" onClick={logout}>
-                <LogOut className="h-4 w-4" />
-                Đăng xuất
-              </Button>
-            </Inline>
-          ) : (
-            <Inline gap="sm" align="center">
-              <Button variant="ghost" size="sm" href="/login">
-                Đăng nhập
-              </Button>
-              <Button variant="primary" size="sm" href="/register">
-                Bắt đầu
-              </Button>
-            </Inline>
-          )}
-        </Inline>
-      </Container>
-    </Box>
-  );
-}
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#06080e] dark:text-zinc-100 transition-colors duration-200">
+      
+      {/* 1. Masthead Sub-bar: Thanh thông tin nhật báo */}
+      <div className="border-b border-zinc-200/80 bg-white/50 dark:border-white/[0.06] dark:bg-white/[0.01] backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2.5 sm:px-6 lg:px-8 text-xs">
+          <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 capitalize">
+            <Calendar className="h-3.5 w-3.5" />
+            <span>{currentDate || 'Hôm nay'}</span>
+          </div>
+          <div className="hidden sm:flex items-center gap-4 text-zinc-500 dark:text-zinc-400">
+            <span className="flex items-center gap-1.5 font-medium text-indigo-600 dark:text-indigo-400">
+              <Sparkles className="h-3 w-3" /> Xu hướng:
+            </span>
+            <span className="hover:text-zinc-900 dark:hover:text-white cursor-pointer transition">Lối sống tối giản</span>
+            <span>•</span>
+            <span className="hover:text-zinc-900 dark:hover:text-white cursor-pointer transition">Kinh tế số</span>
+            <span>•</span>
+            <span className="hover:text-zinc-900 dark:hover:text-white cursor-pointer transition">Văn hóa & Nghệ thuật</span>
+          </div>
+        </div>
+      </div>
 
-function Hero() {
-  const { user, isAuthenticated, logout } = useAuth();
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 pb-20 space-y-12">
+        
+        {/* 2. Headline & Search Bar */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-200/80 dark:border-white/[0.08] pb-8">
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+              <Newspaper className="h-4 w-4" /> Tạp chí điện tử & Diễn đàn mở
+            </div>
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white font-serif leading-tight">
+              Góc nhìn, Tri thức & Những câu chuyện truyền cảm hứng.
+            </h1>
+          </div>
 
-  return (
-    <Container size="md">
-      <Stack gap="lg" align="center" className="py-20 text-center sm:py-28">
-        <Badge variant="outline">
-          <StatusDot tone="white" pulse />
-          <Text variant="small" as="span" className="text-xs font-medium text-zinc-200">
-            Nền tảng blog đa tác giả
-          </Text>
-        </Badge>
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm kiếm bài viết..."
+              className="w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-4 py-2.5 text-xs text-zinc-900 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+            />
+          </div>
+        </div>
 
-        <Heading level={1} size="hero" align="center" gradient>
-          Viết. Xuất bản. Kết nối.
-        </Heading>
+        {/* 3. Category Navigation Ticker */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-zinc-200/60 dark:border-white/[0.05]">
+          <button
+            onClick={() => setSelectedCategory('all')}
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition ${
+              selectedCategory === 'all'
+                ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-sm'
+                : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white'
+            }`}
+          >
+            Tất cả chủ đề
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(String(cat.id))}
+              className={`rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition ${
+                selectedCategory === String(cat.id)
+                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-sm'
+                  : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white'
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
 
-        <Text variant="muted" align="center" className="max-w-xl text-base sm:text-lg">
-          Nền tảng xuất bản nội dung chuẩn doanh nghiệp — bảo mật phiên đăng nhập
-          bằng refresh token xoay vòng, phân quyền rõ ràng cho Admin và tác giả.
-        </Text>
-
-        {isAuthenticated ? (
-          <Inline justify="center" gap="sm">
-            {user?.role === "Admin" ? (
-              <Button variant="primary" href="/users">
-                Mở bảng quản trị
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Badge variant="solid">{user?.role}</Badge>
-            )}
-            <Button variant="outline" onClick={logout}>
-              Đăng xuất
-            </Button>
-          </Inline>
+        {/* 4. Editorial Spotlight: Lead Story (2/3) + Trending Sidebar (1/3) */}
+        {loading ? (
+          <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+            <p className="text-xs font-medium tracking-wide">Đang đồng bộ bản tin xuất bản...</p>
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-zinc-300 dark:border-white/10 p-16 text-center">
+            <BookOpen className="mx-auto h-10 w-10 text-zinc-400 dark:text-zinc-600 mb-3" />
+            <h3 className="text-base font-bold text-zinc-900 dark:text-white">Không tìm thấy bài viết nào</h3>
+            <p className="text-xs text-zinc-500 mt-1">
+              Hãy thử chọn một chủ đề khác hoặc thay đổi từ khóa tìm kiếm.
+            </p>
+          </div>
         ) : (
-          <Inline justify="center" gap="md">
-            <Button variant="primary" href="/register">
-              Tạo tài khoản miễn phí
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button variant="secondary" href="/login">
-              <KeyRound className="h-4 w-4" />
-              Đăng nhập
-            </Button>
-          </Inline>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+            
+            {/* Cột chính: Bài viết tiêu điểm (Lead Feature) */}
+            {leadPost && (
+              <div className="lg:col-span-8">
+                <article className="group flex flex-col justify-between rounded-3xl border border-zinc-200/80 bg-white p-6 sm:p-8 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.02] transition hover:shadow-lg dark:hover:border-white/20">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 text-xs font-medium">
+                      <span className="rounded-md bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">
+                        {getCategoryName(Number((leadPost as any).categoryId || (leadPost as any).category_id))}
+                      </span>
+                      <span className="text-zinc-400">•</span>
+                      <span className="flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
+                        <Clock className="h-3.5 w-3.5" />
+                        {calculateReadTime(leadPost.content)} phút đọc
+                      </span>
+                    </div>
+
+                    <Link href={`/posts/${leadPost.id}`} className="block group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                      <h2 className="text-2xl sm:text-4xl font-extrabold text-zinc-950 dark:text-white leading-tight font-serif tracking-tight">
+                        {leadPost.title}
+                      </h2>
+                    </Link>
+
+                    <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-300 leading-relaxed line-clamp-4">
+                      {(leadPost as any).excerpt || leadPost.content}
+                    </p>
+                  </div>
+
+                  <div className="mt-8 pt-6 border-t border-zinc-100 dark:border-white/[0.06] flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 font-bold text-xs shadow-sm">
+                        {((leadPost as any).author_name || (leadPost as any).authorName || 'TG').charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-zinc-900 dark:text-white">
+                          {(leadPost as any).author_name || (leadPost as any).authorName || 'Tác giả bài viết'}
+                        </p>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                          {(leadPost as any).created_at ? new Date((leadPost as any).created_at).toLocaleDateString('vi-VN') : 'Mới cập nhật'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Link
+                      href={`/posts/${leadPost.id}`}
+                      className="inline-flex items-center gap-1.5 font-bold text-indigo-600 dark:text-indigo-400 hover:gap-2 transition-all"
+                    >
+                      Đọc trọn vẹn <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+                </article>
+              </div>
+            )}
+
+            {/* Cột phụ: Bảng xếp hạng đọc nhiều (Trending Column) */}
+            <aside className="lg:col-span-4 space-y-6">
+              <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-rose-600 dark:text-rose-400 border-b border-zinc-200 dark:border-white/[0.08] pb-3">
+                <Flame className="h-4 w-4" /> Đọc nhiều nhất tuần
+              </div>
+
+              <div className="divide-y divide-zinc-200/60 dark:divide-white/[0.06]">
+                {trendingPosts.map((post, idx) => (
+                  <article key={post.id} className="py-4 first:pt-0 group flex items-start gap-4">
+                    <span className="font-serif text-3xl font-extrabold text-zinc-300 dark:text-zinc-700 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition leading-none">
+                      0{idx + 1}
+                    </span>
+                    <div className="space-y-1.5 flex-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                        {getCategoryName(Number((post as any).categoryId || (post as any).category_id))}
+                      </span>
+                      <Link href={`/posts/${post.id}`} className="block">
+                        <h3 className="text-sm font-bold text-zinc-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2 leading-snug">
+                          {post.title}
+                        </h3>
+                      </Link>
+                      <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                        <span className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" /> {(post as any).view_count ?? (post as any).viewCount ?? 0}
+                        </span>
+                        <span>•</span>
+                        <span>{calculateReadTime(post.content)} phút</span>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </aside>
+
+          </div>
         )}
 
-        <Inline justify="center" gap="xl" className="pt-4">
-          {STATS.map((s) => (
-            <Stack key={s.label} gap="xs" align="center">
-              <Heading level={2} size="md" align="center">
-                {s.value}
-              </Heading>
-              <Text variant="caption" align="center">
-                {s.label}
-              </Text>
-            </Stack>
-          ))}
-        </Inline>
-      </Stack>
-    </Container>
-  );
-}
+        {/* 5. Main Stories Feed: Lưới các bài viết đa chủ đề */}
+        {mainGridPosts.length > 0 && (
+          <section className="space-y-8 pt-6 border-t border-zinc-200/80 dark:border-white/[0.08]">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold font-serif text-zinc-950 dark:text-white">
+                  Dòng chảy bài viết mới
+                </h2>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                  Khám phá các góc nhìn đa dạng từ văn hóa, phong cách sống đến kinh tế và xã hội.
+                </p>
+              </div>
+            </div>
 
-function Features() {
-  return (
-    <Box id="features">
-      <Container size="xl">
-        <Stack gap="lg" className="py-16">
-          <Stack gap="sm" align="center" className="text-center">
-            <Badge variant="outline">Tính năng</Badge>
-            <Heading level={2} size="2xl" align="center">
-              Mọi thứ bạn cần để vận hành một blog
-            </Heading>
-            <Text variant="muted" align="center" className="max-w-lg">
-              Từ trải nghiệm viết bài đến hạ tầng xác thực — tất cả gói gọn trong một nền tảng.
-            </Text>
-          </Stack>
-          <Grid columns={3}>
-            {FEATURES.map((f) => (
-              <Card key={f.title} padding="md">
-                <Stack gap="md">
-                  <Center className="h-12 w-12 rounded-xl border border-white/10 bg-white/5">
-                    <f.icon className="h-5 w-5 text-white" />
-                  </Center>
-                  <Stack gap="xs">
-                    <Heading level={3} size="sm">
-                      {f.title}
-                    </Heading>
-                    <Text variant="muted">{f.description}</Text>
-                  </Stack>
-                  <Stack gap="xs">
-                    {f.points.map((p) => (
-                      <Inline key={p} gap="sm" align="center">
-                        <Check className="h-4 w-4 shrink-0 text-white" />
-                        <Text variant="small">{p}</Text>
-                      </Inline>
-                    ))}
-                  </Stack>
-                </Stack>
-              </Card>
-            ))}
-          </Grid>
-        </Stack>
-      </Container>
-    </Box>
-  );
-}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {mainGridPosts.map((post) => {
+                const raw = post as any;
+                const catId = Number(raw.categoryId || raw.category_id);
+                const viewCount = raw.view_count ?? raw.viewCount ?? 0;
+                const author = raw.author_name || raw.authorName || 'Tác giả';
 
-function Roles() {
-  return (
-    <Box id="roles">
-      <Container size="xl">
-        <Stack gap="lg" className="py-16">
-          <Stack gap="sm" align="center" className="text-center">
-            <Badge variant="outline">Vai trò</Badge>
-            <Heading level={2} size="2xl" align="center">
-              Một nền tảng, hai trải nghiệm
-            </Heading>
-          </Stack>
-          <Grid columns={2}>
-            {ROLES.map((r) => (
-              <Card key={r.title} padding="md">
-                <Stack gap="md">
-                  <Inline justify="between" align="center">
-                    <Center className="h-12 w-12 rounded-xl border border-white/10 bg-white/5">
-                      <r.icon className="h-5 w-5 text-white" />
-                    </Center>
-                    <Badge variant={r.badgeVariant}>{r.badge}</Badge>
-                  </Inline>
-                  <Stack gap="xs">
-                    <Heading level={3} size="sm">
-                      {r.title}
-                    </Heading>
-                    <Text variant="muted">{r.description}</Text>
-                  </Stack>
-                  <Stack gap="xs">
-                    {r.points.map((p) => (
-                      <Inline key={p} gap="sm" align="center">
-                        <Check className="h-4 w-4 shrink-0 text-white" />
-                        <Text variant="small">{p}</Text>
-                      </Inline>
-                    ))}
-                  </Stack>
-                  <Box className="pt-2">
-                    <Button variant="secondary" href={r.href}>
-                      {r.cta}
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Box>
-                </Stack>
-              </Card>
-            ))}
-          </Grid>
-        </Stack>
-      </Container>
-    </Box>
-  );
-}
+                return (
+                  <article
+                    key={post.id}
+                    className="group flex flex-col justify-between rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-white/[0.06] dark:bg-white/[0.02] hover:-translate-y-1 hover:shadow-md dark:hover:border-white/20 transition duration-200"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="rounded-md bg-zinc-100 dark:bg-white/5 px-2.5 py-0.5 font-semibold text-zinc-700 dark:text-zinc-300 text-[11px]">
+                          {getCategoryName(catId)}
+                        </span>
+                        <span className="flex items-center gap-1 text-zinc-400 text-[11px]">
+                          <Clock className="h-3 w-3" /> {calculateReadTime(post.content)} phút
+                        </span>
+                      </div>
 
-function CtaBand() {
-  const { isAuthenticated } = useAuth();
+                      <Link href={`/posts/${post.id}`} className="block">
+                        <h3 className="text-lg font-bold text-zinc-950 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2 leading-snug font-serif">
+                          {post.title}
+                        </h3>
+                      </Link>
 
-  return (
-    <Box id="start">
-      <Container size="md">
-        <Box className="py-16">
-          <Card padding="lg">
-            <Stack gap="md" align="center" className="text-center">
-              <Center className="h-12 w-12 rounded-xl border border-white/10 bg-white/5">
-                <Users className="h-5 w-5 text-white" />
-              </Center>
-              <Heading level={2} size="xl" align="center">
-                Sẵn sàng chia sẻ góc nhìn của bạn?
-              </Heading>
-              <Text variant="muted" align="center" className="max-w-md">
-                Tạo tài khoản trong chưa đầy một phút. Mật khẩu được mã hóa bcrypt,
-                phiên đăng nhập duy trì 30 ngày an toàn.
-              </Text>
-              {isAuthenticated ? (
-                <Button variant="primary" href="/login">
-                  Tiếp tục
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Inline justify="center" gap="md">
-                  <Button variant="primary" href="/register">
-                    Đăng ký ngay
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" href="/login">
-                    Đăng nhập
-                  </Button>
-                </Inline>
-              )}
-            </Stack>
-          </Card>
-        </Box>
-      </Container>
-    </Box>
-  );
-}
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-3 leading-relaxed">
+                        {raw.excerpt || post.content}
+                      </p>
+                    </div>
 
-function Footer() {
-  return (
-    <Container size="xl">
-      <Box className="pb-10">
-        <Divider className="mb-6" />
-        <Inline justify="between" align="center">
-          <Brand />
-          <Text variant="muted" className="text-xs">
-            Đồ án Open Source — Blog Platform
-          </Text>
-        </Inline>
-      </Box>
-    </Container>
-  );
-}
+                    <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-white/[0.04] flex items-center justify-between text-xs">
+                      <span className="font-medium text-zinc-500 dark:text-zinc-400">
+                        Bởi {author}
+                      </span>
+                      <Link
+                        href={`/posts/${post.id}`}
+                        className="inline-flex items-center gap-1 font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                      >
+                        Đọc tiếp <ChevronRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
-export default function Home() {
-  return (
-    <Box className="relative min-h-screen overflow-hidden">
-      <AmbientBackground />
-      <Box className="relative z-10">
-        <TopBar />
-        <Hero />
-        <Features />
-        <Roles />
-        <CtaBand />
-        <Footer />
-      </Box>
-    </Box>
+        {/* 6. Call to Action: Mời đóng góp bài viết phong cách Tạp chí số */}
+        <section className="rounded-3xl border border-zinc-200/80 bg-gradient-to-br from-zinc-100 to-white dark:from-white/[0.04] dark:to-white/[0.01] p-8 sm:p-12 text-center space-y-4">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/30">
+            <PenSquare className="h-6 w-6" />
+          </div>
+          <h3 className="text-2xl sm:text-3xl font-bold font-serif text-zinc-950 dark:text-white">
+            Bạn có câu chuyện hay muốn chia sẻ cùng cộng đồng?
+          </h3>
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
+            Blog Platform chào đón tất cả các góc nhìn đa dạng về phong cách sống, kiến thức chuyên ngành, trải nghiệm du lịch và những suy ngẫm đời thường.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-xs font-bold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-500 active:scale-95 transition"
+            >
+              Bắt đầu viết bài ngay <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </section>
+
+      </div>
+    </div>
   );
 }
