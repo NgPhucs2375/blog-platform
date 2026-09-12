@@ -34,8 +34,8 @@ class PostRepository extends AbstractRepository implements IPostRepository
     {
         if (!$entity instanceof Post) throw new InvalidArgumentException("Input must be Post Entity");
 
-        $sql = "INSERT INTO {$this->table} (title, slug, content, author_id, category_id, status, view_count, created_at, updated_at)
-                VALUES (:title, :slug, :content, :author_id, :category_id, :status, :view_count, :created_at, :updated_at)
+        $sql = "INSERT INTO {$this->table} (title, slug, content, author_id, category_id, status, view_count, moderation_reason, created_at, updated_at)
+                VALUES (:title, :slug, :content, :author_id, :category_id, :status, :view_count, :moderation_reason, :created_at, :updated_at)
                 RETURNING id";
         $stmt = $this->db()->prepare($sql);
         $stmt->execute([
@@ -46,6 +46,7 @@ class PostRepository extends AbstractRepository implements IPostRepository
             ':category_id' => $entity->getCategoryId(),
             ':status' => $entity->getStatus()->value,
             ':view_count' => $entity->getViewCount(),
+            ':moderation_reason' => $entity->getModerationReason(),
             ':created_at' => $entity->getCreatedAt()->format('Y-m-d H:i:s'),
             ':updated_at' => ($entity->getUpdatedAt() ?? new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
@@ -59,7 +60,7 @@ class PostRepository extends AbstractRepository implements IPostRepository
 
         $sql = "UPDATE {$this->table}
                 SET title = :title, slug = :slug, content = :content, category_id = :category_id,
-                    status = :status, view_count = :view_count, updated_at = :updated_at WHERE id = :id";
+                    status = :status, view_count = :view_count, moderation_reason = :moderation_reason, updated_at = :updated_at WHERE id = :id";
         $stmt = $this->db()->prepare($sql);
         $stmt->execute([
             ':id' => $entity->getId(),
@@ -69,6 +70,7 @@ class PostRepository extends AbstractRepository implements IPostRepository
             ':category_id' => $entity->getCategoryId(),
             ':status' => $entity->getStatus()->value,
             ':view_count' => $entity->getViewCount(),
+            ':moderation_reason' => $entity->getModerationReason(),
             ':updated_at' => ($entity->getUpdatedAt() ?? new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
     }
@@ -154,6 +156,7 @@ class PostRepository extends AbstractRepository implements IPostRepository
             (int)$row['category_id'],
             PostStatus::from($row['status']),
             (int)($row['view_count'] ?? 0),
+            $row['moderation_reason'] ?? null,
             (int)$row['id'],
             new DateTimeImmutable($row['created_at']),
             isset($row['updated_at']) && $row['updated_at'] ? new DateTimeImmutable($row['updated_at']) : null,

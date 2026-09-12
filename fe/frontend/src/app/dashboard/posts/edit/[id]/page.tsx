@@ -46,7 +46,7 @@ export default function EditPostPage() {
         setLoading(true);
         const [cats, post] = await Promise.all([
           postApi.getCategories(),
-          postApi.getPostById(id),
+          postApi.getManagePostById(id),
         ]);
 
         setCategories(cats || []);
@@ -83,7 +83,7 @@ export default function EditPostPage() {
       setSubmitting(true);
       setError('');
 
-      await postApi.updatePost(id, {
+      const updated = await postApi.updatePost(id, {
         title: title.trim(),
         slug: slug.trim(),
         categoryId: Number(categoryId),
@@ -93,8 +93,14 @@ export default function EditPostPage() {
         status: nextStatus.toUpperCase() as any,
       } as any);
 
-      setStatus(nextStatus);
-      setSuccess(`Đã ${nextStatus === 'published' ? 'xuất bản' : 'lưu bản nháp'} thành công!`);
+      const moderationReason = (updated as any)?.moderationReason;
+      const actualStatus = String((updated as any)?.status || nextStatus).toLowerCase();
+      setStatus(actualStatus === 'draft' ? 'draft' : 'published');
+      setSuccess(actualStatus === 'reject'
+        ? (moderationReason || 'Bài viết có chứa ngôn từ không phù hợp và đã bị từ chối xuất bản.')
+        : actualStatus === 'pending'
+          ? 'Bộ lọc gặp lỗi; bài viết đang chờ Admin xử lý.'
+          : `Đã ${nextStatus === 'published' ? 'xuất bản' : 'lưu bản nháp'} thành công!`);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Cập nhật thất bại. Vui lòng thử lại!');

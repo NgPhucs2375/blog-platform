@@ -40,7 +40,7 @@ export default function DashboardPage() {
   const [newExcerpt, setNewExcerpt] = useState('');
   const [newCoverImage, setNewCoverImage] = useState('');
   const [newContent, setNewContent] = useState('');
-  const [newCategoryId, setNewCategoryId] = useState<number>(1);
+  const [newCategoryId, setNewCategoryId] = useState<number | null>(null);
   const [newStatus, setNewStatus] = useState<'published' | 'draft'>('published');
 
   const currentUserId = user?.id ?? (user as any)?.userId ?? (user as any)?.sub;
@@ -128,8 +128,8 @@ export default function DashboardPage() {
   // Tạo bài viết
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim() || !newContent.trim()) {
-      setModalError('Vui lòng nhập đầy đủ tiêu đề và nội dung.');
+    if (!newTitle.trim() || !newContent.trim() || !newCategoryId) {
+      setModalError('Vui lòng nhập tiêu đề, nội dung và chọn chuyên mục hợp lệ.');
       return;
     }
 
@@ -137,19 +137,31 @@ export default function DashboardPage() {
       setCreating(true);
       setModalError('');
 
-      await postApi.createPost({
+      const created = await postApi.createPost({
         title: newTitle.trim(),
         slug: newSlug.trim() || `post-${Date.now()}`,
         excerpt: newExcerpt.trim(),
         coverImage: newCoverImage.trim(),
         content: newContent.trim(),
-        categoryId: Number(newCategoryId),
-        category_id: Number(newCategoryId),
+        categoryId: newCategoryId,
+        category_id: newCategoryId,
         status: newStatus.toUpperCase(),
         userId: currentUserId,
         authorId: currentUserId,
       });
 
+      const createdRaw = created as any;
+      const createdStatus = String(createdRaw.status || '').toLowerCase();
+      if (createdStatus === 'reject') {
+        setModalError(createdRaw.moderationReason || 'Bài viết có chứa ngôn từ không phù hợp và đã bị từ chối xuất bản.');
+        await fetchDashboardData();
+        return;
+      }
+      if (createdStatus === 'pending') {
+        setModalError('Bộ lọc gặp lỗi; bài viết đang chờ Admin xử lý.');
+        await fetchDashboardData();
+        return;
+      }
       setIsModalOpen(false);
       setNewTitle('');
       setNewSlug('');
@@ -411,7 +423,7 @@ export default function DashboardPage() {
                     const raw = post as any;
                     const catId = Number(raw.categoryId || raw.category_id);
                     const viewCount = raw.view_count ?? raw.viewCount ?? 0;
-                    const isPublished = (post.status || '').toString().toLowerCase() === 'published';
+                    const status = (post.status || '').toString().toLowerCase();
                     const uniqueKey = post.id ?? raw._id ?? `post-${idx}`;
 
                     return (
@@ -436,10 +448,25 @@ export default function DashboardPage() {
                         </td>
 
                         <td className="py-4 px-6 whitespace-nowrap">
-                          {isPublished ? (
+                          {status === 'published' ? (
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400">
                               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                               Đã xuất bản
+                            </span>
+                          ) : status === 'reject' ? (
+                            <div className="space-y-1">
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400">
+                                <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                                Từ chối
+                              </span>
+                              <p className="max-w-48 truncate text-[10px] text-rose-600 dark:text-rose-300" title={raw.moderationReason || 'Bài viết có chứa ngôn từ không phù hợp và đã bị từ chối xuất bản.'}>
+                                {raw.moderationReason || 'Bài viết có chứa ngôn từ không phù hợp và đã bị từ chối xuất bản.'}
+                              </p>
+                            </div>
+                          ) : status === 'pending' ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/20 bg-sky-50 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-400">
+                              <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+                              Chờ duyệt
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
@@ -555,7 +582,7 @@ export default function DashboardPage() {
                     Chuyên mục
                   </label>
                   <select
-                    value={newCategoryId}
+                    value={newCategoryId ?? ''}
                     onChange={(e) => setNewCategoryId(Number(e.target.value))}
                     className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 focus:border-indigo-500 focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-white transition"
                   >
@@ -606,7 +633,7 @@ export default function DashboardPage() {
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                   placeholder="Chia sẻ nội dung hoặc câu chuyện của bạn..."
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition leading-relaxed"
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:focus:bg-white/[0.08] dark:text-white dark:placeholder-zinc-500 transition leading-relaxed"
                   required
                 />
               </div>

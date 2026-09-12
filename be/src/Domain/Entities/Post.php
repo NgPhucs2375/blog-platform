@@ -17,6 +17,7 @@ class Post extends BaseEntity
         private int $categoryId,
         private PostStatus $status = PostStatus::DRAFT,
         private int $viewCount = 0,
+        private ?string $moderationReason = null,
         ?int $id = null,
         ?DateTimeImmutable $createdAt = null,
         ?DateTimeImmutable $updatedAt = null,
@@ -93,6 +94,11 @@ class Post extends BaseEntity
         $this->status = $status;
     }
 
+    public function setModerationReason(?string $reason): void
+    {
+        $this->moderationReason = $reason === null ? null : trim($reason);
+    }
+
     public function setContent(string $content): void
     {
         $trimmed = trim($content);
@@ -108,6 +114,7 @@ class Post extends BaseEntity
     public function getCategoryId(): int { return $this->categoryId; }
     public function getStatus(): PostStatus { return $this->status; }
     public function getViewCount(): int { return $this->viewCount; }
+    public function getModerationReason(): ?string { return $this->moderationReason; }
 
     public function toArray(): array
     {
@@ -119,6 +126,7 @@ class Post extends BaseEntity
             'categoryId' => $this->categoryId,
             'status' => $this->status->value,
             'viewCount' => $this->viewCount,
+            'moderationReason' => $this->moderationReason,
         ]);
     }
 }

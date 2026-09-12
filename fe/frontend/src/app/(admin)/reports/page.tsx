@@ -33,7 +33,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [reportData, setReportData] = useState<ReportSummary & { viewsTrend: ViewsTrendItemWithRaw[] }>({
+  const [reportData, setReportData] = useState<Omit<ReportSummary, 'viewsTrend'> & { viewsTrend: ViewsTrendItemWithRaw[] }>({
     totalViews: 0,
     activeUsers: 0,
     totalPosts: 0,
