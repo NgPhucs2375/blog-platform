@@ -27,4 +27,14 @@ interface ICommentRepository extends RepositoryInterface
     public function getReplies(int $parentId, ?CommentStatus $status = null): array;
     
     public function countByPostId(int $postId, ?CommentStatus $status = null): int;
+
+    public function hasReplies(int $parentId): bool;
+
+    /** @return Comment[] */
+    public function searchComments(?CommentStatus $status = null, ?int $postId = null, int $page = 1, int $limit = 20): array;
+
+    public function countSearchComments(?CommentStatus $status = null, ?int $postId = null): int;
+
+    /** @return array{total:int, pending:int, approved:int, hidden:int} */
+    public function countStats(?int $postId = null): array;
 }

@@ -22,8 +22,16 @@ interface ISystemLogRepository
         ?string $startDate = null, 
         ?string $endDate = null, 
         int $page = 1, 
-        int $limit = 20
+        int $limit = 20,
+        ?int $targetId = null
     ): array;
     
-    public function countLogs(): int;
+    public function countLogs(
+        ?int $userId = null,
+        ?LogAction $action = null,
+        ?LogTargetType $targetType = null,
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?int $targetId = null
+    ): int;
 }
