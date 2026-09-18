@@ -29,15 +29,34 @@ class PostController extends BaseController
     #[Route('GET', '/api/v1/posts')]
     public function index(): void
     {
-        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
-        $keyword = isset($_GET['keyword']) ? (string)$_GET['keyword'] : null;
-        $categoryId = isset($_GET['categoryId']) ? (int)$_GET['categoryId'] : null;
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $limit = isset($_GET['limit']) ? max(1, min(100, (int)$_GET['limit'])) : 10;
+        $keyword = isset($_GET['keyword']) && trim((string)$_GET['keyword']) !== '' ? trim((string)$_GET['keyword']) : null;
+        $categoryId = isset($_GET['categoryId']) && $_GET['categoryId'] !== '' ? (int)$_GET['categoryId'] : null;
+        $authorId = isset($_GET['authorId']) && $_GET['authorId'] !== '' ? (int)$_GET['authorId'] : null;
+        $fromDate = isset($_GET['fromDate']) && trim((string)$_GET['fromDate']) !== '' ? trim((string)$_GET['fromDate']) : null;
+        $toDate = isset($_GET['toDate']) && trim((string)$_GET['toDate']) !== '' ? trim((string)$_GET['toDate']) : null;
 
-        $posts = $this->postRepository->getPublishedPosts($keyword, $categoryId, null, $page, $limit);
+        $posts = $this->postRepository->getPublishedPosts($keyword, $categoryId, $authorId, $page, $limit, $fromDate, $toDate);
+        $total = $this->postRepository->countPublishedPosts($keyword, $categoryId, $authorId, $fromDate, $toDate);
         $data = array_map(fn(Post $p) => $p->toArray(), $posts);
 
-        $this->json($data, 200, "Lấy danh sách bài viết thành công.");
+        $this->json([
+            'posts' => $data,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total,
+                'totalPages' => $limit > 0 ? (int)ceil($total / $limit) : 0,
+            ],
+            'filters' => [
+                'keyword' => $keyword,
+                'categoryId' => $categoryId,
+                'authorId' => $authorId,
+                'fromDate' => $fromDate,
+                'toDate' => $toDate,
+            ],
+        ], 200, "Lấy danh sách bài viết thành công.");
     }
 
     #[Route('POST', '/api/v1/posts', auth: true)]

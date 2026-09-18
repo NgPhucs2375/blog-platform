@@ -166,7 +166,7 @@ export function AdminActionRow({ title, description, actions, tone = "default" }
       className={cn(
         "rounded-xl border p-4",
         tone === "danger"
-          ? "border-red-500/10 bg-red-500/[0.03]"
+          ? "border-red-600/10 bg-red-600/[0.03]"
           : "border-white/5 bg-white/[0.02]",
       )}
     >

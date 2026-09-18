@@ -50,33 +50,10 @@ class SystemLogRepository implements ISystemLogRepository
         ?string $startDate = null, 
         ?string $endDate = null, 
         int $page = 1, 
-        int $limit = 20
+        int $limit = 20,
+        ?int $targetId = null
     ): array {
-        $where = [];
-        $params = [];
-
-        if ($userId !== null) {
-            $where[] = "user_id = :user_id";
-            $params[':user_id'] = $userId;
-        }
-        if ($action !== null) {
-            $where[] = "action = :action";
-            $params[':action'] = $action->value;
-        }
-        if ($targetType !== null) {
-            $where[] = "target_type = :target_type";
-            $params[':target_type'] = $targetType->value;
-        }
-        if ($startDate !== null) {
-            $where[] = "created_at >= :start_date";
-            $params[':start_date'] = $startDate;
-        }
-        if ($endDate !== null) {
-            $where[] = "created_at <= :end_date";
-            $params[':end_date'] = $endDate;
-        }
-
-        $whereClause = count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '';
+        [$whereClause, $params] = $this->buildFilter($userId, $action, $targetType, $startDate, $endDate, $targetId);
         $offset = ($page - 1) * $limit;
 
         $sql = "SELECT * FROM {$this->table} {$whereClause} ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
@@ -92,9 +69,57 @@ class SystemLogRepository implements ISystemLogRepository
         return array_map([$this, 'mapToEntity'], $stmt->fetchAll());
     }
 
-    public function countLogs(): int
+    public function countLogs(
+        ?int $userId = null,
+        ?LogAction $action = null,
+        ?LogTargetType $targetType = null,
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?int $targetId = null
+    ): int {
+        [$whereClause, $params] = $this->buildFilter($userId, $action, $targetType, $startDate, $endDate, $targetId);
+        $stmt = $this->context->getConnection()->prepare("SELECT COUNT(*) FROM {$this->table} {$whereClause}");
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * @return array{0: string, 1: array<string,mixed>}
+     */
+    private function buildFilter(?int $userId, ?LogAction $action, ?LogTargetType $targetType, ?string $startDate, ?string $endDate, ?int $targetId = null): array
     {
-        return (int)$this->context->getConnection()->query("SELECT COUNT(*) FROM {$this->table}")->fetchColumn();
+        $where = [];
+        $params = [];
+
+        if ($userId !== null) {
+            $where[] = "user_id = :user_id";
+            $params[':user_id'] = $userId;
+        }
+        if ($action !== null) {
+            $where[] = "action = :action";
+            $params[':action'] = $action->value;
+        }
+        if ($targetType !== null) {
+            $where[] = "target_type = :target_type";
+            $params[':target_type'] = $targetType->value;
+        }
+        if ($targetId !== null) {
+            $where[] = "target_id = :target_id";
+            $params[':target_id'] = $targetId;
+        }
+        if ($startDate !== null && trim($startDate) !== '') {
+            $where[] = "created_at >= :start_date";
+            $params[':start_date'] = trim($startDate);
+        }
+        if ($endDate !== null && trim($endDate) !== '') {
+            $where[] = "created_at <= :end_date";
+            $params[':end_date'] = trim($endDate);
+        }
+
+        return [count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '', $params];
     }
 
     /**

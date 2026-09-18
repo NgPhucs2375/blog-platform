@@ -16,7 +16,9 @@ interface IPostRepository extends RepositoryInterface
     public function findBySlug(string $slug): ?Post;
     
     /** @return Post[] */
-    public function getPublishedPosts(?string $keyword = null, ?int $categoryId = null, ?int $authorId = null, int $page = 1, int $limit = 10): array;
+    public function getPublishedPosts(?string $keyword = null, ?int $categoryId = null, ?int $authorId = null, int $page = 1, int $limit = 10, ?string $fromDate = null, ?string $toDate = null): array;
+
+    public function countPublishedPosts(?string $keyword = null, ?int $categoryId = null, ?int $authorId = null, ?string $fromDate = null, ?string $toDate = null): int;
     
     /** @return Post[] */
     public function getPostsByStatus(PostStatus $status, int $page = 1, int $limit = 10): array;

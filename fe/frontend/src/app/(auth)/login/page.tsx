@@ -45,7 +45,7 @@ export default function LoginPage() {
         
         {/* Header Form */}
         <div className="text-center space-y-3">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 border border-indigo-200/60 text-indigo-600 dark:bg-indigo-500/15 dark:border-indigo-500/30 dark:text-indigo-400 shadow-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 border border-red-200/60 text-red-700 dark:bg-red-600/15 dark:border-red-600/30 dark:text-red-400 shadow-sm">
             <KeyRound className="h-6 w-6" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
@@ -77,7 +77,7 @@ export default function LoginPage() {
               placeholder="you@example.com"
               required
               autoComplete="email"
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
+              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
             />
           </div>
 
@@ -93,7 +93,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 required
                 autoComplete="current-password"
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-4 pr-10 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-4 pr-10 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
               />
               <button
                 type="button"
@@ -109,7 +109,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-indigo-600/25 hover:bg-indigo-500 active:scale-[0.99] disabled:opacity-50 transition"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-red-700 py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-red-700/25 hover:bg-red-600 active:scale-[0.99] disabled:opacity-50 transition"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             <span>Đăng nhập</span>
@@ -121,7 +121,7 @@ export default function LoginPage() {
           Chưa có tài khoản?{' '}
           <Link
             href="/register"
-            className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-0.5"
+            className="font-semibold text-red-700 dark:text-red-400 hover:underline inline-flex items-center gap-0.5"
           >
             Đăng ký ngay <ArrowRight className="h-3 w-3 inline" />
           </Link>

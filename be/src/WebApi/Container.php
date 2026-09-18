@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace src\WebApi;
 
 use RuntimeException;
+use src\Application\Services\ContentModerationService;
 use src\Infrastructure\Context\DbContext;
 use src\Infrastructure\Repositories\CategoryRepository;
+use src\Infrastructure\Repositories\CommentRepository;
 use src\Infrastructure\Repositories\ModerationRuleRepository;
-use src\Application\Services\ContentModerationService;
-use src\WebApi\Controller\V1\ModerationRuleController;
 use src\Infrastructure\Repositories\PostRepository;
 use src\Infrastructure\Repositories\RefreshTokenRepository;
 use src\Infrastructure\Repositories\SystemLogRepository;
@@ -17,8 +17,11 @@ use src\Infrastructure\Repositories\UserRepository;
 use src\Infrastructure\Services\JwtTokenService;
 use src\WebApi\Controller\V1\AuthController;
 use src\WebApi\Controller\V1\CategoryController;
+use src\WebApi\Controller\V1\CommentController;
+use src\WebApi\Controller\V1\ModerationRuleController;
 use src\WebApi\Controller\V1\PostController;
 use src\WebApi\Controller\V1\ProfileController;
+use src\WebApi\Controller\V1\SystemLogController;
 use src\WebApi\Controller\V1\UserController;
 use src\WebApi\Controller\HealthController;
 use src\WebApi\Middlewares\AuthMiddleware;
@@ -82,6 +85,11 @@ class Container
         return new CategoryRepository($this->db());
     }
 
+    public function comments(): CommentRepository
+    {
+        return new CommentRepository($this->db());
+    }
+
     public function systemLogs(): SystemLogRepository
     {
         return new SystemLogRepository($this->db());
@@ -139,6 +147,16 @@ class Container
         return new CategoryController($this->categories());
     }
 
+    public function commentController(): CommentController
+    {
+        return new CommentController($this->comments(), $this->posts(), $this->users(), $this->systemLogs());
+    }
+
+    public function systemLogController(): SystemLogController
+    {
+        return new SystemLogController($this->systemLogs());
+    }
+
     public function healthController(): HealthController
     {
         return new HealthController();
@@ -156,6 +174,8 @@ class Container
             $this->router->register($this->postController());
             $this->router->register($this->moderationRuleController());
             $this->router->register($this->categoryController());
+            $this->router->register($this->commentController());
+            $this->router->register($this->systemLogController());
             $this->router->register($this->healthController());
         }
         return $this->router;

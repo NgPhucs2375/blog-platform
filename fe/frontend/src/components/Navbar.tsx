@@ -53,11 +53,11 @@ export default function Navbar() {
                 <div className="flex items-center gap-8">
                     {/* Logo Thương hiệu */}
                     <Link href="/" className="flex items-center gap-2.5 group">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 border border-indigo-200/60 text-indigo-600 dark:bg-indigo-500/10 dark:border-indigo-500/20 dark:text-indigo-400 group-hover:scale-105 transition shadow-sm">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 border border-red-200/60 text-red-700 dark:bg-red-600/10 dark:border-red-600/20 dark:text-red-400 group-hover:scale-105 transition shadow-sm">
                             <Feather className="h-4 w-4" />
                         </div>
-                        <span className="text-base font-extrabold tracking-tight text-zinc-950 dark:text-white">
-                            Blog Platform<span className="text-indigo-600 dark:text-indigo-400">.</span>
+                        <span className="whitespace-nowrap text-base font-extrabold tracking-tight text-zinc-950 dark:text-white">
+                            Blog Platform<span className="text-red-700 dark:text-red-400">.</span>
                         </span>
                     </Link>
 
@@ -66,7 +66,7 @@ export default function Navbar() {
                         <Link
                             href="/"
                             className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${pathname === '/'
-                                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/60 dark:bg-indigo-600/15 dark:text-indigo-300 dark:border-indigo-500/30'
+                                    ? 'bg-red-50 text-red-700 border border-red-200/60 dark:bg-red-700/15 dark:text-red-300 dark:border-red-600/30'
                                     : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/[0.05]'
                                 }`}
                         >
@@ -77,7 +77,7 @@ export default function Navbar() {
                         <Link
                             href="/posts"
                             className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${pathname.startsWith('/posts')
-                                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/60 dark:bg-indigo-600/15 dark:text-indigo-300 dark:border-indigo-500/30'
+                                    ? 'bg-red-50 text-red-700 border border-red-200/60 dark:bg-red-700/15 dark:text-red-300 dark:border-red-600/30'
                                     : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/[0.05]'
                                 }`}
                         >
@@ -90,7 +90,7 @@ export default function Navbar() {
                             <Link
                                 href="/dashboard"
                                 className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${pathname.startsWith('/dashboard')
-                                        ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/60 dark:bg-indigo-600/15 dark:text-indigo-300 dark:border-indigo-500/30'
+                                        ? 'bg-red-50 text-red-700 border border-red-200/60 dark:bg-red-700/15 dark:text-red-300 dark:border-red-600/30'
                                         : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/[0.05]'
                                     }`}
                             >
@@ -104,7 +104,7 @@ export default function Navbar() {
                             <Link
                                 href="/users"
                                 className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${pathname.startsWith('/users') || pathname.startsWith('/categories') || pathname.startsWith('/reports')
-                                        ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/60 dark:bg-indigo-600/15 dark:text-indigo-300 dark:border-indigo-500/30'
+                                        ? 'bg-red-50 text-red-700 border border-red-200/60 dark:bg-red-700/15 dark:text-red-300 dark:border-red-600/30'
                                         : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/[0.05]'
                                     }`}
                             >
@@ -130,13 +130,13 @@ export default function Navbar() {
 
                     {/* Vùng xác thực: Tránh chớp nháy và đồng bộ SSR */}
                     {!mounted ? (
-                        <div className="h-9 w-24 rounded-xl bg-zinc-100 dark:bg-white/5 animate-pulse" />
+                        <div className="hidden sm:block h-9 w-24 rounded-xl bg-zinc-100 dark:bg-white/5 animate-pulse" />
                     ) : isAuth ? (
                         <>
                             {/* Nút Viết bài */}
                             <Link
                                 href="/dashboard"
-                                className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-500 active:scale-95 transition"
+                                className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-red-700 px-4 py-2 text-xs font-bold text-white shadow-md shadow-red-700/20 hover:bg-red-600 active:scale-95 transition"
                             >
                                 <PenSquare className="h-3.5 w-3.5" />
                                 <span>Viết bài</span>
@@ -146,16 +146,16 @@ export default function Navbar() {
                             <Link
                                 href="/profile"
                                 className={`flex items-center gap-2.5 rounded-xl border px-3 py-1.5 text-xs transition shadow-sm group ${pathname === '/profile'
-                                        ? 'border-indigo-500/50 bg-indigo-50/80 dark:bg-indigo-500/15'
-                                        : 'border-zinc-200 bg-white hover:border-indigo-500/40 hover:bg-zinc-50 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:hover:border-white/20'
+                                        ? 'border-red-600/50 bg-red-50/80 dark:bg-red-600/15'
+                                        : 'border-zinc-200 bg-white hover:border-red-600/40 hover:bg-zinc-50 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:hover:border-white/20'
                                     }`}
                                 title="Hồ sơ cá nhân"
                             >
-                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 border border-indigo-200/60 text-indigo-600 dark:bg-indigo-500/20 dark:border-indigo-500/30 dark:text-indigo-300 font-bold text-xs">
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 border border-red-200/60 text-red-700 dark:bg-red-600/20 dark:border-red-600/30 dark:text-red-300 font-bold text-xs">
                                     <UserIcon className="h-3.5 w-3.5" />
                                 </div>
                                 <div className="flex flex-col text-left leading-none">
-                                    <span suppressHydrationWarning className="font-bold text-zinc-950 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                                    <span suppressHydrationWarning className="font-bold text-zinc-950 dark:text-white group-hover:text-red-700 dark:group-hover:text-red-400 transition">
                                         {username}
                                     </span>
                                     <span className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">
@@ -177,14 +177,14 @@ export default function Navbar() {
                         <div className="flex items-center gap-2">
                             <Link
                                 href="/login"
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-semibold text-zinc-700 shadow-sm hover:bg-zinc-100 hover:text-zinc-950 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 dark:hover:bg-white/[0.06] dark:hover:text-white transition"
+                                className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-semibold text-zinc-700 shadow-sm hover:bg-zinc-100 hover:text-zinc-950 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 dark:hover:bg-white/[0.06] dark:hover:text-white transition"
                             >
                                 <LogIn className="h-3.5 w-3.5" />
                                 <span>Đăng nhập</span>
                             </Link>
                             <Link
                                 href="/register"
-                                className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-500 active:scale-95 transition"
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-red-700 px-4 py-2 text-xs font-bold text-white shadow-md shadow-red-700/20 hover:bg-red-600 active:scale-95 transition"
                             >
                                 <span>Bắt đầu</span>
                             </Link>
@@ -205,12 +205,12 @@ export default function Navbar() {
 
             {/* 3. Dropdown Menu thiết bị di động */}
             {mobileMenuOpen && (
-                <div className="md:hidden border-t border-zinc-200/80 bg-white dark:border-white/[0.08] dark:bg-[#080c14] px-4 py-4 space-y-2 animate-in slide-in-from-top-2 duration-150">
+                <div className="md:hidden origin-top border-t border-zinc-200/80 bg-white dark:border-white/[0.08] dark:bg-[#080c14] px-4 py-4 space-y-2 transition-opacity duration-150">
                     <Link
                         href="/"
                         onClick={() => setMobileMenuOpen(false)}
                         className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${pathname === '/'
-                                ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-600/15 dark:text-indigo-300'
+                                ? 'bg-red-50 text-red-700 dark:bg-red-700/15 dark:text-red-300'
                                 : 'text-zinc-600 dark:text-zinc-400'
                             }`}
                     >
@@ -222,7 +222,7 @@ export default function Navbar() {
                         href="/posts"
                         onClick={() => setMobileMenuOpen(false)}
                         className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${pathname.startsWith('/posts')
-                                ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-600/15 dark:text-indigo-300'
+                                ? 'bg-red-50 text-red-700 dark:bg-red-700/15 dark:text-red-300'
                                 : 'text-zinc-600 dark:text-zinc-400'
                             }`}
                     >
@@ -230,12 +230,23 @@ export default function Navbar() {
                         Khám phá bài viết
                     </Link>
 
+                    {mounted && !isAuth && (
+                        <Link
+                            href="/login"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-zinc-600 dark:text-zinc-400"
+                        >
+                            <LogIn className="h-4 w-4" />
+                            Đăng nhập
+                        </Link>
+                    )}
+
                     {isAuth && (
                         <Link
                             href="/dashboard"
                             onClick={() => setMobileMenuOpen(false)}
                             className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${pathname.startsWith('/dashboard')
-                                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-600/15 dark:text-indigo-300'
+                                    ? 'bg-red-50 text-red-700 dark:bg-red-700/15 dark:text-red-300'
                                     : 'text-zinc-600 dark:text-zinc-400'
                                 }`}
                         >
@@ -249,7 +260,7 @@ export default function Navbar() {
                             href="/users"
                             onClick={() => setMobileMenuOpen(false)}
                             className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${pathname.startsWith('/users') || pathname.startsWith('/categories') || pathname.startsWith('/reports')
-                                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-600/15 dark:text-indigo-300'
+                                    ? 'bg-red-50 text-red-700 dark:bg-red-700/15 dark:text-red-300'
                                     : 'text-zinc-600 dark:text-zinc-400'
                                 }`}
                         >

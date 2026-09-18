@@ -1,21 +1,119 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import {
-  Search,
-  BookOpen,
-  Eye,
-  Calendar,
-  Clock,
-  Tag,
-  ArrowRight,
-  TrendingUp,
-  Globe2,
-  Loader2,
-  ChevronRight,
-} from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { Clock, Eye, Search } from 'lucide-react';
 import { postApi, PostItem, Category } from '@/services/postApi';
+import { chipStyle } from '@/lib/chipColors';
+
+// Trang khám phá: archive toàn bộ ấn phẩm với tìm kiếm + lọc chuyên mục.
+
+const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+const coverOf = (p: PostItem, w = 800, h = 450) =>
+  (p as any).cover_image ||
+  p.coverImage ||
+  `https://picsum.photos/seed/${p.slug || p.id}/${w}/${h}`;
+
+const viewCountOf = (p: PostItem) =>
+  Number((p as any).view_count ?? p.viewCount ?? 0);
+
+function readTime(content?: string) {
+  if (!content) return 2;
+  return Math.max(1, Math.ceil(content.trim().split(/\s+/).length / 220));
+}
+
+function Reveal({
+  children,
+  delay = 0,
+  className,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: reduce ? 0 : 0.6, delay: reduce ? 0 : delay, ease: EASE_OUT }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function CategoryPill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+        active ? 'text-white' : 'text-muted hover:text-ink'
+      }`}
+    >
+      {active && (
+        <motion.span
+          layoutId="posts-cat-pill"
+          transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+          className="absolute inset-0 rounded-full bg-gradient-to-r from-[#a4161a] via-[#7a0f18] to-[#4f060e] shadow-md shadow-[#a4161a]/30"
+        />
+      )}
+      <span className="relative z-10">{children}</span>
+    </button>
+  );
+}
+
+function ArchiveCard({ post, category, catId }: { post: PostItem; category: string; catId?: number }) {
+  return (
+    <article className="group flex flex-col overflow-hidden rounded-3xl border border-line bg-surface transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+      <Link href={`/posts/${post.id}`} className="block overflow-hidden" tabIndex={-1} aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={coverOf(post)}
+          alt=""
+          loading="lazy"
+          className="aspect-[16/9] w-full object-cover saturate-[.85] transition duration-700 group-hover:scale-[1.04]"
+        />
+      </Link>
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex items-center justify-between text-[11px]">
+          <span className={`rounded-full px-2.5 py-1 font-bold uppercase tracking-wider ${chipStyle(catId)}`}>
+            {category}
+          </span>
+          <span className="flex items-center gap-1 text-faint">
+            <Eye className="h-3 w-3" /> {viewCountOf(post).toLocaleString('vi-VN')}
+          </span>
+        </div>
+        <Link href={`/posts/${post.id}`} className="mt-2.5 block">
+          <h3 className="line-clamp-2 font-serif text-lg font-bold leading-snug text-ink transition group-hover:text-accent">
+            {post.title}
+          </h3>
+        </Link>
+        <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-muted">
+          {(post as any).excerpt || post.content}
+        </p>
+        <p className="mt-4 flex items-center gap-2 border-t border-line pt-3 text-[11px] text-faint">
+          {(post as any).author_name || 'Ban biên tập'}
+          <span className="ml-auto flex items-center gap-1">
+            <Clock className="h-3 w-3" /> {readTime(post.content)} phút
+          </span>
+        </p>
+      </div>
+    </article>
+  );
+}
 
 export default function PostsPage() {
   const [posts, setPosts] = useState<PostItem[]>([]);
@@ -32,248 +130,197 @@ export default function PostsPage() {
           postApi.getCategories(),
           postApi.getPosts(),
         ]);
-
         setCategories(cats || []);
-        const publishedPosts = (allPosts || []).filter(
-          (p) => (p.status || '').toLowerCase() === 'published'
+        setPosts(
+          (allPosts || []).filter((p) => (p.status || '').toLowerCase() === 'published'),
         );
-        setPosts(publishedPosts);
       } catch (err) {
         console.error('Lỗi khi tải bài viết:', err);
       } finally {
         setLoading(false);
       }
     }
-
     fetchData();
   }, []);
 
+  const categoryName = (catId?: number) =>
+    categories.find((c) => c.id === catId)?.name || 'Tổng hợp';
+
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
-      const postCatId = Number((post as any).categoryId || (post as any).category_id);
-      const matchCategory =
-        selectedCategory === 'all' || postCatId === Number(selectedCategory);
-
-      const query = searchQuery.toLowerCase().trim();
+      const catId = Number((post as any).categoryId || (post as any).category_id);
+      const matchCategory = selectedCategory === 'all' || catId === Number(selectedCategory);
+      const q = searchQuery.toLowerCase().trim();
       const matchSearch =
-        !query ||
-        post.title.toLowerCase().includes(query) ||
-        post.content.toLowerCase().includes(query);
-
+        !q ||
+        post.title.toLowerCase().includes(q) ||
+        (post.content || '').toLowerCase().includes(q);
       return matchCategory && matchSearch;
     });
   }, [posts, selectedCategory, searchQuery]);
 
-  const featuredPost = useMemo(() => {
-    return filteredPosts.length > 0 ? filteredPosts[0] : null;
-  }, [filteredPosts]);
-
-  const regularPosts = useMemo(() => {
-    return filteredPosts.length > 1 ? filteredPosts.slice(1) : [];
-  }, [filteredPosts]);
-
-  const getCategoryName = (catId?: number) => {
-    if (!catId) return 'Tổng hợp';
-    const found = categories.find((c) => c.id === catId);
-    return found ? found.name : 'Tổng hợp';
-  };
-
-  const calculateReadTime = (content?: string) => {
-    if (!content) return 2;
-    const words = content.trim().split(/\s+/).length;
-    return Math.max(1, Math.ceil(words / 220));
-  };
+  const featuredPost = filteredPosts[0] || null;
+  const restPosts = filteredPosts.slice(1);
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#06080e] dark:text-zinc-100 transition-colors duration-200">
-      
-      {/* Vầng sáng Ambient nền */}
-      <div className="absolute inset-0 top-0 -z-10 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.12),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.18),rgba(255,255,255,0))]" />
-
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-10 pb-24 space-y-12">
-        
-        {/* Tiêu đề trang Khám phá */}
-        <div className="max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3.5 py-1 text-xs font-semibold text-indigo-600 dark:text-indigo-300">
-            <Globe2 className="h-3.5 w-3.5" />
-            ẤN PHẨM & CÂU CHUYỆN ĐA LĨNH VỰC
-          </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+    <div className="relative isolate bg-canvas">
+      {/* Blob gradient trôi phía sau nội dung */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] overflow-hidden">
+        <div className="animate-float absolute -top-28 left-[12%] h-80 w-80 rounded-full bg-red-600/20 blur-[110px]" />
+        <div
+          className="animate-float absolute top-10 right-[14%] h-72 w-72 rounded-full bg-orange-400/20 blur-[110px]"
+          style={{ animationDelay: '2s' }}
+        />
+      </div>
+      <div className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 lg:px-8">
+        {/* Khai đề */}
+        <header className="border-b border-line pb-10 pt-12 sm:pt-16">
+          <h1 className="font-serif text-4xl font-bold tracking-tight text-ink sm:text-5xl">
             Khám phá bài viết
           </h1>
-          <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-            Tổng hợp các bài viết, quan điểm và chia sẻ từ cộng đồng tác giả trên Blog Platform.
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">
+            Toàn bộ ấn phẩm từ cộng đồng tác giả của Blog Platform, xếp theo
+            thời gian xuất bản.
           </p>
-        </div>
+        </header>
 
-        {/* Thanh tìm kiếm & Bộ lọc chủ đề */}
-        <div className="space-y-4">
-          <div className="relative max-w-xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+        {/* Thanh công cụ */}
+        <div className="flex flex-col gap-4 border-b border-line py-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative w-full max-w-xl">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm theo tiêu đề, tác giả hoặc nội dung..."
-              className="w-full rounded-2xl border border-zinc-200 bg-white pl-11 pr-4 py-3 text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none dark:border-white/[0.08] dark:bg-[#0c121e]/70 dark:text-white dark:placeholder-zinc-500 transition"
+              placeholder="Tìm kiếm theo tiêu đề hoặc nội dung..."
+              aria-label="Tìm kiếm bài viết"
+              className="w-full rounded-full border border-line bg-surface py-2.5 pl-11 pr-4 text-sm text-ink placeholder:text-faint transition focus:outline-none focus:ring-2 focus:ring-accent/40"
             />
           </div>
-
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            <button
+          <div className="scroll-slim flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
+            <CategoryPill
+              active={selectedCategory === 'all'}
               onClick={() => setSelectedCategory('all')}
-              className={`rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition ${
-                selectedCategory === 'all'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                  : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/[0.06]'
-              }`}
             >
               Tất cả chủ đề
-            </button>
+            </CategoryPill>
             {categories.map((cat) => (
-              <button
+              <CategoryPill
                 key={cat.id}
+                active={selectedCategory === String(cat.id)}
                 onClick={() => setSelectedCategory(String(cat.id))}
-                className={`rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition ${
-                  selectedCategory === String(cat.id)
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                    : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/[0.06]'
-                }`}
               >
                 {cat.name}
-              </button>
+              </CategoryPill>
             ))}
           </div>
         </div>
 
-        {/* Danh sách bài viết */}
+        {/* Kết quả */}
         {loading ? (
-          <div className="flex min-h-[35vh] flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400" />
-            <p className="text-xs font-medium tracking-wide">Đang nạp dữ liệu ấn phẩm...</p>
+          <div className="mt-10 space-y-8">
+            <div className="grid animate-pulse gap-6 rounded-3xl border border-line sm:grid-cols-2">
+              <div className="h-52 bg-raised sm:h-full" />
+              <div className="space-y-3 p-6">
+                <div className="h-3 w-24 bg-raised rounded" />
+                <div className="h-6 w-full bg-raised rounded" />
+                <div className="h-3 w-3/4 bg-raised rounded" />
+              </div>
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="aspect-[16/9] rounded-2xl bg-raised" />
+                  <div className="mt-3 h-4 w-3/4 rounded bg-raised" />
+                  <div className="mt-2 h-3 w-1/2 rounded bg-raised" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : filteredPosts.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-zinc-300 dark:border-white/10 p-16 text-center">
-            <BookOpen className="mx-auto h-10 w-10 text-zinc-400 dark:text-zinc-600 mb-3" />
-            <h3 className="text-base font-bold text-zinc-900 dark:text-white">Không có bài viết phù hợp</h3>
-            <p className="text-xs text-zinc-500 mt-1">
-              Thử tìm kiếm với từ khóa khác hoặc chọn chuyên mục bài viết khác.
+          <div className="mt-10 rounded-3xl border border-dashed border-line p-16 text-center">
+            <h3 className="text-base font-bold text-ink">Không có bài viết nào</h3>
+            <p className="mt-1 text-xs text-muted">
+              Thử đổi từ khóa hoặc chọn chuyên mục khác để xem thêm.
             </p>
           </div>
         ) : (
-          <div className="space-y-12">
-            
-            {/* TIÊU ĐIỂM MỚI NHẤT (Khắc phục triệt để lỗi màu nền tối) */}
+          <>
+            {/* Ấn phẩm nổi bật: card ngang */}
             {featuredPost && (
-              <div>
-                <div className="flex items-center gap-2 mb-4 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                  <TrendingUp className="h-4 w-4" /> Tiêu điểm mới nhất
-                </div>
-
-                <Link
-                  href={`/posts/${featuredPost.id}`}
-                  className="group relative block overflow-hidden rounded-3xl border border-zinc-200/80 bg-white dark:bg-[#0c121e]/90 dark:border-white/[0.08] p-6 sm:p-10 shadow-sm hover:shadow-xl dark:hover:border-white/20 transition-all duration-200"
-                >
-                  <div className="flex flex-col justify-between gap-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3 text-xs font-medium">
-                        <span className="rounded-md border border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-1 font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider text-[11px]">
-                          {getCategoryName(Number((featuredPost as any).categoryId || (featuredPost as any).category_id))}
-                        </span>
-                        <span className="flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
-                          <Eye className="h-3.5 w-3.5" />
-                          {(featuredPost as any).view_count ?? (featuredPost as any).viewCount ?? 0} lượt xem
-                        </span>
-                        <span className="text-zinc-300 dark:text-zinc-600">•</span>
-                        <span className="flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
-                          <Clock className="h-3.5 w-3.5" />
-                          {calculateReadTime(featuredPost.content)} phút đọc
-                        </span>
-                        <span className="text-zinc-300 dark:text-zinc-600">•</span>
-                        <span className="text-zinc-500 dark:text-zinc-400">
-                          {(featuredPost as any).created_at ? new Date((featuredPost as any).created_at).toLocaleDateString('vi-VN') : 'Mới cập nhật'}
-                        </span>
-                      </div>
-
-                      {/* Tiêu đề: Đảm bảo hiển thị sắc nét ở cả Dark & Light */}
-                      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-zinc-950 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition leading-snug">
+              <Reveal className="mt-10">
+                <article className="group grid overflow-hidden rounded-3xl border border-line bg-surface transition duration-300 hover:-translate-y-0.5 hover:shadow-lg sm:grid-cols-2">
+                  <Link
+                    href={`/posts/${featuredPost.id}`}
+                    className="block overflow-hidden"
+                    tabIndex={-1}
+                    aria-hidden
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={coverOf(featuredPost, 900, 620)}
+                      alt=""
+                      className="h-52 w-full object-cover saturate-[.85] transition duration-700 group-hover:scale-[1.04] sm:h-full sm:min-h-[280px]"
+                    />
+                  </Link>
+                  <div className="flex flex-col justify-center p-6 sm:p-8">
+                    <div className="flex items-center gap-3 text-[11px]">
+                      <span
+                        className={`rounded-full px-2.5 py-1 font-bold uppercase tracking-wider ${chipStyle(
+                          Number(
+                            (featuredPost as any).categoryId ||
+                              (featuredPost as any).category_id,
+                          ),
+                        )}`}
+                      >
+                        {categoryName(
+                          Number(
+                            (featuredPost as any).categoryId ||
+                              (featuredPost as any).category_id,
+                          ),
+                        )}
+                      </span>
+                      <span className="flex items-center gap-1 text-faint">
+                        <Clock className="h-3 w-3" /> {readTime(featuredPost.content)} phút
+                      </span>
+                    </div>
+                    <Link href={`/posts/${featuredPost.id}`} className="mt-3 block">
+                      <h2 className="font-serif text-xl font-bold leading-snug text-ink transition group-hover:text-accent sm:text-2xl">
                         {featuredPost.title}
                       </h2>
-
-                      <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-300 leading-relaxed line-clamp-3 max-w-3xl">
-                        {(featuredPost as any).excerpt || featuredPost.content}
-                      </p>
-                    </div>
-
-                    <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
-                      Bắt đầu đọc <ArrowRight className="h-4 w-4" />
-                    </div>
+                    </Link>
+                    <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted">
+                      {(featuredPost as any).excerpt || featuredPost.content}
+                    </p>
+                    <p className="mt-5 flex items-center gap-2 text-[11px] text-faint">
+                      <span className="grid h-6 w-6 place-items-center rounded-full bg-raised text-[10px] font-bold text-muted">
+                        {((featuredPost as any).author_name || 'B').charAt(0).toUpperCase()}
+                      </span>
+                      {(featuredPost as any).author_name || 'Ban biên tập'}
+                    </p>
                   </div>
-                </Link>
-              </div>
+                </article>
+              </Reveal>
             )}
 
-            {/* DANH SÁCH BÀI VIẾT TIẾP THEO */}
-            {regularPosts.length > 0 && (
-              <div className="space-y-6">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                  Khám phá thêm bài viết
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {regularPosts.map((post) => {
-                    const raw = post as any;
-                    const catId = Number(raw.categoryId || raw.category_id);
-                    const viewCount = raw.view_count ?? raw.viewCount ?? 0;
-                    const author = raw.author_name || raw.authorName || 'Tác giả';
-
-                    return (
-                      <article
-                        key={post.id}
-                        className="group flex flex-col justify-between rounded-2xl border border-zinc-200/80 bg-white dark:bg-[#0c121e]/70 dark:border-white/[0.06] p-6 shadow-sm hover:-translate-y-1 hover:shadow-md dark:hover:border-white/20 transition-all duration-200"
-                      >
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="rounded-md border border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 font-semibold text-indigo-600 dark:text-indigo-400 text-[11px]">
-                              {getCategoryName(catId)}
-                            </span>
-                            <span className="flex items-center gap-1 text-zinc-400 dark:text-zinc-500 text-[11px]">
-                              <Eye className="h-3 w-3" /> {viewCount}
-                            </span>
-                          </div>
-
-                          <Link href={`/posts/${post.id}`} className="block">
-                            <h4 className="text-base font-bold text-zinc-950 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2 leading-snug">
-                              {post.title}
-                            </h4>
-                          </Link>
-
-                          <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-3 leading-relaxed">
-                            {raw.excerpt || post.content}
-                          </p>
-                        </div>
-
-                        <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-white/[0.04] flex items-center justify-between text-xs">
-                          <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                            Bởi {author}
-                          </span>
-                          <Link
-                            href={`/posts/${post.id}`}
-                            className="inline-flex items-center gap-1 font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
-                          >
-                            Đọc tiếp <ChevronRight className="h-3.5 w-3.5" />
-                          </Link>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
+            {/* Lưới archive */}
+            {restPosts.length > 0 && (
+              <div className="mt-8 grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {restPosts.map((post, i) => (
+                  <Reveal key={post.id} delay={(i % 3) * 0.06}>
+                    <ArchiveCard
+                      post={post}
+                      category={categoryName(
+                        Number((post as any).categoryId || (post as any).category_id),
+                      )}
+                      catId={Number((post as any).categoryId || (post as any).category_id)}
+                    />
+                  </Reveal>
+                ))}
               </div>
             )}
-
-          </div>
+          </>
         )}
-
       </div>
     </div>
   );

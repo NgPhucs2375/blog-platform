@@ -171,15 +171,60 @@ interface AuthShellProps {
   className?: string;
 }
 
-/** Khung layout cho các trang auth (login / register). */
+/** Khung layout cho các trang auth (login / register):
+    panel biên tập bên trái (cố định tông ink cả 2 theme) + form bên phải. */
 export function AuthShell({ children, className }: AuthShellProps) {
   return (
-    <div className={cn("relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12", className)}>
-      <Box className="pointer-events-none absolute inset-0">
-        <Box className="animate-float absolute top-1/3 left-1/4 h-96 w-96 rounded-full bg-white/[0.05] blur-[120px]" />
-        <Box className="animate-float-delay absolute right-1/4 bottom-1/3 h-80 w-80 rounded-full bg-white/[0.03] blur-[100px]" />
-      </Box>
-      <Box className="relative z-10 w-full max-w-md">{children}</Box>
+    <div className={cn("bg-canvas", className)}>
+      <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full lg:grid-cols-2">
+        <aside className="relative hidden overflow-hidden bg-gradient-to-br from-[#a4161a] via-[#7a0f18] to-[#4f060e] text-white lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
+          <div
+            aria-hidden
+            className="animate-float pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/15 blur-[110px]"
+          />
+          <div
+            aria-hidden
+            className="animate-float pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-amber-300/25 blur-[110px]"
+            style={{ animationDelay: '1.8s' }}
+          />
+
+          <p className="relative font-serif text-2xl font-bold tracking-tight">
+            Blog Platform<span className="text-amber-200">.</span>
+          </p>
+
+          <div className="relative">
+            <span aria-hidden className="font-serif text-7xl leading-none text-white/60">
+              &ldquo;
+            </span>
+            <p className="mt-2 max-w-md font-serif text-3xl font-bold leading-snug xl:text-4xl">
+              Mỗi câu chuyện đều xứng đáng được <em className="italic text-amber-200">kể đúng cách</em>.
+            </p>
+            <p className="mt-6 max-w-md text-sm leading-relaxed text-white/75">
+              Tham gia cộng đồng tác giả của Blog Platform: nơi tri thức, trải nghiệm
+              và góc nhìn cá nhân được xuất bản với chuẩn biên tập của một tạp chí.
+            </p>
+          </div>
+
+          <dl className="relative grid grid-cols-3 gap-4 text-xs">
+            <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+              <dt className="text-white/70">Xuất bản</dt>
+              <dd className="mt-1 font-bold">Tự do, đa lĩnh vực</dd>
+            </div>
+            <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+              <dt className="text-white/70">Biên tập</dt>
+              <dd className="mt-1 font-bold">Kiểm duyệt kịp thời</dd>
+            </div>
+            <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+              <dt className="text-white/70">Cộng đồng</dt>
+              <dd className="mt-1 font-bold">Thảo luận trực tiếp</dd>
+            </div>
+          </dl>
+        </aside>
+
+        <main className="flex items-center justify-center px-4 py-12 sm:px-8">
+          <div className="relative z-10 w-full max-w-md">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }

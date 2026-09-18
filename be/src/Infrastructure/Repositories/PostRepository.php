@@ -75,25 +75,9 @@ class PostRepository extends AbstractRepository implements IPostRepository
         ]);
     }
 
-    public function getPublishedPosts(?string $keyword = null, ?int $categoryId = null, ?int $authorId = null, int $page = 1, int $limit = 10): array
+    public function getPublishedPosts(?string $keyword = null, ?int $categoryId = null, ?int $authorId = null, int $page = 1, int $limit = 10, ?string $fromDate = null, ?string $toDate = null): array
     {
-        $params = [':status' => PostStatus::PUBLISHED->value];
-        $where = ["status = :status"];
-
-        if (!empty($keyword)) {
-            $where[] = "(title LIKE :kw OR content LIKE :kw)";
-            $params[':kw'] = '%' . $keyword . '%';
-        }
-        if ($categoryId !== null) {
-            $where[] = "category_id = :cat_id";
-            $params[':cat_id'] = $categoryId;
-        }
-        if ($authorId !== null) {
-            $where[] = "author_id = :author_id";
-            $params[':author_id'] = $authorId;
-        }
-
-        $whereClause = 'WHERE ' . implode(' AND ', $where);
+        [$whereClause, $params] = $this->buildPublishedFilter($keyword, $categoryId, $authorId, $fromDate, $toDate);
         $offset = ($page - 1) * $limit;
 
         $sql = "SELECT * FROM {$this->table} {$whereClause} ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
@@ -105,6 +89,17 @@ class PostRepository extends AbstractRepository implements IPostRepository
         $stmt->execute();
 
         return array_map([$this, 'mapToEntity'], $stmt->fetchAll());
+    }
+
+    public function countPublishedPosts(?string $keyword = null, ?int $categoryId = null, ?int $authorId = null, ?string $fromDate = null, ?string $toDate = null): int
+    {
+        [$whereClause, $params] = $this->buildPublishedFilter($keyword, $categoryId, $authorId, $fromDate, $toDate);
+        $stmt = $this->db()->prepare("SELECT COUNT(*) FROM {$this->table} {$whereClause}");
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
     }
 
     public function getPostsByStatus(PostStatus $status, int $page = 1, int $limit = 10): array
@@ -144,6 +139,49 @@ class PostRepository extends AbstractRepository implements IPostRepository
         $stmt = $this->db()->prepare("SELECT COUNT(*) FROM {$this->table} WHERE status = ?");
         $stmt->execute([$status->value]);
         return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Dựng WHERE dùng chung cho get/count published (AND tất cả filter).
+     * @return array{0: string, 1: array<string,mixed>}
+     */
+    private function buildPublishedFilter(?string $keyword, ?int $categoryId, ?int $authorId, ?string $fromDate, ?string $toDate): array
+    {
+        $params = [':status' => PostStatus::PUBLISHED->value];
+        $where = ["status = :status"];
+
+        if ($keyword !== null && trim($keyword) !== '') {
+            $op = $this->driver() === 'pgsql' ? 'ILIKE' : 'LIKE';
+            $where[] = "(title {$op} :kw OR content {$op} :kw)";
+            $params[':kw'] = '%' . trim($keyword) . '%';
+        }
+        if ($categoryId !== null) {
+            $where[] = "category_id = :cat_id";
+            $params[':cat_id'] = $categoryId;
+        }
+        if ($authorId !== null) {
+            $where[] = "author_id = :author_id";
+            $params[':author_id'] = $authorId;
+        }
+        if ($fromDate !== null && trim($fromDate) !== '') {
+            $where[] = "created_at >= :from_date";
+            $params[':from_date'] = trim($fromDate);
+        }
+        if ($toDate !== null && trim($toDate) !== '') {
+            $where[] = "created_at <= :to_date";
+            $params[':to_date'] = trim($toDate);
+        }
+
+        return ['WHERE ' . implode(' AND ', $where), $params];
+    }
+
+    private function driver(): string
+    {
+        try {
+            return (string) $this->db()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        } catch (\Throwable) {
+            return 'pgsql';
+        }
     }
 
     private function mapToEntity(array $row): Post

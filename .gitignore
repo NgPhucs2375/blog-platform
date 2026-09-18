@@ -18,3 +18,7 @@ redis_data/
 .idea/
 .DS_Store
 Thumbs.db
+
+# thu vien ngoai
+.agents/
+.claude/

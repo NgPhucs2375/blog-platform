@@ -82,7 +82,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   if (loading) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-zinc-500">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-red-700" />
         <p className="text-xs font-medium">Đang tải thông tin thành viên...</p>
       </div>
     );
@@ -101,7 +101,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
           <h3 className="text-base font-bold text-zinc-950 dark:text-white">Không tìm thấy người dùng</h3>
           <button
             onClick={backToList}
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-500 transition shadow-md"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2 text-xs font-bold text-white hover:bg-red-600 transition shadow-md"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Quay lại danh sách
@@ -142,7 +142,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       )}
       {isSelf && (
-        <div className="flex items-center gap-2 rounded-2xl border border-indigo-500/30 bg-indigo-50 px-4 py-3 text-xs font-medium text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-300">
+        <div className="flex items-center gap-2 rounded-2xl border border-red-600/30 bg-red-50 px-4 py-3 text-xs font-medium text-red-800 dark:bg-red-600/10 dark:text-red-300">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>Đây là tài khoản của bạn — các hành động tự khóa / tự xóa / tự hạ quyền bị chặn.</span>
         </div>
@@ -158,7 +158,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
       <div className="rounded-3xl border border-zinc-200/80 bg-white p-6 sm:p-8 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/80 space-y-6 transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 dark:border-white/[0.06] pb-6">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 text-2xl font-black text-white shadow-md shadow-indigo-600/20">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-700 text-2xl font-black text-white shadow-md shadow-red-700/20">
               {initial}
             </div>
             <div>
@@ -244,7 +244,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                 onClick={() => mutate((u) => adminApi.updateRole(u.id, { role: "Admin" }), "Đã nâng lên Admin.")}
                 className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
                   isAdmin
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "bg-red-700 text-white shadow-sm"
                     : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
                 }`}
               >
@@ -332,7 +332,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                 type="checkbox"
                 checked={permanent}
                 onChange={(e) => setPermanent(e.target.checked)}
-                className="h-4 w-4 accent-red-500"
+                className="h-4 w-4 accent-red-600"
               />
               Xóa vĩnh viễn (không thể khôi phục)
             </label>

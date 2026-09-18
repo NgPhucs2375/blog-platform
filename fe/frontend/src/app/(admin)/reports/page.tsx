@@ -14,7 +14,7 @@ import { postApi, PostItem, Category } from '@/services/postApi';
 import { adminApi, ReportSummary } from '@/services/adminApi';
 
 const CATEGORY_COLORS = [
-  'bg-indigo-600',
+  'bg-red-700',
   'bg-cyan-500',
   'bg-emerald-500',
   'bg-amber-500',
@@ -180,8 +180,8 @@ export default function ReportsPage() {
       value: reportData.totalViews.toLocaleString(),
       note: 'Toàn bộ ấn phẩm đã đăng',
       icon: Eye,
-      color: 'text-indigo-600 dark:text-indigo-400',
-      bg: 'bg-indigo-50 dark:bg-indigo-500/10',
+      color: 'text-red-700 dark:text-red-400',
+      bg: 'bg-red-50 dark:bg-red-600/10',
     },
     {
       label: 'Tài khoản hoạt động',
@@ -215,7 +215,7 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 dark:border-white/[0.08] pb-6">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400">
             <BarChart3 className="h-3.5 w-3.5" /> BÁO CÁO & GIÁM SÁT THỜI GIAN THỰC
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
@@ -233,7 +233,7 @@ export default function ReportsPage() {
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 shadow-sm hover:bg-zinc-100 dark:border-white/10 dark:bg-[#0c121e] dark:text-zinc-300 dark:hover:bg-white/[0.05] transition"
             title="Làm mới dữ liệu"
           >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin text-indigo-600' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin text-red-700' : ''}`} />
           </button>
 
           <div className="flex items-center gap-1 rounded-xl border border-zinc-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-[#0c121e]">
@@ -243,7 +243,7 @@ export default function ReportsPage() {
                 onClick={() => setTimeRange(r)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                   timeRange === r
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-red-700 text-white shadow-sm'
                     : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white'
                 }`}
               >
@@ -256,7 +256,7 @@ export default function ReportsPage() {
 
       {loading ? (
         <div className="flex min-h-[45vh] flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-red-700 dark:text-red-400" />
           <p className="text-xs font-medium tracking-wide">Đang truy vấn số liệu từ máy chủ...</p>
         </div>
       ) : (
@@ -306,7 +306,7 @@ export default function ReportsPage() {
                     Lưu lượng bài viết và tương tác qua các mốc thời gian thực tế
                   </p>
                 </div>
-                <span className="rounded-full bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-400">
+                <span className="rounded-full bg-red-50 dark:bg-red-600/10 px-2.5 py-1 text-xs font-bold text-red-700 dark:text-red-400">
                   Dữ liệu thời gian thực
                 </span>
               </div>
@@ -317,7 +317,7 @@ export default function ReportsPage() {
                   {reportData.viewsTrend.map((item, i) => (
                     <div key={i} className="flex-1 h-full flex flex-col items-center justify-end group relative">
                       {/* Tooltip hiển thị số lượt đọc cụ thể khi hover */}
-                      <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150 mb-1 pointer-events-none whitespace-nowrap">
+                      <span className="text-[10px] font-bold text-red-700 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150 mb-1 pointer-events-none whitespace-nowrap">
                         {item.rawViews} lượt
                       </span>
 
@@ -325,7 +325,7 @@ export default function ReportsPage() {
                       <div className="w-full h-full flex items-end justify-center">
                         <div
                           style={{ height: `${item.count}%` }}
-                          className="w-full max-w-[42px] rounded-t-xl bg-gradient-to-t from-indigo-600 via-indigo-500 to-indigo-400 group-hover:from-indigo-500 group-hover:to-indigo-300 transition-all duration-300 cursor-pointer shadow-md shadow-indigo-500/10"
+                          className="w-full max-w-[42px] rounded-t-xl bg-gradient-to-t from-red-700 via-red-600 to-red-400 group-hover:from-red-600 group-hover:to-red-300 transition-all duration-300 cursor-pointer shadow-md shadow-red-600/10"
                         />
                       </div>
                     </div>

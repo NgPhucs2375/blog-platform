@@ -1,27 +1,55 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion, useScroll, useSpring } from 'motion/react';
 import {
   ArrowLeft,
-  Calendar,
-  Eye,
-  User,
-  Tag,
-  Loader2,
-  Share2,
   Bookmark,
-  Heart,
-  MessageSquare,
   Check,
   Clock,
-  Sparkles,
-  ChevronRight,
+  Eye,
+  Heart,
+  MessageSquare,
   Send,
+  Share2,
 } from 'lucide-react';
 import { postApi, PostItem, Category } from '@/services/postApi';
+import { chipStyle } from '@/lib/chipColors';
 import { useAuth } from '@/contexts/AuthContext';
+
+// Trang đọc bài: thanh tiến độ đọc, typography Lora với drop cap,
+// khối tác giả và thảo luận. Rose chỉ dùng cho semantic "thích".
+
+const coverOf = (p: PostItem, w = 1400, h = 700) =>
+  (p as any).cover_image ||
+  p.coverImage ||
+  `https://picsum.photos/seed/${p.slug || p.id}/${w}/${h}`;
+
+function readTime(content?: string) {
+  if (!content) return 2;
+  return Math.max(1, Math.ceil(content.trim().split(/\s+/).length / 200));
+}
+
+function paragraphsOf(content: string): string[] {
+  return content
+    .split(/\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function ReadingProgress() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 140, damping: 28, mass: 0.4 });
+  return (
+    <motion.div
+      aria-hidden
+      style={{ scaleX, willChange: 'transform' }}
+      className="fixed inset-x-0 top-0 z-[60] h-[3px] origin-left bg-gradient-to-r from-[#b3131c] via-[#7a0f18] to-[#4f060e]"
+    />
+  );
+}
 
 export default function PostDetailPage() {
   const params = useParams();
@@ -35,15 +63,14 @@ export default function PostDetailPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  // Trạng thái tương tác
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(12);
+  const [likeCount, setLikeCount] = useState(0);
   const [bookmarked, setBookmarked] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState([
     {
       id: 1,
-      author: 'HoangDev',
+      author: 'Nguyễn Hải Yến',
       time: '2 giờ trước',
       content: 'Bài viết súc tích và đúng trọng tâm, cảm ơn tác giả đã chia sẻ!',
     },
@@ -54,7 +81,6 @@ export default function PostDetailPage() {
   useEffect(() => {
     async function loadPostData() {
       if (!id || id === 'undefined') return;
-
       try {
         setLoading(true);
         const [postData, cats, allPosts] = await Promise.all([
@@ -72,7 +98,7 @@ export default function PostDetailPage() {
         setRelatedPosts(
           (allPosts || [])
             .filter((p: any) => String(p.id) !== String(id))
-            .slice(0, 3)
+            .slice(0, 3),
         );
 
         // Đếm lượt đọc đúng 1 lần duy nhất trong phiên
@@ -82,13 +108,11 @@ export default function PostDetailPage() {
         if (!hasTrackedRef.current && !alreadyViewedInSession) {
           hasTrackedRef.current = true;
           sessionStorage.setItem(sessionKey, 'true');
-
           try {
             const result = await postApi.trackView(id);
             const updatedViews =
               result?.viewCount ??
               Number((postData as any).view_count ?? postData.viewCount ?? 0) + 1;
-
             setPost({
               ...postData,
               viewCount: updatedViews,
@@ -106,7 +130,6 @@ export default function PostDetailPage() {
         setLoading(false);
       }
     }
-
     loadPostData();
   }, [id]);
 
@@ -120,13 +143,12 @@ export default function PostDetailPage() {
 
   const handleLike = () => {
     setLiked(!liked);
-    setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
+    setLikeCount((prev) => (liked ? Math.max(0, prev - 1) : prev + 1));
   };
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-
     setComments((prev) => [
       ...prev,
       {
@@ -139,204 +161,225 @@ export default function PostDetailPage() {
     setCommentText('');
   };
 
+  const paragraphs = useMemo(
+    () => (post?.content ? paragraphsOf(post.content) : []),
+    [post?.content],
+  );
+
   if (loading) {
     return (
-      <div className="flex min-h-[75vh] flex-col items-center justify-center gap-3 bg-zinc-50 dark:bg-[#06080e] text-zinc-500 dark:text-zinc-400 transition-colors">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400" />
-        <p className="text-xs font-medium tracking-wide">Đang nạp ấn phẩm...</p>
+      <div className="bg-canvas">
+        <ReadingProgress />
+        <div className="mx-auto max-w-[760px] px-4 pt-16 sm:px-6">
+          <div className="h-4 w-24 animate-pulse rounded bg-raised" />
+          <div className="mt-6 h-12 w-full animate-pulse rounded bg-raised" />
+          <div className="mt-3 h-12 w-2/3 animate-pulse rounded bg-raised" />
+          <div className="mt-8 aspect-[16/8] animate-pulse rounded-3xl bg-raised" />
+          <div className="mt-8 space-y-3">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="h-3.5 animate-pulse rounded bg-raised"
+                style={{ width: `${94 - (i % 3) * 14}%` }}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 bg-zinc-50 dark:bg-[#06080e] p-6 text-center">
-        <h2 className="text-xl font-bold text-zinc-950 dark:text-white">Không tìm thấy ấn phẩm</h2>
-        <p className="text-xs text-zinc-500 max-w-sm">Bài viết có thể đã bị gỡ hoặc chuyển hướng.</p>
-        <Link
-          href="/posts"
-          className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md hover:bg-indigo-500 transition"
-        >
-          Khám phá các bài viết khác
-        </Link>
+      <div className="bg-canvas">
+        <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 p-6 text-center">
+          <h2 className="font-serif text-2xl font-bold text-ink">Không tìm thấy ấn phẩm</h2>
+          <p className="max-w-sm text-sm text-muted">
+            Bài viết có thể đã bị gỡ hoặc đường dẫn không còn đúng.
+          </p>
+          <Link
+            href="/posts"
+            className="rounded-full bg-accent px-5 py-2.5 text-xs font-bold text-accent-ink transition hover:bg-accent-hover"
+          >
+            Khám phá các bài viết khác
+          </Link>
+        </div>
       </div>
     );
   }
 
   const raw = post as any;
   const currentViews = post.viewCount ?? raw.view_count ?? 0;
-  const categoryName = categories.find((c) => c.id === (post.categoryId ?? raw.category_id))?.name || 'Tổng hợp';
-  const authorName = raw.author_name || post.authorName || 'Tác giả Blog Platform';
-  const publishDate = raw.created_at || post.createdAt ? new Date(raw.created_at || post.createdAt).toLocaleDateString('vi-VN') : 'Mới xuất bản';
-  const readingTime = Math.max(1, Math.ceil((post.content || '').split(/\s+/).length / 200));
+  const categoryName =
+    categories.find((c) => c.id === (post.categoryId ?? raw.category_id))?.name || 'Tổng hợp';
+  const authorName = raw.author_name || post.authorName || 'Ban biên tập';
+  const publishDate = raw.created_at || post.createdAt
+    ? new Date(raw.created_at || post.createdAt).toLocaleDateString('vi-VN')
+    : 'Mới xuất bản';
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#06080e] dark:text-zinc-100 transition-colors duration-200 pb-28">
-      
-      {/* Glow Effect */}
-      <div className="absolute inset-0 top-0 -z-10 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.15),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.22),rgba(255,255,255,0))]" />
+    <div className="bg-canvas pb-24">
+      <ReadingProgress />
 
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-8 space-y-10">
-        
-        {/* Navigation Breadcrumb & Share */}
-        <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-white/[0.08] pb-4">
+      <div className="mx-auto max-w-[760px] px-4 sm:px-6">
+        {/* Thanh công cụ đọc */}
+        <div className="flex items-center justify-between py-5">
           <button
             onClick={() => router.back()}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white transition"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted transition hover:text-ink"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Quay lại</span>
           </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleShare}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 dark:hover:bg-white/[0.06] transition"
-              title="Chia sẻ bài viết"
-            >
-              {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Share2 className="h-3.5 w-3.5" />}
-              <span>{copied ? 'Đã sao chép link' : 'Chia sẻ'}</span>
-            </button>
-          </div>
+          <button
+            onClick={handleShare}
+            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-1.5 text-xs font-semibold text-muted shadow-sm transition hover:text-ink"
+            title="Chia sẻ bài viết"
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5 text-emerald-600" />
+            ) : (
+              <Share2 className="h-3.5 w-3.5" />
+            )}
+            <span>{copied ? 'Đã sao chép link' : 'Chia sẻ'}</span>
+          </button>
         </div>
 
-        {/* Khung bài viết chính */}
-        <article className="rounded-3xl border border-zinc-200/80 bg-white p-6 sm:p-12 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/80 space-y-8">
-          
-          {/* Header Metadata */}
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-400 uppercase tracking-wider">
-              <Tag className="h-3.5 w-3.5" />
-              {categoryName}
-            </div>
+        {/* Đề bài */}
+        <header className="border-b border-line pb-8">
+          <span
+            className={`inline-block rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${chipStyle(
+              Number(post.categoryId ?? raw.category_id),
+            )}`}
+          >
+            {categoryName}
+          </span>
+          <h1 className="mt-4 font-serif text-3xl font-bold leading-[1.15] tracking-tight text-ink sm:text-5xl">
+            {post.title}
+          </h1>
 
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-tight">
-              {post.title}
-            </h1>
-
-            <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs text-zinc-500 dark:text-zinc-400 pt-2 border-b border-zinc-100 dark:border-white/[0.06] pb-6">
-              <div className="flex items-center gap-2 font-medium text-zinc-800 dark:text-zinc-200">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
-                  {authorName.charAt(0).toUpperCase()}
-                </div>
-                <span>{authorName}</span>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5" />
-                <span>{publishDate}</span>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                <span>{readingTime} phút đọc</span>
-              </div>
-
-              <div className="flex items-center gap-1.5 font-semibold text-indigo-600 dark:text-indigo-400">
-                <Eye className="h-3.5 w-3.5" />
-                <span>{currentViews.toLocaleString()} lượt xem</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Ảnh bìa (nếu có) */}
-          {(raw.cover_image || raw.coverImage) && (
-            <div className="overflow-hidden rounded-2xl border border-zinc-200/80 shadow-md dark:border-white/[0.08]">
-              <img
-                src={raw.cover_image || raw.coverImage}
-                alt={post.title}
-                className="h-72 sm:h-96 w-full object-cover"
-              />
-            </div>
-          )}
-
-          {/* Trích đoạn Excerpt */}
-          {post.excerpt && (
-            <p className="text-base sm:text-lg font-medium text-zinc-700 dark:text-zinc-300 italic border-l-4 border-indigo-600 pl-4 py-1 leading-relaxed bg-zinc-50 dark:bg-white/[0.02] rounded-r-xl">
-              {post.excerpt}
-            </p>
-          )}
-
-          {/* Nội dung bài viết */}
-          <div className="prose prose-zinc dark:prose-invert max-w-none text-zinc-800 dark:text-zinc-200 text-base sm:text-lg leading-relaxed whitespace-pre-wrap font-sans py-4">
-            {post.content}
-          </div>
-
-          {/* Thanh tương tác bài viết (Like, Bookmark, Comments) */}
-          <div className="flex items-center justify-between pt-6 border-t border-zinc-200/80 dark:border-white/[0.08]">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleLike}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
-                  liked
-                    ? 'bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
-                    : 'border border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400'
-                }`}
-              >
-                <Heart className={`h-4 w-4 ${liked ? 'fill-rose-500 text-rose-500' : ''}`} />
-                <span>{likeCount} Thích</span>
-              </button>
-
-              <button
-                onClick={() => setBookmarked(!bookmarked)}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
-                  bookmarked
-                    ? 'bg-indigo-50 text-indigo-600 border border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20'
-                    : 'border border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400'
-                }`}
-              >
-                <Bookmark className={`h-4 w-4 ${bookmarked ? 'fill-indigo-500 text-indigo-500' : ''}`} />
-                <span>Lưu bài</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-              <MessageSquare className="h-4 w-4" />
-              <span>{comments.length} thảo luận</span>
-            </div>
-          </div>
-
-          {/* Khung giới thiệu tác giả (Author Box) */}
-          <div className="rounded-2xl border border-zinc-200/80 bg-zinc-50/60 p-6 dark:border-white/[0.08] dark:bg-white/[0.02] flex flex-col sm:flex-row items-center gap-5">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-2xl font-black text-white shadow-md">
-              {authorName.charAt(0).toUpperCase()}
-            </div>
-            <div className="space-y-1 text-center sm:text-left flex-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                Tác giả bài viết
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted">
+            <span className="flex items-center gap-2 font-semibold text-ink">
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-accent text-[10px] font-bold text-accent-ink">
+                {authorName.charAt(0).toUpperCase()}
               </span>
-              <h3 className="text-base font-extrabold text-zinc-950 dark:text-white">
-                {authorName}
-              </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                Tác giả chia sẻ các góc nhìn công nghệ và trải nghiệm phát triển phần mềm trên nền tảng Blog Platform.
-              </p>
-            </div>
+              {authorName}
+            </span>
+            <span>{publishDate}</span>
+            <span className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" /> {readTime(post.content)} phút đọc
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Eye className="h-3.5 w-3.5" /> {currentViews.toLocaleString('vi-VN')} lượt đọc
+            </span>
           </div>
-        </article>
+        </header>
 
-        {/* Khung thảo luận & Bình luận */}
-        <section className="rounded-3xl border border-zinc-200/80 bg-white p-6 sm:p-10 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/80 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-zinc-950 dark:text-white flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              Thảo luận ({comments.length})
-            </h2>
+        {/* Ảnh bìa */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={coverOf(post)}
+          alt={post.title}
+          className="mt-8 aspect-[16/8] w-full rounded-3xl border border-line object-cover saturate-[.9]"
+        />
+
+        {/* Trích đoạn mở bài */}
+        {post.excerpt && (
+          <p className="mt-8 border-l-2 border-accent pl-5 font-serif text-lg italic leading-relaxed text-muted">
+            {post.excerpt}
+          </p>
+        )}
+
+        {/* Nội dung với drop cap ở đoạn đầu */}
+        <div className="mt-8 space-y-6 font-serif text-[17px] leading-[1.85] text-ink/90 sm:text-lg">
+          {paragraphs.map((para, i) => (
+            <p
+              key={i}
+              className={
+                i === 0
+                  ? 'first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:font-serif first-letter:text-6xl first-letter:font-bold first-letter:leading-[0.8] first-letter:text-accent'
+                  : undefined
+              }
+            >
+              {para}
+            </p>
+          ))}
+        </div>
+
+        {/* Thanh tương tác */}
+        <div className="mt-12 flex items-center justify-between border-y border-line py-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleLike}
+              aria-pressed={liked}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                liked
+                  ? 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400'
+                  : 'border-line bg-surface text-muted hover:text-ink'
+              }`}
+            >
+              <Heart className={`h-4 w-4 ${liked ? 'fill-rose-500 text-rose-500' : ''}`} />
+              <span>{likeCount > 0 ? likeCount + ' lượt thích' : 'Thích bài này'}</span>
+            </button>
+
+            <button
+              onClick={() => setBookmarked(!bookmarked)}
+              aria-pressed={bookmarked}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                bookmarked
+                  ? 'border-accent/30 bg-accent-soft text-accent'
+                  : 'border-line bg-surface text-muted hover:text-ink'
+              }`}
+            >
+              <Bookmark
+                className={`h-4 w-4 ${bookmarked ? 'fill-accent text-accent' : ''}`}
+              />
+              <span>{bookmarked ? 'Đã lưu' : 'Lưu bài'}</span>
+            </button>
           </div>
 
-          <form onSubmit={handleAddComment} className="space-y-3">
+          <span className="flex items-center gap-1.5 text-xs text-muted">
+            <MessageSquare className="h-4 w-4" /> {comments.length} thảo luận
+          </span>
+        </div>
+
+        {/* Tác giả */}
+        <section className="mt-10 flex flex-col items-center gap-5 rounded-3xl border border-line bg-raised p-6 sm:flex-row sm:p-7">
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-accent text-2xl font-bold text-accent-ink">
+            {authorName.charAt(0).toUpperCase()}
+          </span>
+          <div className="text-center sm:text-left">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-faint">
+              Tác giả
+            </p>
+            <h3 className="mt-1 font-serif text-lg font-bold text-ink">{authorName}</h3>
+            <p className="mt-1 text-sm leading-relaxed text-muted">
+              Tác giả chia sẻ các góc nhìn và trải nghiệm trên nền tảng Blog Platform.
+            </p>
+          </div>
+        </section>
+
+        {/* Thảo luận */}
+        <section className="mt-12">
+          <h2 className="font-serif text-xl font-bold text-ink">
+            Thảo luận <span className="text-muted">({comments.length})</span>
+          </h2>
+
+          <form onSubmit={handleAddComment} className="mt-5 space-y-3">
             <textarea
               rows={3}
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Chia sẻ suy nghĩ hoặc đặt câu hỏi cho tác giả..."
-              className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition leading-relaxed"
+              aria-label="Nội dung bình luận"
+              className="w-full rounded-2xl border border-line bg-surface p-4 text-sm leading-relaxed text-ink placeholder:text-faint transition focus:outline-none focus:ring-2 focus:ring-accent/40"
             />
             <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={!commentText.trim()}
-                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-500 active:scale-95 disabled:opacity-50 transition"
+                className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-xs font-bold text-accent-ink transition hover:bg-accent-hover disabled:opacity-40"
               >
                 <Send className="h-3.5 w-3.5" />
                 Gửi bình luận
@@ -344,66 +387,62 @@ export default function PostDetailPage() {
             </div>
           </form>
 
-          {/* Danh sách bình luận */}
-          <div className="divide-y divide-zinc-100 dark:divide-white/[0.04] pt-2">
+          <div className="mt-6 space-y-5">
             {comments.map((cmt) => (
-              <div key={cmt.id} className="py-4 space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-zinc-950 dark:text-white">{cmt.author}</span>
-                  <span className="text-zinc-400 text-[11px]">{cmt.time}</span>
+              <article key={cmt.id} className="flex gap-3">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-raised text-[11px] font-bold text-muted">
+                  {cmt.author.charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0">
+                  <p className="flex items-center gap-2 text-xs">
+                    <span className="font-bold text-ink">{cmt.author}</span>
+                    <span className="text-faint">{cmt.time}</span>
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted">{cmt.content}</p>
                 </div>
-                <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                  {cmt.content}
-                </p>
-              </div>
+              </article>
             ))}
           </div>
         </section>
 
-        {/* Khung bài viết đề xuất cùng chuyên mục */}
+        {/* Đề xuất đọc tiếp */}
         {relatedPosts.length > 0 && (
-          <section className="space-y-4 pt-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-zinc-950 dark:text-white flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                Ấn phẩm đề xuất khác
-              </h2>
-              <Link
-                href="/posts"
-                className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1"
-              >
-                Xem tất cả <ChevronRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <section className="mt-14 border-t border-line pt-10">
+            <h2 className="font-serif text-xl font-bold text-ink">Đọc tiếp</h2>
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
               {relatedPosts.map((item) => (
                 <Link
                   key={item.id}
                   href={`/posts/${item.id}`}
-                  className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm hover:border-indigo-500/40 dark:border-white/[0.08] dark:bg-[#0c121e]/80 transition group flex flex-col justify-between space-y-3"
+                  className="group overflow-hidden rounded-2xl border border-line bg-surface transition duration-300 hover:-translate-y-0.5 hover:shadow-lg"
                 >
-                  <div className="space-y-2">
-                    <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400 uppercase">
-                      Bài viết
-                    </span>
-                    <h3 className="text-xs sm:text-sm font-bold text-zinc-950 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 line-clamp-2 transition">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={coverOf(item, 480, 300)}
+                    alt=""
+                    loading="lazy"
+                    className="aspect-[16/9] w-full object-cover saturate-[.85] transition duration-500 group-hover:scale-[1.04]"
+                  />
+                  <div className="p-4">
+                    <h3 className="line-clamp-2 text-sm font-bold leading-snug text-ink transition group-hover:text-accent">
                       {item.title}
                     </h3>
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-2 border-t border-zinc-100 dark:border-white/[0.04]">
-                    <span>{(item as any).created_at ? new Date((item as any).created_at).toLocaleDateString('vi-VN') : 'Gần đây'}</span>
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3 w-3" /> {(item as any).view_count ?? item.viewCount ?? 0}
-                    </span>
+                    <p className="mt-2 flex items-center gap-2 text-[11px] text-faint">
+                      {(item as any).created_at
+                        ? new Date((item as any).created_at).toLocaleDateString('vi-VN')
+                        : 'Gần đây'}
+                      <span aria-hidden>•</span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" />
+                        {Number((item as any).view_count ?? item.viewCount ?? 0).toLocaleString('vi-VN')}
+                      </span>
+                    </p>
                   </div>
                 </Link>
               ))}
             </div>
           </section>
         )}
-
       </div>
     </div>
   );

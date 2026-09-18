@@ -2,31 +2,132 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ============================================================
+   Semantic tokens — nguồn sự thật duy nhất cho màu sắc.
+   Các component mới dùng bg-surface / text-ink / border-line...
+   Các trang admin cũ chưa migrate vẫn dùng zinc-* với giá trị tương đương.
+   ============================================================ */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  /* ===== PALETTE: Indigo-Violet (tạm comment, quay lại bằng cách đổi 2 khối) =====
+  --canvas: #f7f8fe;
+  --surface: #ffffff;
+  --raised: #f1f3fb;
+  --line: #e3e6f4;
+  --ink: #0f1222;
+  --muted: #4b5069;
+  --faint: #9298b4;
+  --accent: #4f46e5;
+  --accent-2: #7c3aed;
+  --accent-3: #d946ef;
+  --accent-hover: #4338ca;
+  --accent-soft: #eef0ff;
+  --accent-ink: #ffffff;
+  */
+
+  /* ===== PALETTE: Royal Crimson - tông trầm (đang test) ===== */
+  --canvas: #fdf7f7;
+  --surface: #ffffff;
+  --raised: #f8eded;
+  --line: #eddfe0;
+  --ink: #1c1114;
+  --muted: #5f5054;
+  --faint: #a29297;
+  --accent: #a4161a;
+  --accent-2: #6b0a12;
+  --accent-3: #3d030b;
+  --accent-hover: #8b1015;
+  --accent-soft: #f9e9e9;
+  --accent-ink: #ffffff;
 }
 
 .dark {
-  --background: #06080e;
-  --foreground: #fafafa;
+  /* ===== PALETTE: Indigo-Violet (tạm comment) =====
+  --canvas: #0b0e1a;
+  --surface: #131830;
+  --raised: #1a2140;
+  --line: rgba(255, 255, 255, 0.09);
+  --ink: #f4f5ff;
+  --muted: #a6abcc;
+  --faint: #6e7494;
+  --accent: #818cf8;
+  --accent-2: #a78bfa;
+  --accent-3: #e879f9;
+  --accent-hover: #a5b4fc;
+  --accent-soft: rgba(99, 102, 241, 0.16);
+  --accent-ink: #0b1020;
+  */
+
+  /* ===== PALETTE: Royal Crimson (đang test) ===== */
+  --canvas: #150a0d;
+  --surface: #231017;
+  --raised: #2d151d;
+  --line: rgba(255, 255, 255, 0.09);
+  --ink: #fff2f3;
+  --muted: #c4a9ae;
+  --faint: #8a7076;
+  --accent: #f24d60;
+  --accent-2: #ff6b7d;
+  --accent-3: #a4161a;
+  --accent-hover: #ff7285;
+  --accent-soft: rgba(242, 77, 96, 0.16);
+  --accent-ink: #1c0508;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-3: var(--accent-3);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
   --font-serif: var(--font-lora), "Times New Roman", Times, serif;
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-typing: typing 1.2s ease-in-out infinite;
+  --animate-float: float 8s ease-in-out infinite;
+  --animate-ping-ring: ping-ring 1.4s cubic-bezier(0, 0, 0.2, 1) 1;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -18px, 0) scale(1.05); }
+}
+
+@keyframes ping-ring {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(1.9); opacity: 0; }
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: var(--canvas);
+  color: var(--ink);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Form controls: nhiều page dùng focus:bg-white cho light mode. Khi dark mode,
-   rule này giữ nền tối và chữ sáng cho toàn bộ input/textarea/select. */
+::selection {
+  background-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* Form controls: các trang admin cũ vẫn dùng focus:bg-white cho light mode.
+   Rule này giữ nền tối và chữ sáng cho toàn bộ input/textarea/select trong dark. */
 .dark input:not([type="checkbox"]):not([type="radio"]):focus,
 .dark textarea:focus,
 .dark select:focus {
@@ -38,4 +139,30 @@ body {
 .dark select option {
   background-color: #171b26;
   color: #f8fafc;
+}
+
+/* Scrollbar mảnh cho khu vực cuộn nội bộ (khung chat, ticker). */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.scroll-slim::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+.scroll-slim::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-typing,
+  .animate-float,
+  .animate-ping-ring {
+    animation: none;
+  }
 }

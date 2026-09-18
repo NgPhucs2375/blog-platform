@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Lora } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import SiteChrome from "@/components/SiteChrome";
 import { Providers } from "./providers";
 
 const geistSans = Geist({
@@ -37,10 +38,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${lora.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-zinc-50 text-zinc-900 dark:bg-[#06080e] dark:text-zinc-100 transition-colors duration-200">
+      <body className="min-h-full flex flex-col bg-canvas text-ink transition-colors duration-200">
         <Providers>
           <Navbar />
           <main className="flex-1">{children}</main>
+          <SiteChrome />
         </Providers>
       </body>
     </html>
