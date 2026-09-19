@@ -166,7 +166,7 @@ export function AdminActionRow({ title, description, actions, tone = "default" }
       className={cn(
         "rounded-xl border p-4",
         tone === "danger"
-          ? "border-red-600/10 bg-red-600/[0.03]"
+          ? "border-rose-800/10 bg-accent/[0.03]"
           : "border-white/5 bg-white/[0.02]",
       )}
     >
@@ -174,7 +174,7 @@ export function AdminActionRow({ title, description, actions, tone = "default" }
         <Text
           variant="small"
           as="div"
-          className={cn("font-medium", tone === "danger" ? "text-red-400" : "text-white")}
+          className={cn("font-medium", tone === "danger" ? "text-rose-600" : "text-white")}
         >
           {title}
         </Text>

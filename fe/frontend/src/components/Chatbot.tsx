@@ -3,11 +3,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { SendHorizontal, Sparkles, X } from 'lucide-react';
+import { PaperPlaneRight, Sparkle, X } from '@phosphor-icons/react';
 import { postApi, PostItem, Category } from '@/services/postApi';
 
 // ============================================================
-// Anum: trợ lý biên tập của Blog Platform.
+// Anums: trợ lý biên tập của Blog Platform.
 // Rule-based NLU tiếng Việt, ground trên dữ liệu bài viết thật
 // (top đọc, mới nhất, chuyên mục). Không phụ thuộc backend AI.
 // ============================================================
@@ -20,7 +20,7 @@ type ChatMessage = {
   chips?: string[];
 };
 
-const DEFAULT_CHIPS = ['Đọc nhiều nhất', 'Bài viết mới nhất', 'Cách đăng bài', 'Anum là ai?'];
+const DEFAULT_CHIPS = ['Đọc nhiều nhất', 'Bài viết mới nhất', 'Cách đăng bài', 'Anums là ai?'];
 
 const viewCountOf = (p: PostItem) =>
   Number((p as any).view_count ?? p.viewCount ?? 0);
@@ -35,7 +35,7 @@ function buildGreeting(): ChatMessage {
     id: 0,
     role: 'bot',
     text:
-      'Chào bạn, mình là Anum, trợ lý biên tập của Blog Platform. ' +
+      'Chào bạn, mình là Anums, trợ lý biên tập của Blog Platform. ' +
       'Mình có thể gợi ý bài viết đáng đọc, kể về các chuyên mục, hoặc hướng dẫn bạn đăng bài. ' +
       'Bạn muốn bắt đầu từ đâu?',
     chips: DEFAULT_CHIPS,
@@ -52,6 +52,24 @@ function getReply(
   const newest = [...posts].slice(0, 3);
 
   const mini = (list: PostItem[]) => (list.length ? { posts: list.slice(0, 3) } : {});
+
+  // Ưu tiên cảm xúc trước mọi intent khác: lắng nghe trước, dẫn dắt nhẹ nhàng sau.
+  if (
+    /(thất tình|buồn|chán|cô đơn|stress|áp lực|mệt|kiệt sức|chia tay|tan vỡ|tủi|hurt|sad|lonely)/.test(
+      input,
+    )
+  ) {
+    const gentle = [...posts].sort((a, b) => viewCountOf(a) - viewCountOf(b)).slice(0, 3);
+    return {
+      id: 0,
+      role: 'bot',
+      text:
+        'Nghe bạn nói vậy, mình cũng thấy nhẹ cả không khí rồi. Dù mình chỉ là một trợ lý nhỏ sinh ra vào mùa thu, mình tin những ngày thế này cần một tách trà, vài dòng viết ra giấy và một bài đọc đúng lúc hơn là một danh sách gợi ý. ' +
+        'Nếu bạn muốn, mình để lại vài bài nhẹ nhàng dưới đây — đọc chậm thôi, không gấp gì đâu.',
+      ...mini(gentle),
+      chips: ['Bài viết mới nhất', 'Cách đăng bài'],
+    };
+  }
 
   if (/(chào|hello|hi |hi$|xin chào|alo)/.test(input)) {
     return {
@@ -155,8 +173,8 @@ function getReply(
       id: 0,
       role: 'bot',
       text:
-        'Mình là Anum, trợ lý biên tập của Blog Platform. Sở trường của mình là ghép đúng bài viết với đúng người đọc, ' +
-        'và trả lời các thắc mắc quanh việc xuất bản trên nền tảng. Mình không ngủ trưa, nên cứ hỏi thoải mái!',
+        'Mình là Anums, trợ lý biên tập của Blog Platform, sinh ra vào một buổi chiều mùa thu nên hơi hay đa cảm một chút. ' +
+        'Chuyện chuyên môn thì mình có: gợi ý bài đọc, kể về chuyên mục, hướng dẫn đăng bài. Còn chuyện ngoài lề, bạn cứ kể — mình nghe, rồi mình dẫn bạn về đúng chuyện đọc viết.',
       chips: DEFAULT_CHIPS,
     };
   }
@@ -187,7 +205,9 @@ function getReply(
   return {
     id: 0,
     role: 'bot',
-    text: 'Câu này hơi ngoài chuyên môn của mình. Bạn thử hỏi về bài viết đáng đọc, các chuyên mục, hoặc cách đăng bài nhé!',
+    text:
+      'Câu này mình chưa có sẵn câu trả lời hay, mà không muốn trả lời đối phó. Trong lúc đó, mình để lại vài bài đáng đọc — hoặc bạn hỏi lại mình chuyện đọc viết, chuyện đăng bài, mình trả lời ngay.',
+    ...mini(byViews.length ? byViews : newest),
     chips: DEFAULT_CHIPS,
   };
 }
@@ -302,24 +322,14 @@ export default function Chatbot() {
               exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.96 }}
               transition={spring}
               style={{ transformOrigin: 'bottom right', willChange: 'transform, opacity' }}
-              aria-label="Trò chuyện cùng Anum"
-              className="flex h-[min(560px,calc(100dvh-8.5rem))] w-[min(384px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-2xl shadow-black/20"
+              aria-label="Trò chuyện cùng Anums"
+              className="flex h-[min(640px,calc(100dvh-7rem))] w-[min(430px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-2xl shadow-black/25"
             >
-              {/* Header */}
-              <header className="flex items-center gap-3 border-b border-line px-4 py-3.5">
-                <div className="relative">
-                  <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-[#a4161a] via-[#7a0f18] to-[#4f060e] text-white">
-                    <Sparkles className="h-5 w-5" />
-                  </div>
-                  <span
-                    aria-hidden
-                    className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-surface bg-emerald-500"
-                  />
-                </div>
-                <div className="flex-1 leading-tight">
-                  <p className="text-sm font-bold text-ink">Anum</p>
-                  <p className="mt-0.5 text-[11px] text-muted">Trợ lý biên tập, luôn trực tuyến</p>
-                </div>
+              {/* Header tối giản: chỉ tên + nút đóng */}
+              <header className="flex items-center justify-between border-b border-line px-5 py-4">
+                <p className="font-serif text-lg font-bold tracking-tight text-ink">
+                  Anums<span className="text-accent">.</span>
+                </p>
                 <button
                   onClick={() => setOpen(false)}
                   aria-label="Đóng khung chat"
@@ -430,21 +440,21 @@ export default function Chatbot() {
                   <input
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Hỏi Anum bất cứ điều gì..."
-                    aria-label="Nhập tin nhắn cho Anum"
+                    placeholder="Hỏi Anums bất cứ điều gì..."
+                    aria-label="Nhập tin nhắn cho Anums"
                     className="min-w-0 flex-1 rounded-full border border-line bg-canvas px-4 py-2.5 text-[13px] text-ink placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent/40"
                   />
                   <button
                     type="submit"
                     disabled={!inputValue.trim() || typing}
                     aria-label="Gửi tin nhắn"
-                    className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#a4161a] via-[#7a0f18] to-[#4f060e] text-white shadow-md shadow-[#a4161a]/30 transition hover:opacity-90 disabled:opacity-40"
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#0f766e] via-[#134e4a] to-[#042f2e] text-white shadow-md shadow-[#0f766e]/30 transition hover:opacity-90 disabled:opacity-40"
                   >
-                    <SendHorizontal className="h-4 w-4" />
+                    <PaperPlaneRight className="h-4 w-4" weight="fill" />
                   </button>
                 </div>
                 <p className="mt-2 text-center text-[10px] text-faint">
-                  Anum có thể nhầm lẫn. Bạn hãy kiểm chứng lại thông tin quan trọng.
+                  Anums có thể nhầm lẫn. Bạn hãy kiểm chứng lại thông tin quan trọng.
                 </p>
               </form>
             </motion.section>
@@ -452,20 +462,21 @@ export default function Chatbot() {
         </AnimatePresence>
 
         {/* Launcher */}
+        {/* Launcher tinh tế: đĩa sáng viền mềm, sparkle màu vang */}
         <motion.button
           onClick={toggleOpen}
           initial={reduceMotion ? false : { opacity: 0, scale: 0.6 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ ...spring, delay: reduceMotion ? 0 : 0.8 }}
-          whileHover={reduceMotion ? undefined : { scale: 1.08 }}
+          whileHover={reduceMotion ? undefined : { scale: 1.06 }}
           whileTap={{ scale: 0.94 }}
-          aria-label={open ? 'Đóng khung chat Anum' : 'Mở khung chat Anum'}
-          className="relative grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-[#a4161a] via-[#7a0f18] to-[#4f060e] text-white shadow-xl shadow-[#a4161a]/35"
+          aria-label={open ? 'Đóng khung chat Anums' : 'Mở khung chat Anums'}
+          className="relative grid h-14 w-14 place-items-center rounded-full border border-line bg-surface text-accent shadow-[0_14px_36px_-12px_rgba(19,78,74,0.35)]"
         >
           {!open && !everOpened && (
             <span
               aria-hidden
-              className="animate-ping-ring absolute inset-0 rounded-full border-2 border-red-500"
+              className="animate-ping-ring absolute inset-0 rounded-full border-2 border-accent/50"
             />
           )}
           <AnimatePresence mode="wait" initial={false}>
@@ -477,13 +488,17 @@ export default function Chatbot() {
               transition={{ duration: 0.18 }}
               className="grid place-items-center"
             >
-              {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+              {open ? (
+                <X className="h-5 w-5" weight="bold" />
+              ) : (
+                <Sparkle className="h-6 w-6" weight="fill" />
+              )}
             </motion.span>
           </AnimatePresence>
           {!everOpened && !open && (
             <span
               aria-hidden
-              className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-accent text-[9px] font-bold text-accent-ink"
+              className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-accent text-[9px] font-bold text-accent-ink ring-2 ring-canvas"
             >
               1
             </span>

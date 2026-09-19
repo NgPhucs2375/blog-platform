@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'motion/react';
-import { Clock, Eye, Search } from 'lucide-react';
+import { ArrowRight, Clock, Eye, MagnifyingGlass } from '@phosphor-icons/react';
 import { postApi, PostItem, Category } from '@/services/postApi';
 import { chipStyle } from '@/lib/chipColors';
 
@@ -67,7 +67,7 @@ function CategoryPill({
         <motion.span
           layoutId="posts-cat-pill"
           transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-          className="absolute inset-0 rounded-full bg-gradient-to-r from-[#a4161a] via-[#7a0f18] to-[#4f060e] shadow-md shadow-[#a4161a]/30"
+          className="absolute inset-0 rounded-full bg-gradient-to-r from-[#0f766e] via-[#134e4a] to-[#042f2e] shadow-md shadow-[#0f766e]/30"
         />
       )}
       <span className="relative z-10">{children}</span>
@@ -78,14 +78,19 @@ function CategoryPill({
 function ArchiveCard({ post, category, catId }: { post: PostItem; category: string; catId?: number }) {
   return (
     <article className="group flex flex-col overflow-hidden rounded-3xl border border-line bg-surface transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
-      <Link href={`/posts/${post.id}`} className="block overflow-hidden" tabIndex={-1} aria-hidden>
+      <Link href={`/posts/${post.id}`} className="relative block overflow-hidden" tabIndex={-1} aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={coverOf(post)}
           alt=""
           loading="lazy"
-          className="aspect-[16/9] w-full object-cover saturate-[.85] transition duration-700 group-hover:scale-[1.04]"
+          className="aspect-[16/9] w-full object-cover transition duration-700 group-hover:scale-[1.04]"
         />
+        <span className="absolute inset-0 flex items-end bg-gradient-to-t from-[#042f2e]/70 via-transparent to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <span className="inline-flex translate-y-3 items-center gap-1.5 rounded-full bg-white px-4 py-2 text-[11px] font-bold text-accent shadow-md transition-transform duration-300 group-hover:translate-y-0">
+            Đọc ngay <ArrowRight className="h-3 w-3" />
+          </span>
+        </span>
       </Link>
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center justify-between text-[11px]">
@@ -166,7 +171,7 @@ export default function PostsPage() {
     <div className="relative isolate bg-canvas">
       {/* Blob gradient trôi phía sau nội dung */}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] overflow-hidden">
-        <div className="animate-float absolute -top-28 left-[12%] h-80 w-80 rounded-full bg-red-600/20 blur-[110px]" />
+        <div className="animate-float absolute -top-28 left-[12%] h-80 w-80 rounded-full bg-accent/20 blur-[110px]" />
         <div
           className="animate-float absolute top-10 right-[14%] h-72 w-72 rounded-full bg-orange-400/20 blur-[110px]"
           style={{ animationDelay: '2s' }}
@@ -187,7 +192,7 @@ export default function PostsPage() {
         {/* Thanh công cụ */}
         <div className="flex flex-col gap-4 border-b border-line py-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative w-full max-w-xl">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
+            <MagnifyingGlass className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
             <input
               type="text"
               value={searchQuery}

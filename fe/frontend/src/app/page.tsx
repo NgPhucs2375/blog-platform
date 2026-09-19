@@ -5,17 +5,20 @@ import Link from 'next/link';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   ArrowRight,
-  Calendar,
+  CaretLeft,
+  CaretRight,
   Clock,
   Eye,
   Flame,
   Newspaper,
-  PenLine,
-  Search,
-  Sparkles,
-} from 'lucide-react';
+  Pen,
+  MagnifyingGlass,
+  Sparkle,
+} from '@phosphor-icons/react';
 import { postApi, PostItem, Category } from '@/services/postApi';
 import { GRADIENT_BUTTON, GRADIENT_TEXT, chipStyle } from '@/lib/chipColors';
+import { EVENT_TICKETS, PROMO_BANNER } from '@/config/promotions';
+import { EventTicketList, PromoBanner } from '@/components/Promo';
 // Trang chủ tạp chí: masthead + marquee đọc nhiều, lead story sáng màu,
 // hero reveal từng dòng, blob gradient trôi, manifesto CTA.
 
@@ -93,7 +96,7 @@ function TrendingRow({ post, index }: { post: PostItem; index: number }) {
       <span
         className={`font-serif text-3xl font-extrabold leading-none transition group-hover:scale-110 ${
           index < 3
-            ? 'bg-gradient-to-b from-[#b3131c] to-[#5c0a14] bg-clip-text text-transparent dark:from-[#ff6b7d] dark:to-[#a4161a]'
+            ? 'bg-gradient-to-b from-[#0d9488] to-[#042f2e] bg-clip-text text-transparent dark:from-[#ff6b7d] dark:to-[#0f766e]'
             : 'text-faint'
         }`}
       >
@@ -122,7 +125,7 @@ function TrendingRow({ post, index }: { post: PostItem; index: number }) {
 function LatestCard({ post, category, catId }: { post: PostItem; category: string; catId?: number }) {
   return (
     <article className="group flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-[0_6px_30px_-14px_rgba(217,4,41,0.18)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_-14px_rgba(166,13,32,0.28)]">
-      <Link href={`/posts/${post.id}`} className="block overflow-hidden" tabIndex={-1} aria-hidden>
+      <Link href={`/posts/${post.id}`} className="relative block overflow-hidden" tabIndex={-1} aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={coverOf(post)}
@@ -130,6 +133,12 @@ function LatestCard({ post, category, catId }: { post: PostItem; category: strin
           loading="lazy"
           className="aspect-[16/9] w-full object-cover transition duration-700 group-hover:scale-[1.05]"
         />
+        {/* Preview nhẹ khi hover: scrim + nhãn đọc ngay trượt lên */}
+        <span className="absolute inset-0 flex items-end bg-gradient-to-t from-[#042f2e]/70 via-transparent to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <span className="inline-flex translate-y-3 items-center gap-1.5 rounded-full bg-white px-4 py-2 text-[11px] font-bold text-accent shadow-md transition-transform duration-300 group-hover:translate-y-0">
+            Đọc ngay <ArrowRight className="h-3 w-3" />
+          </span>
+        </span>
       </Link>
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center justify-between text-[11px]">
@@ -149,7 +158,7 @@ function LatestCard({ post, category, catId }: { post: PostItem; category: strin
           {(post as any).excerpt || post.content}
         </p>
         <p className="mt-4 flex items-center gap-2 border-t border-line pt-3 text-[11px] text-faint">
-          <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-[#a4161a] to-[#5c0a14] text-[9px] font-bold text-white">
+          <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-[#0f766e] to-[#042f2e] text-[9px] font-bold text-white">
             {((post as any).author_name || 'B').charAt(0).toUpperCase()}
           </span>
           {(post as any).author_name || 'Ban biên tập'}
@@ -170,20 +179,9 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [currentDate, setCurrentDate] = useState('');
   const reduce = useReducedMotion();
 
   useEffect(() => {
-    const now = new Date();
-    setCurrentDate(
-      new Intl.DateTimeFormat('vi-VN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }).format(now),
-    );
-
     async function fetchData() {
       try {
         setLoading(true);
@@ -225,129 +223,242 @@ export default function HomePage() {
     [posts],
   );
 
+  // Carousel hero: 5 ảnh từ các bài nổi bật, tự chuyển mỗi 5 giây (dừng khi hover)
+  const heroSlides = useMemo(() => {
+    const pool = trending.length >= 3 ? trending : posts.slice(0, 5);
+    return pool.slice(0, 5);
+  }, [trending, posts]);
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [slidePaused, setSlidePaused] = useState(false);
+  useEffect(() => {
+    // Tự chuyển chạy cả khi prefers-reduced-motion (chỉ hiệu ứng chuyển mới bị lược bỏ)
+    if (slidePaused || heroSlides.length < 2) return;
+    const timer = setInterval(
+      () => setSlideIndex((i) => (i + 1) % heroSlides.length),
+      5000,
+    );
+    return () => clearInterval(timer);
+  }, [slidePaused, heroSlides.length]);
+  const goSlide = (dir: 1 | -1) =>
+    setSlideIndex((i) => (i + dir + heroSlides.length) % heroSlides.length);
+
   const leadPost = filteredPosts[0] || null;
   const widePost = filteredPosts.length > 1 ? filteredPosts[1] : null;
   const gridPosts = filteredPosts.length > 2 ? filteredPosts.slice(2) : [];
 
-  const heroLines = [
-    <React.Fragment key="l1">Góc nhìn, tri thức và</React.Fragment>,
-    <React.Fragment key="l2">
-      <em className="italic text-accent">những câu chuyện</em>
-    </React.Fragment>,
-    <React.Fragment key="l3">
-      <span className={GRADIENT_TEXT}>truyền cảm hứng.</span>
-    </React.Fragment>,
-  ];
-
   return (
     <div className="relative isolate bg-canvas">
-      {/* Blob gradient trôi phía sau nội dung */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[760px] overflow-hidden">
-        <div className="animate-float absolute -top-32 left-[6%] h-96 w-96 rounded-full bg-red-600/20 blur-[110px]" />
+      {/* Blob gradient trôi phía sau nội dung — độ phủ nhẹ, tông vang */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[720px] overflow-hidden">
+        <div className="animate-float absolute -top-28 left-[8%] h-96 w-96 rounded-full bg-[#0d9488]/10 blur-[120px]" />
         <div
-          className="animate-float absolute top-16 right-[10%] h-80 w-80 rounded-full bg-rose-500/20 blur-[110px]"
-          style={{ animationDelay: '1.4s' }}
+          className="animate-float absolute top-16 right-[12%] h-80 w-80 rounded-full bg-[#115e59]/10 blur-[120px]"
+          style={{ animationDelay: '1.6s' }}
         />
         <div
-          className="animate-float absolute top-72 left-[40%] h-72 w-72 rounded-full bg-orange-400/20 blur-[110px]"
-          style={{ animationDelay: '2.8s' }}
+          className="animate-float absolute top-64 left-[42%] h-72 w-72 rounded-full bg-amber-200/50 blur-[120px]"
+          style={{ animationDelay: '3.2s' }}
         />
-      </div>
-
-      {/* Masthead: ngày phát hành + marquee đọc nhiều */}
-      <div className="border-b border-line bg-canvas/70 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-2.5 text-xs sm:px-6 lg:px-8">
-          <p className="flex shrink-0 items-center gap-2 capitalize text-muted">
-            <Calendar className="h-3.5 w-3.5" />
-            {currentDate || 'Hôm nay'}
-          </p>
-
-          {trending.length > 0 && (
-            <div className="hidden min-w-0 flex-1 items-center gap-4 sm:flex">
-              <span className="flex shrink-0 items-center gap-1.5 font-semibold text-accent">
-                <Flame className="h-3 w-3" /> Đọc nhiều
-              </span>
-              <div className="group relative min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]">
-                <div className="animate-marquee flex w-max items-center gap-10 group-hover:[animation-play-state:paused]">
-                  {[...trending, ...trending].map((p, i) => (
-                    <Link
-                      key={`${p.id}-${i}`}
-                      href={`/posts/${p.id}`}
-                      className="flex items-center gap-1.5 text-muted transition hover:text-ink"
-                    >
-                      <span className="max-w-[260px] truncate">{p.title}</span>
-                      <span className="flex items-center gap-1 text-[10px] text-faint">
-                        <Eye className="h-3 w-3" />
-                        {viewCountOf(p).toLocaleString('vi-VN')}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Khai đề tạp chí với hero reveal từng dòng */}
-        <header className="flex flex-col justify-between gap-8 border-b border-line pb-10 pt-12 sm:pt-16 md:flex-row md:items-end">
-          <div className="max-w-3xl">
-            <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-accent">
+        {/* Hero: khối chữ clean + một nút nhấn, cạnh composition ảnh phong cách */}
+        <header className="grid items-center gap-10 border-b border-line py-14 sm:py-16 lg:grid-cols-[0.88fr_1.12fr]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reduce ? 0 : 0.7, ease: EASE_OUT }}
+          >
+            <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-accent">
               <Newspaper className="h-3.5 w-3.5" /> Tạp chí điện tử và Diễn đàn mở
             </p>
-            <h1 className="mt-4 font-serif text-4xl font-bold leading-[1.12] tracking-tight text-ink sm:text-6xl lg:text-7xl">
-              {heroLines.map((line, i) => (
-                <span key={i} className="block overflow-hidden pb-1">
-                  <motion.span
-                    className="block"
-                    initial={{ y: '110%' }}
-                    animate={{ y: 0 }}
-                    transition={{
-                      duration: reduce ? 0 : 0.9,
-                      delay: reduce ? 0 : 0.15 + i * 0.13,
-                      ease: EASE_OUT,
-                    }}
-                  >
-                    {line}
-                  </motion.span>
-                </span>
-              ))}
+            <h1 className="mt-5 font-serif text-4xl font-bold leading-[1.15] tracking-tight text-ink sm:text-5xl lg:text-[3.5rem]">
+              Góc nhìn, tri thức và{' '}
+              <em className="italic text-accent">những câu chuyện</em> truyền cảm
+              hứng.
             </h1>
+            <p className="mt-5 max-w-lg text-sm leading-relaxed text-muted sm:text-base">
+              Không gian xuất bản mở cho người viết Việt: đọc những bài chọn lọc,
+              theo chân chuyên mục bạn thích và bắt đầu bản thảo đầu tiên của
+              riêng mình.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-5">
+              <motion.div
+                whileHover={reduce ? undefined : { y: -2 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <Link
+                  href="/posts"
+                  className={`inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold ${GRADIENT_BUTTON}`}
+                >
+                  Bắt đầu đọc <ArrowRight className="h-4 w-4" />
+                </Link>
+              </motion.div>
+              <Link
+                href="/dashboard"
+                className="text-sm font-semibold text-ink underline decoration-line decoration-2 underline-offset-4 transition hover:text-accent hover:decoration-accent"
+              >
+                Hoặc viết bài ngay
+              </Link>
+            </div>
+
+            <p className="mt-9 flex items-center text-xs text-faint">
+              <span>
+                <b className="font-bold text-ink">{posts.length}</b> bài viết
+              </span>
+              <span aria-hidden className="mx-4 h-3.5 w-px bg-line" />
+              <span>
+                <b className="font-bold text-ink">{categories.length}</b> chuyên
+                mục
+              </span>
+              <span aria-hidden className="mx-4 h-3.5 w-px bg-line" />
+              <span>Cập nhật liên tục</span>
+            </p>
+          </motion.div>
+
+          {/* Composition ảnh: carousel tự chuyển + mũi tên + lưới chấm */}
+          <div
+            className="group relative hidden h-[520px] lg:block"
+            onMouseEnter={() => setSlidePaused(true)}
+            onMouseLeave={() => setSlidePaused(false)}
+          >
+            <div
+              aria-hidden
+              className="absolute inset-4 rounded-[2.5rem] bg-[radial-gradient(circle_at_65%_35%,rgba(13,148,136,0.14),transparent_65%)]"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-x-4 bottom-2 top-20 rounded-[2rem] bg-[radial-gradient(circle,rgba(33,27,25,0.14)_1px,transparent_1px)] [background-size:20px_20px]"
+            />
+
+            {loading ? (
+              <div className="absolute inset-0 animate-pulse rounded-[2rem] bg-raised" />
+            ) : heroSlides.length > 0 ? (
+              <>
+                {/* Khung carousel chiếm toàn cột phải */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, rotate: 4 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 1.5 }}
+                  transition={{ duration: reduce ? 0 : 1, delay: reduce ? 0 : 0.25, ease: EASE_OUT }}
+                  whileHover={reduce ? undefined : { rotate: 0 }}
+                  className="absolute inset-0 overflow-hidden rounded-[2rem] border border-line bg-surface shadow-[0_36px_80px_-28px_rgba(19,78,74,0.45)]"
+                >
+                  {heroSlides.map((post, i) => (
+                    <motion.div
+                      key={post.id}
+                      initial={false}
+                      animate={{
+                        opacity: i === slideIndex ? 1 : 0,
+                        scale: i === slideIndex ? 1 : 1.08,
+                      }}
+                      transition={{
+                        opacity: { duration: reduce ? 0 : 0.8, ease: EASE_OUT },
+                        scale: { duration: reduce ? 0 : 7, ease: 'linear' },
+                      }}
+                      style={{ willChange: 'opacity, transform' }}
+                      className="absolute inset-0"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={coverOf(post, 1000, 750)}
+                        alt={post.title}
+                        loading={i === 0 ? 'eager' : 'lazy'}
+                        className="h-full w-full object-cover"
+                      />
+                    </motion.div>
+                  ))}
+
+                  {/* Scrim nhẹ cho chữ đọc được, không dùng đen tuyền */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#042f2e]/75 via-transparent to-transparent" />
+
+                  {/* Tên bài đang hiển thị */}
+                  <Link
+                    href={`/posts/${heroSlides[slideIndex].id}`}
+                    className="absolute inset-x-0 bottom-0 block p-6 sm:p-7"
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/70">
+                      {categoryName(
+                        Number(
+                          (heroSlides[slideIndex] as any).categoryId ||
+                            (heroSlides[slideIndex] as any).category_id,
+                        ),
+                      )}
+                    </p>
+                    <h2 className="mt-1.5 line-clamp-2 font-serif text-xl font-bold leading-snug text-white sm:text-2xl">
+                      {heroSlides[slideIndex].title}
+                    </h2>
+                  </Link>
+
+                  {/* Chỉ số slide + chấm chuyển */}
+                  <div className="absolute right-5 top-5 rounded-full border border-white/25 bg-white/10 px-3 py-1 font-mono text-[10px] font-bold text-white backdrop-blur-sm">
+                    {String(slideIndex + 1).padStart(2, '0')} /{' '}
+                    {String(heroSlides.length).padStart(2, '0')}
+                  </div>
+                  <div className="absolute bottom-5 right-5 flex items-center gap-1.5">
+                    {heroSlides.map((post, i) => (
+                      <button
+                        key={post.id}
+                        onClick={() => setSlideIndex(i)}
+                        aria-label={`Chuyển đến ảnh ${i + 1}`}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          i === slideIndex
+                            ? 'w-6 bg-white'
+                            : 'w-1.5 bg-white/50 hover:bg-white/80'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Mũi tên trước / sau — hiện khi hover khung ảnh */}
+                  <button
+                    onClick={() => goSlide(-1)}
+                    aria-label="Ảnh trước"
+                    className="absolute left-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-white/15 text-white opacity-0 backdrop-blur-md transition hover:bg-white/30 group-hover:opacity-100"
+                  >
+                    <CaretLeft className="h-5 w-5" weight="bold" />
+                  </button>
+                  <button
+                    onClick={() => goSlide(1)}
+                    aria-label="Ảnh kế tiếp"
+                    className="absolute right-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-white/15 text-white opacity-0 backdrop-blur-md transition hover:bg-white/30 group-hover:opacity-100"
+                  >
+                    <CaretRight className="h-5 w-5" weight="bold" />
+                  </button>
+                </motion.div>
+              </>
+            ) : null}
+          </div>
+        </header>
+
+        {/* Ticker chuyên mục + ô tìm kiếm gọn */}
+        <div className="relative flex items-center justify-between gap-6 border-b border-line py-3">
+          <div className="scroll-slim flex min-w-0 items-center gap-1.5 overflow-x-auto">
+            <CategoryPill active={selectedCategory === 'all'} onClick={() => setSelectedCategory('all')}>
+              Tất cả chủ đề
+            </CategoryPill>
+            {categories.map((cat) => (
+              <CategoryPill
+                key={cat.id}
+                active={selectedCategory === String(cat.id)}
+                onClick={() => setSelectedCategory(String(cat.id))}
+              >
+                {cat.name}
+              </CategoryPill>
+            ))}
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduce ? 0 : 0.7, delay: reduce ? 0 : 0.6, ease: EASE_OUT }}
-            className="relative w-full md:w-96 md:shrink-0"
-          >
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
+          <div className="relative hidden w-64 shrink-0 md:block">
+            <MagnifyingGlass className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm bài viết..."
+              placeholder="Tìm bài viết..."
               aria-label="Tìm kiếm bài viết"
-              className="w-full rounded-full border border-line bg-surface py-3 pl-11 pr-4 text-sm text-ink shadow-sm placeholder:text-faint transition focus:outline-none focus:ring-2 focus:ring-accent/40"
+              className="w-full rounded-full border border-line bg-surface py-2 pl-10 pr-4 text-xs text-ink shadow-sm placeholder:text-faint transition focus:outline-none focus:ring-2 focus:ring-accent/40"
             />
-          </motion.div>
-        </header>
-
-        {/* Ticker chuyên mục */}
-        <div className="scroll-slim relative flex items-center gap-1.5 overflow-x-auto border-b border-line py-3">
-          <CategoryPill active={selectedCategory === 'all'} onClick={() => setSelectedCategory('all')}>
-            Tất cả chủ đề
-          </CategoryPill>
-          {categories.map((cat) => (
-            <CategoryPill
-              key={cat.id}
-              active={selectedCategory === String(cat.id)}
-              onClick={() => setSelectedCategory(String(cat.id))}
-            >
-              {cat.name}
-            </CategoryPill>
-          ))}
+          </div>
         </div>
 
         {/* Số báo chính: lead story sáng màu + bảng đọc nhiều */}
@@ -412,7 +523,7 @@ export default function HomePage() {
                     </p>
                     <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-xs">
                       <span className="flex items-center gap-2.5">
-                        <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-[#a4161a] to-[#5c0a14] text-[11px] font-bold text-white">
+                        <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-[#0f766e] to-[#042f2e] text-[11px] font-bold text-white">
                           {((leadPost as any).author_name || 'B').charAt(0).toUpperCase()}
                         </span>
                         <span className="font-semibold text-ink">
@@ -454,7 +565,7 @@ export default function HomePage() {
 
         {/* Dòng bài viết mới */}
         {!loading && filteredPosts.length > 1 && (
-          <section className="border-t border-line py-12">
+          <section id="home-feed" className="scroll-mt-24 border-t border-line py-12">
             <div className="flex items-end justify-between gap-4">
               <h2 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
                 Bản tin mới nhất
@@ -499,7 +610,7 @@ export default function HomePage() {
                       {(widePost as any).excerpt || widePost.content}
                     </p>
                     <p className="mt-5 flex items-center gap-2 text-[11px] text-faint">
-                      <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-[#a4161a] to-[#5c0a14] text-[10px] font-bold text-white">
+                      <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-[#0f766e] to-[#042f2e] text-[10px] font-bold text-white">
                         {((widePost as any).author_name || 'B').charAt(0).toUpperCase()}
                       </span>
                       {(widePost as any).author_name || 'Ban biên tập'}
@@ -528,10 +639,27 @@ export default function HomePage() {
           </section>
         )}
 
+        {/* Banner quảng cáo + vé sự kiện: đổi nội dung trong src/config/promotions.ts */}
+        {!loading && (
+          <section id="home-events" className="scroll-mt-24 border-t border-line py-12">
+            <PromoBanner data={PROMO_BANNER} />
+
+            <div className="mt-10 flex items-end justify-between gap-4">
+              <h2 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
+                Sự kiện & Workshop
+              </h2>
+              <p className="text-xs text-muted">Vé miễn phí cho thành viên</p>
+            </div>
+            <div className="mt-6">
+              <EventTicketList tickets={EVENT_TICKETS} />
+            </div>
+          </section>
+        )}
+
         {/* Manifesto */}
         <section className="border-t border-line py-20 text-center sm:py-24">
           <Reveal>
-            <Sparkles className="mx-auto h-6 w-6 text-fuchsia-500" />
+            <Sparkle className="mx-auto h-6 w-6 text-fuchsia-500" />
             <p className="mx-auto mt-5 max-w-3xl font-serif text-3xl font-bold leading-snug tracking-tight text-ink sm:text-5xl sm:leading-tight">
               Mỗi câu chuyện đều xứng đáng được{' '}
               <span className={GRADIENT_TEXT}>kể đúng cách</span>.
@@ -546,7 +674,7 @@ export default function HomePage() {
                   href="/dashboard"
                   className={`inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-bold ${GRADIENT_BUTTON}`}
                 >
-                  <PenLine className="h-4 w-4" /> Bắt đầu viết bài
+                  <Pen className="h-4 w-4" /> Bắt đầu viết bài
                 </Link>
               </motion.div>
               <motion.div whileHover={reduce ? undefined : { y: -2 }} whileTap={{ scale: 0.97 }}>

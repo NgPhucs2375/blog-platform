@@ -112,7 +112,7 @@ export default function EditPostPage() {
   if (loading) {
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 bg-zinc-50 dark:bg-[#06080e] text-zinc-500 dark:text-zinc-400 transition-colors">
-        <Loader2 className="h-8 w-8 animate-spin text-red-700 dark:text-red-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-accent dark:text-rose-600" />
         <p className="text-xs font-medium">Đang tải bản thảo bài viết...</p>
       </div>
     );
@@ -152,7 +152,7 @@ export default function EditPostPage() {
               onClick={() => setPreviewMode(!previewMode)}
               className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition ${
                 previewMode
-                  ? 'border-red-600 bg-red-50 text-red-700 dark:bg-red-600/20 dark:text-red-300'
+                  ? 'border-rose-800 bg-red-50 text-accent dark:bg-accent/20 dark:text-red-300'
                   : 'border-zinc-200 bg-white text-zinc-700 shadow-sm hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300'
               }`}
             >
@@ -174,7 +174,7 @@ export default function EditPostPage() {
               type="button"
               disabled={submitting}
               onClick={() => handleUpdate('published')}
-              className="inline-flex items-center gap-2 rounded-xl bg-red-700 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-red-700/25 hover:bg-red-600 active:scale-95 disabled:opacity-50 transition"
+              className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2 text-xs font-bold text-white shadow-lg shadow-accent/25 hover:bg-accent-hover active:scale-95 disabled:opacity-50 transition"
             >
               {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
               <span>Xuất bản</span>
@@ -191,7 +191,7 @@ export default function EditPostPage() {
         )}
 
         {error && (
-          <div className="flex items-center gap-2 rounded-2xl border border-rose-500/30 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-800 dark:bg-rose-500/10 dark:text-rose-300 animate-in fade-in">
+          <div className="flex items-center gap-2 rounded-2xl border border-rose-500/30 bg-rose-50 px-4 py-3 text-xs font-medium text-accent dark:bg-rose-500/10 dark:text-rose-300 animate-in fade-in">
             <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
             <span>{error}</span>
           </div>
@@ -200,7 +200,7 @@ export default function EditPostPage() {
         {/* Form Chỉnh sửa hoặc Preview */}
         {previewMode ? (
           <div className="rounded-3xl border border-zinc-200/80 bg-white p-8 sm:p-12 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/80 space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-md bg-red-50 dark:bg-red-600/10 px-2.5 py-1 text-xs font-bold text-red-700 dark:text-red-400 uppercase">
+            <div className="inline-flex items-center gap-2 rounded-md bg-red-50 dark:bg-accent/10 px-2.5 py-1 text-xs font-bold text-accent dark:text-rose-600 uppercase">
               {categories.find((c) => c.id === categoryId)?.name || 'Chuyên mục'}
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold font-serif text-zinc-950 dark:text-white">
@@ -229,7 +229,7 @@ export default function EditPostPage() {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Nhập tiêu đề bài viết..."
                 required
-                className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
               />
             </div>
 
@@ -244,7 +244,7 @@ export default function EditPostPage() {
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   placeholder="tieu-de-bai-viet"
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
                 />
               </div>
 
@@ -255,7 +255,7 @@ export default function EditPostPage() {
                 <select
                   value={categoryId}
                   onChange={(e) => setCategoryId(Number(e.target.value))}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 focus:border-red-600 focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-white transition"
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-white transition"
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -276,7 +276,7 @@ export default function EditPostPage() {
                 value={excerpt}
                 onChange={(e) => setExcerpt(e.target.value)}
                 placeholder="Mô tả tóm tắt nội dung bài viết trong 1-2 câu..."
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
               />
             </div>
 
@@ -292,7 +292,7 @@ export default function EditPostPage() {
                   value={coverImage}
                   onChange={(e) => setCoverImage(e.target.value)}
                   placeholder="https://images.unsplash.com/..."
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
                 />
               </div>
             </div>
@@ -308,7 +308,7 @@ export default function EditPostPage() {
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Nhập nội dung bài viết đầy đủ tại đây..."
                 required
-                className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition leading-relaxed font-mono"
+                className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition leading-relaxed font-mono"
               />
             </div>
 

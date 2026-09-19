@@ -57,7 +57,7 @@ export default function ThemeToggle() {
                 }}
                 className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition ${
                   isSelected
-                    ? 'bg-red-700/15 text-red-400'
+                    ? 'bg-accent/15 text-rose-600'
                     : 'text-zinc-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
@@ -65,7 +65,7 @@ export default function ThemeToggle() {
                   <Icon className="h-3.5 w-3.5" />
                   <span>{opt.label}</span>
                 </div>
-                {isSelected && <Check className="h-3.5 w-3.5 text-red-400" />}
+                {isSelected && <Check className="h-3.5 w-3.5 text-rose-600" />}
               </button>
             );
           })}

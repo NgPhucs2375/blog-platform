@@ -141,7 +141,7 @@ export default function CreatePostPage() {
                 type="button"
                 disabled={submitting}
                 onClick={() => handleSave('published')}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-red-700 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-red-700/20 hover:bg-red-600 transition disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-accent/20 hover:bg-accent-hover transition disabled:opacity-50"
               >
                 <Send className="h-3.5 w-3.5" />
                 Xuất bản
@@ -167,7 +167,7 @@ export default function CreatePostPage() {
                   value={title}
                   onChange={(e) => handleTitleChange(e.target.value)}
                   placeholder="Ví dụ: Thiết kế hệ thống chịu tải cao với Redis và RabbitMQ"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-lg font-bold text-white outline-none focus:border-red-600 transition placeholder-slate-600"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-lg font-bold text-white outline-none focus:border-accent transition placeholder-slate-600"
                 />
               </div>
 
@@ -181,7 +181,7 @@ export default function CreatePostPage() {
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
                     placeholder="duong-dan-bai-viet"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-300 outline-none focus:border-red-600 transition"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-300 outline-none focus:border-accent transition"
                   />
                 </div>
 
@@ -192,7 +192,7 @@ export default function CreatePostPage() {
                   <select
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-200 outline-none focus:border-red-600 transition"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-200 outline-none focus:border-accent transition"
                   >
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -212,7 +212,7 @@ export default function CreatePostPage() {
                   value={excerpt}
                   onChange={(e) => setExcerpt(e.target.value)}
                   placeholder="Mô tả tóm tắt nội dung bài viết trong 1-2 câu..."
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-xs text-slate-300 outline-none focus:border-red-600 transition resize-none placeholder-slate-600"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-xs text-slate-300 outline-none focus:border-accent transition resize-none placeholder-slate-600"
                 />
               </div>
 
@@ -225,7 +225,7 @@ export default function CreatePostPage() {
                   value={featuredImage}
                   onChange={(e) => setFeaturedImage(e.target.value)}
                   placeholder="https://images.unsplash.com/..."
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-300 outline-none focus:border-red-600 transition placeholder-slate-600"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-300 outline-none focus:border-accent transition placeholder-slate-600"
                 />
               </div>
 
@@ -238,7 +238,7 @@ export default function CreatePostPage() {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Bắt đầu viết nội dung bài viết..."
-                  className="w-full font-mono rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-200 outline-none focus:border-red-600 transition leading-relaxed placeholder-slate-600"
+                  className="w-full font-mono rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-200 outline-none focus:border-accent transition leading-relaxed placeholder-slate-600"
                 />
               </div>
             </div>
@@ -260,7 +260,7 @@ export default function CreatePostPage() {
                   {title || 'Tiêu đề bài viết chưa nhập'}
                 </h1>
                 {excerpt && (
-                  <p className="text-sm italic text-slate-400 border-l-2 border-red-600 pl-4 py-1">
+                  <p className="text-sm italic text-slate-400 border-l-2 border-rose-800 pl-4 py-1">
                     {excerpt}
                   </p>
                 )}

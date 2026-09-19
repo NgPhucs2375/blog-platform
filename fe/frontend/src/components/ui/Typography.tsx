@@ -82,7 +82,7 @@ const TEXT_VARIANTS = {
   muted: "text-sm text-zinc-400 leading-relaxed",
   small: "text-sm text-zinc-300",
   caption: "text-xs uppercase tracking-wider text-zinc-400",
-  error: "text-xs text-red-400",
+  error: "text-xs text-rose-600",
 } as const;
 
 export function Text({

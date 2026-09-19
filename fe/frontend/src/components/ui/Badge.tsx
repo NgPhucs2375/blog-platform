@@ -10,7 +10,7 @@ const badgeVariants = cva(
         default: "border-white/10 bg-white/5 text-zinc-400",
         solid: "border-white bg-white text-black",
         outline: "border-white/25 bg-transparent text-zinc-100",
-        red: "border-red-600/25 bg-red-600/10 text-red-400",
+        red: "border-rose-800/25 bg-accent/10 text-rose-600",
       },
     },
     defaultVariants: { variant: "default" },
@@ -39,7 +39,7 @@ export function StatusDot({
   const tones = {
     white: "bg-white",
     zinc: "bg-zinc-500",
-    red: "bg-red-400",
+    red: "bg-rose-600",
   } as const;
   return (
     <span

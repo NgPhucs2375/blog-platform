@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Feather, Eye, EyeOff, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
+import { ArrowRight, Eye, EyeSlash, Feather, WarningCircle, CircleNotch } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
+import SocialAuthButtons from '@/components/SocialAuthButtons';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -58,11 +59,11 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md space-y-8 rounded-3xl border border-zinc-200/80 bg-white p-8 shadow-xl dark:border-white/[0.08] dark:bg-[#0c121e]/80 dark:shadow-2xl backdrop-blur-xl transition-colors">
+      <div className="w-full max-w-md space-y-8">
         
         {/* Header Form */}
         <div className="text-center space-y-3">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 border border-red-200/60 text-red-700 dark:bg-red-600/15 dark:border-red-600/30 dark:text-red-400 shadow-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 border border-red-200/60 text-accent dark:bg-accent/15 dark:border-accent/30 dark:text-rose-600 shadow-sm">
             <Feather className="h-6 w-6" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
@@ -76,7 +77,7 @@ export default function RegisterPage() {
         {/* Thông báo lỗi */}
         {errorMessage && (
           <div className="flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 animate-in fade-in duration-200">
-            <AlertCircle className="h-4 w-4 shrink-0" />
+            <WarningCircle className="h-4 w-4 shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
@@ -96,7 +97,7 @@ export default function RegisterPage() {
               minLength={3}
               maxLength={50}
               autoComplete="username"
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
+              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
             />
           </div>
 
@@ -111,7 +112,7 @@ export default function RegisterPage() {
               placeholder="you@example.com"
               required
               autoComplete="email"
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
+              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
             />
           </div>
 
@@ -128,7 +129,7 @@ export default function RegisterPage() {
                 required
                 minLength={8}
                 autoComplete="new-password"
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-4 pr-10 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-4 pr-10 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
               />
               <button
                 type="button"
@@ -136,7 +137,7 @@ export default function RegisterPage() {
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition"
                 tabIndex={-1}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? <EyeSlash className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
@@ -153,7 +154,7 @@ export default function RegisterPage() {
                 placeholder="Nhập lại mật khẩu"
                 required
                 autoComplete="new-password"
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-4 pr-10 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-4 pr-10 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
               />
               <button
                 type="button"
@@ -161,7 +162,7 @@ export default function RegisterPage() {
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition"
                 tabIndex={-1}
               >
-                {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showConfirm ? <EyeSlash className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
@@ -169,19 +170,22 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-red-700 py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-red-700/25 hover:bg-red-600 active:scale-[0.99] disabled:opacity-50 transition"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-accent py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-accent/25 hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50 transition"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {loading ? <CircleNotch className="h-4 w-4 animate-spin" /> : null}
             <span>Đăng ký</span>
           </button>
         </form>
+
+        {/* Đăng nhập bằng nhà cung cấp ngoài */}
+        <SocialAuthButtons />
 
         {/* Chân trang chuyển hướng */}
         <div className="text-center text-xs text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-100 dark:border-white/[0.06]">
           Đã có tài khoản?{' '}
           <Link
             href="/login"
-            className="font-semibold text-red-700 dark:text-red-400 hover:underline inline-flex items-center gap-0.5"
+            className="font-semibold text-accent dark:text-rose-600 hover:underline inline-flex items-center gap-0.5"
           >
             Đăng nhập <ArrowRight className="h-3 w-3 inline" />
           </Link>

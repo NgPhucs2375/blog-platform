@@ -1,4 +1,6 @@
-import { LoaderCircle } from "lucide-react";
+'use client';
+
+import { CircleNotch } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Text } from "@/components/ui/Typography";
@@ -16,7 +18,7 @@ export function Spinner({
   className?: string;
 }) {
   const sizes = { sm: "h-4 w-4", md: "h-6 w-6", lg: "h-10 w-10" } as const;
-  return <LoaderCircle aria-hidden className={cn("animate-spin", sizes[size], className)} />;
+  return <CircleNotch aria-hidden className={cn("animate-spin", sizes[size], className)} />;
 }
 
 export function LoadingState({ message = "Đang tải..." }: { message?: string }) {

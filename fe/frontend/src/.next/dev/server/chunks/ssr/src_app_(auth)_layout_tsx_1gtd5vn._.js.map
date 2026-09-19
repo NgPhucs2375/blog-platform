@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///D:/Univer/Nam_4/HKI/OpenSRC/blog-platform/fe/frontend/src/app/(auth)/layout.tsx"],"sourcesContent":["import type { ReactNode } from \"react\";\nimport { AuthShell } from \"@/components/ui\";\n\nexport default function AuthLayout({ children }: { children: ReactNode }) {\n  return <AuthShell>{children}</AuthShell>;\n}\n"],"names":["AuthLayout","children","AuthShell"],"mappings":";;;;;;;;;;;;AAGe,SAASA,WAAW,EAAEC,QAAQ,EAA2B;IACtE,qBAAO,8OAACC;kBAAWD;;;;;;AACrB"}}]
+}

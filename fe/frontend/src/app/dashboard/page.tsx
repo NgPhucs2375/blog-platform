@@ -251,7 +251,7 @@ export default function DashboardPage() {
               Bảng điều khiển tác giả
             </h1>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Xin chào, <span suppressHydrationWarning className="font-semibold text-red-700 dark:text-red-400">{username}</span>. Theo dõi chỉ số và quản lý ấn phẩm của bạn.
+              Xin chào, <span suppressHydrationWarning className="font-semibold text-accent dark:text-rose-600">{username}</span>. Theo dõi chỉ số và quản lý ấn phẩm của bạn.
             </p>
           </div>
 
@@ -266,7 +266,7 @@ export default function DashboardPage() {
 
             <button
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-red-700 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-red-700/25 hover:bg-red-600 active:scale-95 transition"
+              className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-accent/25 hover:bg-accent-hover active:scale-95 transition"
             >
               <Plus className="h-4 w-4" />
               Soạn bài mới
@@ -292,7 +292,7 @@ export default function DashboardPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 TỔNG BÀI VIẾT
               </span>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 dark:bg-red-600/10 text-red-700 dark:text-red-400">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 dark:bg-accent/10 text-accent dark:text-rose-600">
                 <FileText className="h-4 w-4" />
               </div>
             </div>
@@ -385,7 +385,7 @@ export default function DashboardPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm tiêu đề bài viết..."
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-10 pr-4 py-2 text-xs text-zinc-900 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-10 pr-4 py-2 text-xs text-zinc-900 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
             />
           </div>
         </div>
@@ -394,7 +394,7 @@ export default function DashboardPage() {
         <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm dark:border-white/[0.08] dark:bg-white/[0.02]">
           {loading ? (
             <div className="flex min-h-[30vh] flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
-              <Loader2 className="h-7 w-7 animate-spin text-red-700 dark:text-red-400" />
+              <Loader2 className="h-7 w-7 animate-spin text-accent dark:text-rose-600" />
               <p className="text-xs">Đang nạp danh sách bài viết...</p>
             </div>
           ) : filteredPosts.length === 0 ? (
@@ -431,7 +431,7 @@ export default function DashboardPage() {
                         <td className="py-4 px-6 max-w-md">
                           <Link
                             href={`/posts/${post.id}`}
-                            className="font-bold text-zinc-950 dark:text-white hover:text-red-700 dark:hover:text-red-400 line-clamp-1 transition"
+                            className="font-bold text-zinc-950 dark:text-white hover:text-accent dark:hover:text-rose-600 line-clamp-1 transition"
                             title={post.title}
                           >
                             {post.title || 'Chưa đặt tiêu đề'}
@@ -496,7 +496,7 @@ export default function DashboardPage() {
 
                             <Link
                               href={`/dashboard/posts/edit/${post.id}`}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-600/10 dark:hover:text-red-400 transition"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-50 hover:text-accent dark:hover:bg-accent-hover/10 dark:hover:text-rose-600 transition"
                               title="Chỉnh sửa"
                             >
                               <Edit3 className="h-4 w-4" />
@@ -528,7 +528,7 @@ export default function DashboardPage() {
           <div className="w-full max-w-2xl rounded-3xl border border-zinc-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-white/10 dark:bg-[#0c101a] text-zinc-900 dark:text-white my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-4">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-700/10 text-red-700 dark:bg-red-600/20 dark:text-red-400">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10 text-accent dark:bg-accent/20 dark:text-rose-600">
                   <PenSquare className="h-4 w-4" />
                 </div>
                 <h3 className="text-base font-bold">Soạn thảo ấn phẩm mới</h3>
@@ -558,7 +558,7 @@ export default function DashboardPage() {
                   value={newTitle}
                   onChange={(e) => handleTitleChange(e.target.value)}
                   placeholder="Nhập tiêu đề truyền cảm hứng..."
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
                   required
                 />
               </div>
@@ -573,7 +573,7 @@ export default function DashboardPage() {
                     value={newSlug}
                     onChange={(e) => setNewSlug(e.target.value)}
                     placeholder="tieu-de-bai-viet-xxxx"
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
                   />
                 </div>
 
@@ -584,7 +584,7 @@ export default function DashboardPage() {
                   <select
                     value={newCategoryId ?? ''}
                     onChange={(e) => setNewCategoryId(Number(e.target.value))}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 focus:border-red-600 focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-white transition"
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-white transition"
                   >
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
@@ -604,7 +604,7 @@ export default function DashboardPage() {
                   value={newExcerpt}
                   onChange={(e) => setNewExcerpt(e.target.value)}
                   placeholder="Mô tả tóm tắt nội dung bài viết..."
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
                 />
               </div>
 
@@ -619,7 +619,7 @@ export default function DashboardPage() {
                     value={newCoverImage}
                     onChange={(e) => setNewCoverImage(e.target.value)}
                     placeholder="https://images.unsplash.com/..."
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
                   />
                 </div>
               </div>
@@ -633,7 +633,7 @@ export default function DashboardPage() {
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                   placeholder="Chia sẻ nội dung hoặc câu chuyện của bạn..."
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:focus:bg-white/[0.08] dark:text-white dark:placeholder-zinc-500 transition leading-relaxed"
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:focus:bg-white/[0.08] dark:text-white dark:placeholder-zinc-500 transition leading-relaxed"
                   required
                 />
               </div>
@@ -650,7 +650,7 @@ export default function DashboardPage() {
                       value="published"
                       checked={newStatus === 'published'}
                       onChange={() => setNewStatus('published')}
-                      className="text-red-700 focus:ring-red-600"
+                      className="text-accent focus:ring-rose-800"
                     />
                     Xuất bản ngay lập tức
                   </label>
@@ -661,7 +661,7 @@ export default function DashboardPage() {
                       value="draft"
                       checked={newStatus === 'draft'}
                       onChange={() => setNewStatus('draft')}
-                      className="text-red-700 focus:ring-red-600"
+                      className="text-accent focus:ring-rose-800"
                     />
                     Lưu bản nháp
                   </label>
@@ -679,7 +679,7 @@ export default function DashboardPage() {
                 <button
                   type="submit"
                   disabled={creating}
-                  className="inline-flex items-center gap-2 rounded-xl bg-red-700 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-red-700/25 hover:bg-red-600 active:scale-95 disabled:opacity-50 transition"
+                  className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-accent/25 hover:bg-accent-hover active:scale-95 disabled:opacity-50 transition"
                 >
                   {creating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {newStatus === 'published' ? 'Đăng bài viết' : 'Lưu bản nháp'}

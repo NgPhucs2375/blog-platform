@@ -5,8 +5,9 @@ import { usePathname } from 'next/navigation';
 import Footer from '@/components/Footer';
 import Chatbot from '@/components/Chatbot';
 
-// Chrome dành cho khu vực công khai (trang đọc + auth).
-// Dashboard và các trang admin không dính Footer/Chatbot.
+// Chrome dành cho khu vực công khai (trang đọc).
+// Auth (login/register) là trang tối giản: không Footer/Chatbot.
+// Dashboard và các trang admin dùng AdminShell riêng, cũng không dính.
 
 const EXCLUDED_PREFIXES = [
   '/dashboard',
@@ -14,6 +15,8 @@ const EXCLUDED_PREFIXES = [
   '/categories',
   '/reports',
   '/moderation-rules',
+  '/login',
+  '/register',
 ];
 
 export default function SiteChrome() {

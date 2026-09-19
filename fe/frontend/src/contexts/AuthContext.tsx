@@ -11,6 +11,7 @@ import {
 import { authApi } from "@/services/authApi";
 import { tokenStorage, type StoredSession } from "@/services/tokenStorage";
 import type { User, LoginRequest, RegisterRequest } from "@/types/auth";
+import type { SocialProvider } from "@/services/authApi";
 
 interface AuthContextType {
   user: User | null;
@@ -19,6 +20,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (data: LoginRequest) => Promise<User>;
+  loginWithProvider: (provider: SocialProvider) => Promise<User>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -36,6 +38,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (data: LoginRequest) => {
     const res = await authApi.login(data);
+    tokenStorage.save(res.access_token, res.refresh_token, res.user);
+    setToken(res.access_token);
+    setUser(res.user);
+    return res.user;
+  }, []);
+
+  // Đăng nhập qua Google/GitHub: BE trả AuthResponse giống login thường.
+  // Khi BE chưa hiện thực endpoint OAuth, lỗi 404 sẽ ném lên UI hiển thị.
+  const loginWithProvider = useCallback(async (provider: SocialProvider) => {
+    const res = await authApi.socialLogin(provider);
     tokenStorage.save(res.access_token, res.refresh_token, res.user);
     setToken(res.access_token);
     setUser(res.user);
@@ -68,10 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: !!token && !!user,
       isLoading,
       login,
+      loginWithProvider,
       register,
       logout,
     }),
-    [user, token, isLoading, login, register, logout]
+    [user, token, isLoading, login, loginWithProvider, register, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

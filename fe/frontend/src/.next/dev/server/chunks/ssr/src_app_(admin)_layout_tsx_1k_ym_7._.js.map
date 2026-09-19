@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///D:/Univer/Nam_4/HKI/OpenSRC/blog-platform/fe/frontend/src/app/(admin)/layout.tsx"],"sourcesContent":["import type { ReactNode } from \"react\";\nimport AdminShell from \"@/components/layout/AdminShell\";\n\n// Khu quản trị dùng shell riêng (sidebar + topbar + tabs),\n// tách biệt hoàn toàn với header/footer của khu công khai.\nexport default function AdminLayout({ children }: { children: ReactNode }) {\n  return <AdminShell>{children}</AdminShell>;\n}\n"],"names":["AdminLayout","children","AdminShell"],"mappings":";;;;;;;;;;;;AAKe,SAASA,YAAY,EAAEC,QAAQ,EAA2B;IACvE,qBAAO,8OAACC;kBAAYD;;;;;;AACtB"}}]
+}

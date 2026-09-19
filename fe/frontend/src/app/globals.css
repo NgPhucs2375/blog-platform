@@ -24,19 +24,19 @@
   --accent-ink: #ffffff;
   */
 
-  /* ===== PALETTE: Royal Crimson - tông trầm (đang test) ===== */
-  --canvas: #fdf7f7;
+  /* ===== PALETTE: Deep Teal (đang test) — đề xuất thay đỏ vang ===== */
+  --canvas: #f6f8f8;
   --surface: #ffffff;
-  --raised: #f8eded;
-  --line: #eddfe0;
-  --ink: #1c1114;
-  --muted: #5f5054;
-  --faint: #a29297;
-  --accent: #a4161a;
-  --accent-2: #6b0a12;
-  --accent-3: #3d030b;
-  --accent-hover: #8b1015;
-  --accent-soft: #f9e9e9;
+  --raised: #eef2f1;
+  --line: #dfe6e4;
+  --ink: #13201d;
+  --muted: #4c5c58;
+  --faint: #8fa09b;
+  --accent: #0f766e;
+  --accent-2: #115e59;
+  --accent-3: #042f2e;
+  --accent-hover: #0d6459;
+  --accent-soft: #e4f2ef;
   --accent-ink: #ffffff;
 }
 
@@ -57,20 +57,20 @@
   --accent-ink: #0b1020;
   */
 
-  /* ===== PALETTE: Royal Crimson (đang test) ===== */
-  --canvas: #150a0d;
-  --surface: #231017;
-  --raised: #2d151d;
+  /* ===== PALETTE: Deep Teal (đang test) ===== */
+  --canvas: #0d1614;
+  --surface: #152220;
+  --raised: #1c2c29;
   --line: rgba(255, 255, 255, 0.09);
-  --ink: #fff2f3;
-  --muted: #c4a9ae;
-  --faint: #8a7076;
-  --accent: #f24d60;
-  --accent-2: #ff6b7d;
-  --accent-3: #a4161a;
-  --accent-hover: #ff7285;
-  --accent-soft: rgba(242, 77, 96, 0.16);
-  --accent-ink: #1c0508;
+  --ink: #eff7f5;
+  --muted: #a9bfb9;
+  --faint: #718680;
+  --accent: #2cc7b4;
+  --accent-2: #5eead4;
+  --accent-3: #0f766e;
+  --accent-hover: #5eead4;
+  --accent-soft: rgba(44, 199, 180, 0.15);
+  --accent-ink: #04211d;
 }
 
 @theme inline {
@@ -87,7 +87,8 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
   --color-accent-ink: var(--accent-ink);
-  --font-serif: var(--font-lora), "Times New Roman", Times, serif;
+  --font-sans: var(--font-bevietnam), "Be Vietnam Pro", Arial, Helvetica, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
   --animate-marquee: marquee 40s linear infinite;
   --animate-typing: typing 1.2s ease-in-out infinite;
   --animate-float: float 8s ease-in-out infinite;
@@ -117,8 +118,15 @@
 body {
   background-color: var(--canvas);
   color: var(--ink);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-bevietnam), "Be Vietnam Pro", Arial, Helvetica, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Cuộn mượt khi bấm anchor (Tin mới / Sự kiện trên navbar) */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 ::selection {
@@ -131,14 +139,14 @@ body {
 .dark input:not([type="checkbox"]):not([type="radio"]):focus,
 .dark textarea:focus,
 .dark select:focus {
-  background-color: #171b26 !important;
-  color: #f8fafc !important;
+  background-color: #261a1c !important;
+  color: #fdf4f4 !important;
 }
 
 /* Option native kế thừa text trắng từ select nên cần nền tối tương phản. */
 .dark select option {
-  background-color: #171b26;
-  color: #f8fafc;
+  background-color: #261a1c;
+  color: #fdf4f4;
 }
 
 /* Scrollbar mảnh cho khu vực cuộn nội bộ (khung chat, ticker). */

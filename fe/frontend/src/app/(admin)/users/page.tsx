@@ -218,7 +218,7 @@ export default function UsersPage() {
         {/* Header Quản trị */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 dark:border-white/[0.08] pb-6">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-red-600/20 bg-red-50 dark:border-red-600/30 dark:bg-red-600/10 px-3 py-1 text-xs font-bold text-red-700 dark:text-red-400">
+            <div className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-red-50 dark:border-accent/30 dark:bg-accent/10 px-3 py-1 text-xs font-bold text-accent dark:text-rose-600">
               <Shield className="h-3.5 w-3.5" /> HỆ THỐNG PHÂN QUYỀN & TÀI KHOẢN
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
@@ -231,7 +231,7 @@ export default function UsersPage() {
 
           <button
             onClick={() => setCreateOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-red-700/25 hover:bg-red-600 active:scale-95 transition"
+            className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-accent/25 hover:bg-accent-hover active:scale-95 transition"
           >
             <Plus className="h-4 w-4" />
             Tạo người dùng
@@ -250,7 +250,7 @@ export default function UsersPage() {
         )}
 
         {(pageError || (error && !loading)) && (
-          <div className="flex items-center justify-between rounded-2xl border border-rose-500/30 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-800 dark:bg-rose-500/10 dark:text-rose-300 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between rounded-2xl border border-rose-500/30 bg-rose-50 px-4 py-3 text-xs font-medium text-accent dark:bg-rose-500/10 dark:text-rose-300 animate-in fade-in duration-200">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
               <span>{pageError || error}</span>
@@ -310,7 +310,7 @@ export default function UsersPage() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Tìm theo tên hoặc email người dùng..."
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-4 py-2 text-xs text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-4 py-2 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
               />
             </div>
 
@@ -318,7 +318,7 @@ export default function UsersPage() {
               <select
                 value={roleInput}
                 onChange={(e) => setRoleInput(e.target.value)}
-                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-red-600 focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
+                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
               >
                 <option value="">Tất cả role</option>
                 {ROLE_OPTIONS.map((opt) => (
@@ -329,7 +329,7 @@ export default function UsersPage() {
               <select
                 value={statusInput}
                 onChange={(e) => setStatusInput(e.target.value)}
-                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-red-600 focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
+                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
               >
                 <option value="">Tất cả trạng thái</option>
                 {STATUS_OPTIONS.map((opt) => (
@@ -340,7 +340,7 @@ export default function UsersPage() {
               <select
                 value={sortInput}
                 onChange={(e) => setSortInput(e.target.value)}
-                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-red-600 focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
+                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -352,7 +352,7 @@ export default function UsersPage() {
                   type="checkbox"
                   checked={showDeletedInput}
                   onChange={(e) => setShowDeletedInput(e.target.checked)}
-                  className="rounded text-red-700 focus:ring-red-600"
+                  className="rounded text-accent focus:ring-rose-800"
                 />
                 Hiện đã xóa
               </label>
@@ -371,7 +371,7 @@ export default function UsersPage() {
         <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/70">
           {loading ? (
             <div className="flex min-h-[35vh] flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
-              <Loader2 className="h-7 w-7 animate-spin text-red-700 dark:text-red-400" />
+              <Loader2 className="h-7 w-7 animate-spin text-accent dark:text-rose-600" />
               <p className="text-xs">Đang đồng bộ danh sách người dùng...</p>
             </div>
           ) : users.length === 0 ? (
@@ -392,7 +392,7 @@ export default function UsersPage() {
                         type="checkbox"
                         checked={allChecked}
                         onChange={toggleAll}
-                        className="rounded text-red-700 focus:ring-red-600"
+                        className="rounded text-accent focus:ring-rose-800"
                       />
                     </th>
                     <th className="py-3.5 px-4 w-16">ID</th>
@@ -416,7 +416,7 @@ export default function UsersPage() {
                       <tr
                         key={user.id}
                         className={`hover:bg-zinc-50/80 dark:hover:bg-white/[0.02] transition ${
-                          isSelected ? 'bg-red-50/40 dark:bg-red-600/[0.05]' : ''
+                          isSelected ? 'bg-red-50/40 dark:bg-accent/[0.05]' : ''
                         }`}
                       >
                         {/* Checkbox */}
@@ -426,7 +426,7 @@ export default function UsersPage() {
                             checked={isSelected}
                             disabled={isSelf || isAdmin || isDeleted}
                             onChange={() => toggleOne(user.id)}
-                            className="rounded text-red-700 focus:ring-red-600 disabled:opacity-30"
+                            className="rounded text-accent focus:ring-rose-800 disabled:opacity-30"
                           />
                         </td>
 
@@ -440,7 +440,7 @@ export default function UsersPage() {
                           <div className="flex items-center gap-2">
                             <Link
                               href={`/users/${user.id}`}
-                              className="font-bold text-zinc-950 dark:text-white hover:text-red-700 dark:hover:text-red-400 transition"
+                              className="font-bold text-zinc-950 dark:text-white hover:text-accent dark:hover:text-rose-600 transition"
                             >
                               {user.userName}
                             </Link>
@@ -525,7 +525,7 @@ export default function UsersPage() {
                               <button
                                 onClick={() => runSingle(user.id, (id) => adminApi.restoreUser(id), 'Đã khôi phục tài khoản.')}
                                 disabled={busy}
-                                className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 disabled:opacity-30 disabled:cursor-not-allowed dark:border-red-600/30 dark:bg-red-600/10 dark:text-red-400 transition"
+                                className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-accent hover:bg-red-100 disabled:opacity-30 disabled:cursor-not-allowed dark:border-accent/30 dark:bg-accent/10 dark:text-rose-600 transition"
                               >
                                 Khôi phục
                               </button>
@@ -656,7 +656,7 @@ export default function UsersPage() {
                   required
                   minLength={3}
                   maxLength={50}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500"
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500"
                 />
               </div>
 
@@ -670,7 +670,7 @@ export default function UsersPage() {
                   onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
                   placeholder="vana@example.com"
                   required
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500"
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500"
                 />
               </div>
 
@@ -686,7 +686,7 @@ export default function UsersPage() {
                   required
                   minLength={8}
                   autoComplete="new-password"
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-red-600 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500"
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500"
                 />
               </div>
 
@@ -698,7 +698,7 @@ export default function UsersPage() {
                   <select
                     value={createForm.role}
                     onChange={(e) => setCreateForm((f) => ({ ...f, role: e.target.value }))}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-red-600 focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
                   >
                     {ROLE_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -713,7 +713,7 @@ export default function UsersPage() {
                   <select
                     value={createForm.status}
                     onChange={(e) => setCreateForm((f) => ({ ...f, status: e.target.value }))}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-red-600 focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
                   >
                     {STATUS_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -733,7 +733,7 @@ export default function UsersPage() {
                 <button
                   type="submit"
                   disabled={actionLoading === 'create'}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-red-700 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-red-700/25 hover:bg-red-600 active:scale-95 disabled:opacity-50 transition"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-5 py-2 text-xs font-bold text-white shadow-lg shadow-accent/25 hover:bg-accent-hover active:scale-95 disabled:opacity-50 transition"
                 >
                   {actionLoading === 'create' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Tạo tài khoản

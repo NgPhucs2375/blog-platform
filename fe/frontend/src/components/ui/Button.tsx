@@ -17,7 +17,7 @@ const buttonVariants = cva(
           "border border-white/15 bg-transparent text-zinc-300 hover:border-white/30 hover:text-white",
         ghost: "bg-transparent text-zinc-400 hover:bg-white/5 hover:text-white",
         danger:
-          "border border-red-600/20 bg-red-600/10 text-red-400 hover:bg-red-600/20",
+          "border border-accent/20 bg-accent/10 text-rose-600 hover:bg-accent-hover/20",
       },
       size: {
         xs: "px-3 py-1.5 text-xs",

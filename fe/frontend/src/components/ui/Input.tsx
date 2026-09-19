@@ -24,7 +24,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       className={cn(
         INPUT_BASE,
         hasError
-          ? "border-red-600/60 focus:border-red-600/60 focus:ring-red-600/30"
+          ? "border-rose-800/60 focus:border-accent/60 focus:ring-accent/30"
           : "border-white/10 focus:border-white/40 focus:ring-white/10",
         className,
       )}

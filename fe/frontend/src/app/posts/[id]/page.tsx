@@ -6,15 +6,15 @@ import Link from 'next/link';
 import { motion, useScroll, useSpring } from 'motion/react';
 import {
   ArrowLeft,
-  Bookmark,
+  BookmarkSimple,
   Check,
   Clock,
   Eye,
   Heart,
-  MessageSquare,
-  Send,
-  Share2,
-} from 'lucide-react';
+  ChatCircleText,
+  PaperPlaneTilt,
+  ShareNetwork,
+} from '@phosphor-icons/react';
 import { postApi, PostItem, Category } from '@/services/postApi';
 import { chipStyle } from '@/lib/chipColors';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,7 +46,7 @@ function ReadingProgress() {
     <motion.div
       aria-hidden
       style={{ scaleX, willChange: 'transform' }}
-      className="fixed inset-x-0 top-0 z-[60] h-[3px] origin-left bg-gradient-to-r from-[#b3131c] via-[#7a0f18] to-[#4f060e]"
+      className="fixed inset-x-0 top-0 z-[60] h-[3px] origin-left bg-gradient-to-r from-[#0d9488] via-[#134e4a] to-[#042f2e]"
     />
   );
 }
@@ -221,7 +221,50 @@ export default function PostDetailPage() {
     <div className="bg-canvas pb-24">
       <ReadingProgress />
 
-      <div className="mx-auto max-w-[760px] px-4 sm:px-6">
+      <div className="mx-auto max-w-[1140px] px-4 sm:px-6">
+        <div className="grid gap-10 xl:grid-cols-[60px_minmax(0,1fr)_300px]">
+          {/* Rail hành động dọc — kiểu dev.to/medium, chỉ hiện trên màn lớn */}
+          <aside className="hidden self-start xl:sticky xl:top-24 xl:flex xl:flex-col xl:items-center xl:gap-3">
+            <RailButton
+              onClick={handleLike}
+              active={liked}
+              label={likeCount > 0 ? String(likeCount) : 'Thích'}
+              icon={
+                <Heart
+                  className={`h-5 w-5 ${liked ? 'fill-rose-500 text-rose-500' : ''}`}
+                  weight={liked ? 'fill' : 'regular'}
+                />
+              }
+            />
+            <a
+              href="#comments"
+              className="flex flex-col items-center gap-1 rounded-2xl border border-line bg-surface px-3 py-2.5 text-muted shadow-sm transition hover:border-accent/40 hover:text-accent"
+              aria-label="Xem thảo luận"
+            >
+              <ChatCircleText className="h-5 w-5" />
+              <span className="text-[10px] font-bold">{comments.length}</span>
+            </a>
+            <RailButton
+              onClick={() => setBookmarked(!bookmarked)}
+              active={bookmarked}
+              label="Lưu"
+              icon={
+                <BookmarkSimple
+                  className={`h-5 w-5 ${bookmarked ? 'fill-accent text-accent' : ''}`}
+                  weight={bookmarked ? 'fill' : 'regular'}
+                />
+              }
+            />
+            <RailButton
+              onClick={handleShare}
+              active={copied}
+              label={copied ? 'Đã copy' : 'Chia sẻ'}
+              icon={<ShareNetwork className="h-5 w-5" />}
+            />
+          </aside>
+
+          {/* Cột bài viết */}
+          <div className="min-w-0">
         {/* Thanh công cụ đọc */}
         <div className="flex items-center justify-between py-5">
           <button
@@ -240,7 +283,7 @@ export default function PostDetailPage() {
             {copied ? (
               <Check className="h-3.5 w-3.5 text-emerald-600" />
             ) : (
-              <Share2 className="h-3.5 w-3.5" />
+              <ShareNetwork className="h-3.5 w-3.5" />
             )}
             <span>{copied ? 'Đã sao chép link' : 'Chia sẻ'}</span>
           </button>
@@ -307,8 +350,8 @@ export default function PostDetailPage() {
           ))}
         </div>
 
-        {/* Thanh tương tác */}
-        <div className="mt-12 flex items-center justify-between border-y border-line py-4">
+        {/* Thanh tương tác (mobile + tablet; desktop lớn dùng rail bên trái) */}
+        <div className="mt-12 flex items-center justify-between border-y border-line py-4 xl:hidden">
           <div className="flex items-center gap-3">
             <button
               onClick={handleLike}
@@ -332,7 +375,7 @@ export default function PostDetailPage() {
                   : 'border-line bg-surface text-muted hover:text-ink'
               }`}
             >
-              <Bookmark
+              <BookmarkSimple
                 className={`h-4 w-4 ${bookmarked ? 'fill-accent text-accent' : ''}`}
               />
               <span>{bookmarked ? 'Đã lưu' : 'Lưu bài'}</span>
@@ -340,7 +383,7 @@ export default function PostDetailPage() {
           </div>
 
           <span className="flex items-center gap-1.5 text-xs text-muted">
-            <MessageSquare className="h-4 w-4" /> {comments.length} thảo luận
+            <ChatCircleText className="h-4 w-4" /> {comments.length} thảo luận
           </span>
         </div>
 
@@ -361,7 +404,7 @@ export default function PostDetailPage() {
         </section>
 
         {/* Thảo luận */}
-        <section className="mt-12">
+        <section id="comments" className="mt-12 scroll-mt-24">
           <h2 className="font-serif text-xl font-bold text-ink">
             Thảo luận <span className="text-muted">({comments.length})</span>
           </h2>
@@ -381,7 +424,7 @@ export default function PostDetailPage() {
                 disabled={!commentText.trim()}
                 className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-xs font-bold text-accent-ink transition hover:bg-accent-hover disabled:opacity-40"
               >
-                <Send className="h-3.5 w-3.5" />
+                <PaperPlaneTilt className="h-3.5 w-3.5" />
                 Gửi bình luận
               </button>
             </div>
@@ -404,46 +447,114 @@ export default function PostDetailPage() {
             ))}
           </div>
         </section>
+          </div>
 
-        {/* Đề xuất đọc tiếp */}
-        {relatedPosts.length > 0 && (
-          <section className="mt-14 border-t border-line pt-10">
-            <h2 className="font-serif text-xl font-bold text-ink">Đọc tiếp</h2>
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
-              {relatedPosts.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/posts/${item.id}`}
-                  className="group overflow-hidden rounded-2xl border border-line bg-surface transition duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={coverOf(item, 480, 300)}
-                    alt=""
-                    loading="lazy"
-                    className="aspect-[16/9] w-full object-cover saturate-[.85] transition duration-500 group-hover:scale-[1.04]"
-                  />
-                  <div className="p-4">
-                    <h3 className="line-clamp-2 text-sm font-bold leading-snug text-ink transition group-hover:text-accent">
-                      {item.title}
-                    </h3>
-                    <p className="mt-2 flex items-center gap-2 text-[11px] text-faint">
-                      {(item as any).created_at
-                        ? new Date((item as any).created_at).toLocaleDateString('vi-VN')
-                        : 'Gần đây'}
-                      <span aria-hidden>•</span>
-                      <span className="flex items-center gap-1">
-                        <Eye className="h-3 w-3" />
-                        {Number((item as any).view_count ?? item.viewCount ?? 0).toLocaleString('vi-VN')}
-                      </span>
-                    </p>
-                  </div>
-                </Link>
-              ))}
+          {/* Sidebar phải: tác giả + đọc tiếp + CTA */}
+          <aside className="hidden min-w-0 self-start xl:sticky xl:top-24 xl:block xl:space-y-6">
+            {/* Thẻ tác giả gọn */}
+            <div className="rounded-3xl border border-line bg-surface p-5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-accent text-lg font-bold text-accent-ink">
+                  {authorName.charAt(0).toUpperCase()}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[10px] font-bold uppercase tracking-widest text-faint">
+                    Tác giả
+                  </span>
+                  <span className="block truncate font-serif text-base font-bold text-ink">
+                    {authorName}
+                  </span>
+                </span>
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-muted">
+                Theo dõi để không bỏ lỡ các bài viết mới của tác giả.
+              </p>
+              <Link
+                href="/posts"
+                className="mt-4 flex items-center justify-center gap-1.5 rounded-full border border-line px-4 py-2 text-[11px] font-bold text-accent transition hover:bg-accent-soft"
+              >
+                Xem bài viết khác
+              </Link>
             </div>
-          </section>
-        )}
+
+            {/* Đọc tiếp */}
+            {relatedPosts.length > 0 && (
+              <div className="rounded-3xl border border-line bg-surface p-5 shadow-sm">
+                <p className="border-b border-line pb-3 text-xs font-bold uppercase tracking-wider text-ink">
+                  Đọc tiếp
+                </p>
+                <div className="divide-y divide-line">
+                  {relatedPosts.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={`/posts/${item.id}`}
+                      className="group flex items-center gap-3 py-3"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={coverOf(item, 160, 100)}
+                        alt=""
+                        loading="lazy"
+                        className="h-12 w-20 shrink-0 rounded-lg object-cover"
+                      />
+                      <span className="min-w-0">
+                        <span className="line-clamp-2 block text-xs font-bold leading-snug text-ink transition group-hover:text-accent">
+                          {item.title}
+                        </span>
+                        <span className="mt-1 flex items-center gap-1 text-[10px] text-faint">
+                          <Eye className="h-3 w-3" />
+                          {Number((item as any).view_count ?? item.viewCount ?? 0).toLocaleString('vi-VN')}
+                        </span>
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* CTA nhận bản tin */}
+            <div className="rounded-3xl border border-line bg-gradient-to-br from-[#115e59] via-[#134e4a] to-[#042f2e] p-5 text-white">
+              <p className="font-serif text-base font-bold">Nhận bản tin tuần</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-white/75">
+                Tổng hợp bài viết hay nhất, gửi đúng một lần mỗi tuần.
+              </p>
+              <Link
+                href="/register"
+                className="mt-4 inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-[11px] font-bold text-accent transition hover:opacity-90"
+              >
+                Đăng ký ngay
+              </Link>
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
+  );
+}
+
+function RailButton({
+  onClick,
+  active,
+  label,
+  icon,
+}: {
+  onClick: () => void;
+  active?: boolean;
+  label: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex flex-col items-center gap-1 rounded-2xl border px-3 py-2.5 shadow-sm transition ${
+        active
+          ? 'border-accent/50 bg-accent-soft text-accent'
+          : 'border-line bg-surface text-muted hover:border-accent/40 hover:text-accent'
+      }`}
+    >
+      {icon}
+      <span className="text-[10px] font-bold">{label}</span>
+    </button>
   );
 }
