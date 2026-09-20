@@ -2,26 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import {
-  Users,
-  Shield,
-  Search,
-  Plus,
-  Lock,
-  Unlock,
-  Trash2,
-  RotateCcw,
-  ExternalLink,
-  ShieldCheck,
-  User as UserIcon,
-  AlertCircle,
-  Check,
-  X,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-} from 'lucide-react';
+import { CaretLeft as CaretLeft, Check, CaretRight, CircleNotch as CircleNotch, Funnel as Funnel, LockKey as LockKey, LockKeyOpen as LockKeyOpen, MagnifyingGlass as MagnifyingGlass, Plus, Shield, ShieldCheck, Trash as Trash, UserCircle as UserIcon, WarningCircle as WarningCircle, X } from '@phosphor-icons/react';
 import { adminApi } from '@/services/adminApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUsers } from '@/hooks/useUsers';
@@ -208,7 +189,7 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#06080e] dark:text-zinc-100 transition-colors duration-200 pb-20">
+    <div className="min-h-screen bg-canvas text-ink transition-colors duration-200 pb-20">
       
       {/* Soft Ambient Glow */}
       <div className="absolute inset-0 top-0 -z-10 h-80 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.12),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.18),rgba(255,255,255,0))]" />
@@ -216,16 +197,16 @@ export default function UsersPage() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
         
         {/* Header Quản trị */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 dark:border-white/[0.08] pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-6">
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-red-50 dark:border-accent/30 dark:bg-accent/10 px-3 py-1 text-xs font-bold text-accent dark:text-rose-600">
               <Shield className="h-3.5 w-3.5" /> HỆ THỐNG PHÂN QUYỀN & TÀI KHOẢN
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
               Quản lý người dùng
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-              Tổng số <span className="font-semibold text-zinc-950 dark:text-white">{pagination.total}</span> tài khoản thành viên trong hệ thống OpenBlog
+            <p className="text-xs sm:text-sm text-muted">
+              Tổng số <span className="font-semibold text-ink">{pagination.total}</span> tài khoản thành viên trong hệ thống Blog Platform
             </p>
           </div>
 
@@ -245,26 +226,26 @@ export default function UsersPage() {
               <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               <span>{notice}</span>
             </div>
-            <button onClick={() => setNotice('')}><X className="h-4 w-4 text-zinc-400 hover:text-zinc-600" /></button>
+            <button onClick={() => setNotice('')}><X className="h-4 w-4 text-faint hover:text-muted" /></button>
           </div>
         )}
 
         {(pageError || (error && !loading)) && (
           <div className="flex items-center justify-between rounded-2xl border border-rose-500/30 bg-rose-50 px-4 py-3 text-xs font-medium text-accent dark:bg-rose-500/10 dark:text-rose-300 animate-in fade-in duration-200">
             <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+              <WarningCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
               <span>{pageError || error}</span>
             </div>
-            <button onClick={() => setPageError('')}><X className="h-4 w-4 text-zinc-400 hover:text-zinc-600" /></button>
+            <button onClick={() => setPageError('')}><X className="h-4 w-4 text-faint hover:text-muted" /></button>
           </div>
         )}
 
         {/* Thanh Tác vụ hàng loạt & Bộ lọc dữ liệu */}
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="text-zinc-600 dark:text-zinc-400">
+            <div className="text-muted">
               {selected.length > 0 ? (
-                <span>Đã chọn <strong className="font-bold text-zinc-950 dark:text-white">{selected.length}</strong> tài khoản</span>
+                <span>Đã chọn <strong className="font-bold text-ink">{selected.length}</strong> tài khoản</span>
               ) : (
                 <span>Chọn nhiều tài khoản để khóa hoặc xóa hàng loạt</span>
               )}
@@ -274,17 +255,17 @@ export default function UsersPage() {
               <button
                 disabled={selected.length === 0 || actionLoading === 'bulk'}
                 onClick={() => setPending({ kind: 'bulk-lock', ids: selected })}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 font-semibold text-zinc-700 shadow-sm hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 dark:hover:bg-white/[0.06] transition"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-1.5 font-semibold text-ink shadow-sm hover:bg-raised disabled:opacity-40 disabled:cursor-not-allowed dark:bg-surface/[0.03] dark:hover:bg-surface/[0.06] transition"
               >
-                <Lock className="h-3.5 w-3.5 text-amber-500" />
+                <LockKey className="h-3.5 w-3.5 text-amber-500" />
                 Khóa đã chọn
               </button>
               <button
                 disabled={selected.length === 0 || actionLoading === 'bulk'}
                 onClick={() => setPending({ kind: 'bulk-unlock', ids: selected })}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 font-semibold text-zinc-700 shadow-sm hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 dark:hover:bg-white/[0.06] transition"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-1.5 font-semibold text-ink shadow-sm hover:bg-raised disabled:opacity-40 disabled:cursor-not-allowed dark:bg-surface/[0.03] dark:hover:bg-surface/[0.06] transition"
               >
-                <Unlock className="h-3.5 w-3.5 text-emerald-500" />
+                <LockKeyOpen className="h-3.5 w-3.5 text-emerald-500" />
                 Mở khóa đã chọn
               </button>
               <button
@@ -292,7 +273,7 @@ export default function UsersPage() {
                 onClick={() => setPending({ kind: 'bulk-delete', ids: selected })}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-40 disabled:cursor-not-allowed dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400 transition"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash className="h-3.5 w-3.5" />
                 Xóa đã chọn
               </button>
             </div>
@@ -301,16 +282,16 @@ export default function UsersPage() {
           {/* Form tìm kiếm & Bộ lọc Dropdowns */}
           <form
             onSubmit={handleSearch}
-            className="flex flex-col md:flex-row items-stretch md:items-center gap-3 rounded-2xl border border-zinc-200/80 bg-white p-3.5 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/70"
+            className="flex flex-col md:flex-row items-stretch md:items-center gap-3 rounded-2xl border border-line bg-surface p-3.5 shadow-sm/70"
           >
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <MagnifyingGlass className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-faint" />
               <input
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Tìm theo tên hoặc email người dùng..."
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-4 py-2 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-xl border border-line bg-canvas pl-10 pr-4 py-2 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/[0.03] transition"
               />
             </div>
 
@@ -318,7 +299,7 @@ export default function UsersPage() {
               <select
                 value={roleInput}
                 onChange={(e) => setRoleInput(e.target.value)}
-                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
+                className="rounded-xl border border-line bg-canvas px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none"
               >
                 <option value="">Tất cả role</option>
                 {ROLE_OPTIONS.map((opt) => (
@@ -329,7 +310,7 @@ export default function UsersPage() {
               <select
                 value={statusInput}
                 onChange={(e) => setStatusInput(e.target.value)}
-                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
+                className="rounded-xl border border-line bg-canvas px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none"
               >
                 <option value="">Tất cả trạng thái</option>
                 {STATUS_OPTIONS.map((opt) => (
@@ -340,14 +321,14 @@ export default function UsersPage() {
               <select
                 value={sortInput}
                 onChange={(e) => setSortInput(e.target.value)}
-                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
+                className="rounded-xl border border-line bg-canvas px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
 
-              <label className="flex items-center gap-1.5 px-2 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer select-none">
+              <label className="flex items-center gap-1.5 px-2 text-xs text-muted cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={showDeletedInput}
@@ -359,7 +340,7 @@ export default function UsersPage() {
 
               <button
                 type="submit"
-                className="rounded-xl bg-zinc-900 px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 transition"
+                className="rounded-xl bg-zinc-900 px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-800 dark:bg-surface dark:text-ink transition"
               >
                 Tìm kiếm
               </button>
@@ -368,17 +349,17 @@ export default function UsersPage() {
         </div>
 
         {/* Bảng Quản trị Người dùng */}
-        <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/70">
+        <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm/70">
           {loading ? (
-            <div className="flex min-h-[35vh] flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
-              <Loader2 className="h-7 w-7 animate-spin text-accent dark:text-rose-600" />
+            <div className="flex min-h-[35vh] flex-col items-center justify-center gap-3 text-muted">
+              <CircleNotch className="h-7 w-7 animate-spin text-accent dark:text-rose-600" />
               <p className="text-xs">Đang đồng bộ danh sách người dùng...</p>
             </div>
           ) : users.length === 0 ? (
             <div className="p-16 text-center">
-              <UserIcon className="mx-auto h-10 w-10 text-zinc-400 dark:text-zinc-600 mb-3" />
-              <h3 className="text-base font-bold text-zinc-950 dark:text-white">Không tìm thấy người dùng nào</h3>
-              <p className="text-xs text-zinc-500 mt-1">
+              <UserIcon className="mx-auto h-10 w-10 text-faint dark:text-muted mb-3" />
+              <h3 className="text-base font-bold text-ink">Không tìm thấy người dùng nào</h3>
+              <p className="text-xs text-muted mt-1">
                 {error ? error : 'Thử thay đổi bộ lọc tìm kiếm hoặc từ khóa.'}
               </p>
             </div>
@@ -386,7 +367,7 @@ export default function UsersPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-zinc-200/80 bg-zinc-50/80 text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:border-white/[0.06] dark:bg-white/[0.02] dark:text-zinc-400">
+                  <tr className="border-b border-line bg-canvas/80 text-[11px] font-bold uppercase tracking-wider text-muted dark:bg-surface/[0.02] dark:text-faint">
                     <th className="py-3.5 px-4 text-center w-12">
                       <input
                         type="checkbox"
@@ -415,7 +396,7 @@ export default function UsersPage() {
                     return (
                       <tr
                         key={user.id}
-                        className={`hover:bg-zinc-50/80 dark:hover:bg-white/[0.02] transition ${
+                        className={`hover:bg-canvas/80 dark:hover:bg-surface/[0.02] transition ${
                           isSelected ? 'bg-red-50/40 dark:bg-accent/[0.05]' : ''
                         }`}
                       >
@@ -431,7 +412,7 @@ export default function UsersPage() {
                         </td>
 
                         {/* ID */}
-                        <td className="py-4 px-4 font-mono text-zinc-400 dark:text-zinc-500">
+                        <td className="py-4 px-4 font-mono text-faint dark:text-muted">
                           {user.id}
                         </td>
 
@@ -440,12 +421,12 @@ export default function UsersPage() {
                           <div className="flex items-center gap-2">
                             <Link
                               href={`/users/${user.id}`}
-                              className="font-bold text-zinc-950 dark:text-white hover:text-accent dark:hover:text-rose-600 transition"
+                              className="font-bold text-ink hover:text-accent dark:hover:text-rose-600 transition"
                             >
                               {user.userName}
                             </Link>
                             {isSelf && (
-                              <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-[10px] font-bold text-zinc-700 dark:bg-white/10 dark:text-zinc-300">
+                              <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-[10px] font-bold text-ink dark:bg-surface/10">
                                 BẠN
                               </span>
                             )}
@@ -453,7 +434,7 @@ export default function UsersPage() {
                         </td>
 
                         {/* Email */}
-                        <td className="py-4 px-4 text-zinc-600 dark:text-zinc-400">
+                        <td className="py-4 px-4 text-muted">
                           {user.email}
                         </td>
 
@@ -464,7 +445,7 @@ export default function UsersPage() {
                               <ShieldCheck className="h-3 w-3" /> Admin
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-[11px] font-medium text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">
+                            <span className="inline-flex items-center gap-1 rounded-md border border-line bg-raised px-2.5 py-0.5 text-[11px] font-medium text-ink dark:bg-surface/5">
                               <UserIcon className="h-3 w-3" /> User
                             </span>
                           )}
@@ -491,7 +472,7 @@ export default function UsersPage() {
                         </td>
 
                         {/* Ngày tạo */}
-                        <td className="py-4 px-4 text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                        <td className="py-4 px-4 text-muted whitespace-nowrap">
                           {new Date(user.createdAt).toLocaleDateString('vi-VN')}
                         </td>
 
@@ -500,7 +481,7 @@ export default function UsersPage() {
                           <div className="flex items-center justify-end gap-1.5">
                             <Link
                               href={`/users/${user.id}`}
-                              className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-700 shadow-sm hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 dark:hover:bg-white/[0.06] transition"
+                              className="rounded-lg border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm hover:bg-raised dark:bg-surface/[0.03] dark:hover:bg-surface/[0.06] transition"
                             >
                               Chi tiết
                             </Link>
@@ -551,24 +532,24 @@ export default function UsersPage() {
 
         {/* Phân trang (Pagination) */}
         {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between text-xs border-t border-zinc-200/80 dark:border-white/[0.08] pt-4">
-            <span className="text-zinc-500 dark:text-zinc-400">
+          <div className="flex items-center justify-between text-xs border-t border-line pt-4">
+            <span className="text-muted">
               Trang <strong>{pagination.page}</strong> / <strong>{pagination.totalPages}</strong>
             </span>
             <div className="flex items-center gap-2">
               <button
                 disabled={currentPage <= 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 font-semibold text-zinc-700 shadow-sm hover:bg-zinc-100 disabled:opacity-30 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 transition"
+                className="inline-flex items-center gap-1 rounded-xl border border-line bg-surface px-3 py-1.5 font-semibold text-ink shadow-sm hover:bg-raised disabled:opacity-30 dark:bg-surface/[0.03] transition"
               >
-                <ChevronLeft className="h-3.5 w-3.5" /> Trước
+                <CaretLeft className="h-3.5 w-3.5" /> Trước
               </button>
               <button
                 disabled={currentPage >= pagination.totalPages}
                 onClick={() => setCurrentPage((p) => p + 1)}
-                className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 font-semibold text-zinc-700 shadow-sm hover:bg-zinc-100 disabled:opacity-30 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 transition"
+                className="inline-flex items-center gap-1 rounded-xl border border-line bg-surface px-3 py-1.5 font-semibold text-ink shadow-sm hover:bg-raised disabled:opacity-30 dark:bg-surface/[0.03] transition"
               >
-                Sau <ChevronRight className="h-3.5 w-3.5" />
+                Sau <CaretRight className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
@@ -579,7 +560,7 @@ export default function UsersPage() {
       {/* Modal Xác nhận Thao tác */}
       {pending !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#0c101a] text-zinc-900 dark:text-white">
+          <div className="w-full max-w-md rounded-3xl border border-line bg-surface p-6 shadow-2xl text-ink">
             <h3 className="text-base font-bold">
               {pending.kind === 'delete'
                 ? `Xác nhận xóa tài khoản "${pending.name}"?`
@@ -589,7 +570,7 @@ export default function UsersPage() {
                 ? `Khóa ${pending.ids.length} tài khoản?`
                 : `Mở khóa ${pending.ids.length} tài khoản?`}
             </h3>
-            <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            <p className="mt-2 text-xs text-muted leading-relaxed">
               {pending.kind === 'delete' || pending.kind === 'bulk-delete'
                 ? 'Tài khoản sẽ được chuyển sang trạng thái xóa mềm và có thể khôi phục sau này. Toàn bộ phiên đăng nhập của người dùng sẽ bị thu hồi ngay lập tức.'
                 : 'Thao tác sẽ được áp dụng cho toàn bộ các tài khoản đã được chọn (tự động bỏ qua Admin và tài khoản hiện tại của bạn).'}
@@ -598,7 +579,7 @@ export default function UsersPage() {
               <button
                 type="button"
                 onClick={() => setPending(null)}
-                className="rounded-xl px-4 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/5 transition"
+                className="rounded-xl px-4 py-2 text-xs font-semibold text-muted hover:bg-raised dark:text-faint dark:hover:bg-surface/5 transition"
               >
                 Hủy bỏ
               </button>
@@ -613,7 +594,7 @@ export default function UsersPage() {
                 }`}
               >
                 {(actionLoading === 'bulk' || typeof actionLoading === 'number') && (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <CircleNotch className="h-3.5 w-3.5 animate-spin" />
                 )}
                 {pending.kind === 'bulk-unlock' ? 'Mở khóa' : pending.kind === 'bulk-lock' ? 'Khóa' : 'Xác nhận xóa'}
               </button>
@@ -625,12 +606,12 @@ export default function UsersPage() {
       {/* Modal Tạo Người Dùng */}
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#0c101a] text-zinc-900 dark:text-white">
-            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-4">
+          <div className="w-full max-w-md rounded-3xl border border-line bg-surface p-6 shadow-2xl text-ink">
+            <div className="flex items-center justify-between border-b border-line pb-4">
               <h3 className="text-base font-bold">Tạo tài khoản người dùng mới</h3>
               <button
                 onClick={() => setCreateOpen(false)}
-                className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-white/5 dark:hover:text-white"
+                className="rounded-lg p-1 text-faint hover:bg-raised hover:text-ink dark:hover:bg-surface/5"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -638,14 +619,14 @@ export default function UsersPage() {
 
             {createError && (
               <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-600 dark:text-rose-400">
-                <AlertCircle className="h-4 w-4" />
+                <WarningCircle className="h-4 w-4" />
                 <span>{createError}</span>
               </div>
             )}
 
             <form onSubmit={handleCreate} className="mt-5 space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                   Tên người dùng
                 </label>
                 <input
@@ -656,12 +637,12 @@ export default function UsersPage() {
                   required
                   minLength={3}
                   maxLength={50}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500"
+                  className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                   Địa chỉ Email
                 </label>
                 <input
@@ -670,12 +651,12 @@ export default function UsersPage() {
                   onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
                   placeholder="vana@example.com"
                   required
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500"
+                  className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                   Mật khẩu khởi tạo
                 </label>
                 <input
@@ -686,19 +667,19 @@ export default function UsersPage() {
                   required
                   minLength={8}
                   autoComplete="new-password"
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500"
+                  className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                     Vai trò
                   </label>
                   <select
                     value={createForm.role}
                     onChange={(e) => setCreateForm((f) => ({ ...f, role: e.target.value }))}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
+                    className="w-full rounded-xl border border-line bg-canvas px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none"
                   >
                     {ROLE_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -707,13 +688,13 @@ export default function UsersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                     Trạng thái
                   </label>
                   <select
                     value={createForm.status}
                     onChange={(e) => setCreateForm((f) => ({ ...f, status: e.target.value }))}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-zinc-200"
+                    className="w-full rounded-xl border border-line bg-canvas px-3 py-2 text-xs text-zinc-800 focus:border-accent focus:outline-none"
                   >
                     {STATUS_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -722,11 +703,11 @@ export default function UsersPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-zinc-200 dark:border-white/10 pt-4">
+              <div className="flex items-center justify-end gap-3 border-t border-line pt-4">
                 <button
                   type="button"
                   onClick={() => setCreateOpen(false)}
-                  className="rounded-xl px-4 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/5 transition"
+                  className="rounded-xl px-4 py-2 text-xs font-semibold text-muted hover:bg-raised dark:text-faint dark:hover:bg-surface/5 transition"
                 >
                   Hủy bỏ
                 </button>
@@ -735,7 +716,7 @@ export default function UsersPage() {
                   disabled={actionLoading === 'create'}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-5 py-2 text-xs font-bold text-white shadow-lg shadow-accent/25 hover:bg-accent-hover active:scale-95 disabled:opacity-50 transition"
                 >
-                  {actionLoading === 'create' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {actionLoading === 'create' && <CircleNotch className="h-3.5 w-3.5 animate-spin" />}
                   Tạo tài khoản
                 </button>
               </div>

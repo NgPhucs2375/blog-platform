@@ -1,24 +1,9 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import {
-  PenSquare,
-  FileText,
-  CheckCircle2,
-  Eye,
-  Trash2,
-  Edit3,
-  Search,
-  Plus,
-  ExternalLink,
-  AlertCircle,
-  X,
-  Loader2,
-  Check,
-  BookOpen,
-  Image as ImageIcon,
-} from 'lucide-react';
+import { ArrowSquareOut as ArrowSquareOut, BookOpen, Check, CheckCircle as CheckCircle, CircleNotch as CircleNotch, Eye, FileText, Image as ImageIcon, MagnifyingGlass as MagnifyingGlass, NotePencil as NotePencil, PencilSimple as PencilSimple, Plus, Trash as Trash, WarningCircle as WarningCircle, X } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
 import { postApi, PostItem, Category } from '@/services/postApi';
 
@@ -26,7 +11,9 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
+  // Guest chưa đăng nhập: dashboard hiển thị toàn cảnh hệ thống thay vì trống trơn
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -47,12 +34,14 @@ export default function DashboardPage() {
   const currentUsername = (user?.userName || (user as any)?.username || '').toLowerCase().trim();
   const isAdmin = user?.role === 'Admin';
 
+
   // Hàm tải dữ liệu an toàn có cơ chế Fallback
   const fetchDashboardData = useCallback(async () => {
     if (!currentUserId && !currentUsername) {
       setLoading(false);
       return;
     }
+    setLoading(true);
 
     try {
       setLoading(true);
@@ -74,7 +63,7 @@ export default function DashboardPage() {
             myPosts = resMe;
           }
         }
-      } catch (e) {
+      } catch {
         console.warn('Endpoint /v1/posts/me chưa sẵn sàng, chuyển sang chế độ dự phòng.');
       }
 
@@ -103,6 +92,11 @@ export default function DashboardPage() {
       setLoading(false);
     }
   }, [currentUserId, currentUsername, isAdmin]);
+
+  // Dashboard là khu của user đã đăng nhập: guest bị chuyển về trang đăng nhập
+  useEffect(() => {
+    if (!loading && !user) router.replace('/login');
+  }, [loading, user, router]);
 
   // Chỉ kích hoạt lại khi User ID thực sự thay đổi (Triệt tiêu vòng lặp vô tận)
   useEffect(() => {
@@ -235,32 +229,32 @@ export default function DashboardPage() {
   const username = user?.userName || (user as any)?.username || 'Tác giả';
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#06080e] dark:text-zinc-100 transition-colors duration-200 pb-20">
+    <div className="min-h-screen bg-canvas text-ink transition-colors duration-200 pb-20">
       <div className="absolute inset-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.12),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.18),rgba(255,255,255,0))]" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 space-y-10">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-zinc-200/80 dark:border-white/[0.08] pb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-line pb-8">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               TÒA SOẠN & BÀN BIÊN TẬP
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-ink">
               Bảng điều khiển tác giả
             </h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Xin chào, <span suppressHydrationWarning className="font-semibold text-accent dark:text-rose-600">{username}</span>. Theo dõi chỉ số và quản lý ấn phẩm của bạn.
+            <p className="text-sm text-muted">
+              Xin chào, <span suppressHydrationWarning className="font-semibold text-accent">{username}</span>. Quản lý bản thảo và ấn phẩm của bạn tại đây.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-semibold text-zinc-700 shadow-sm hover:bg-zinc-100 hover:text-zinc-950 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-zinc-300 dark:hover:bg-white/[0.06] dark:hover:text-white transition"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-semibold text-ink shadow-sm hover:bg-raised hover:text-ink dark:bg-surface/[0.03] dark:hover:bg-surface/[0.06] transition"
             >
-              <ExternalLink className="h-3.5 w-3.5" />
+              <ArrowSquareOut className="h-3.5 w-3.5" />
               Xem trang chủ
             </Link>
 
@@ -287,36 +281,36 @@ export default function DashboardPage() {
 
         {/* 3 Thẻ chỉ số */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.02]">
+          <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm dark:bg-surface/[0.02]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">
                 TỔNG BÀI VIẾT
               </span>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 dark:bg-accent/10 text-accent dark:text-rose-600">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft text-accent">
                 <FileText className="h-4 w-4" />
               </div>
             </div>
             <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-extrabold text-zinc-950 dark:text-white">
+              <span className="text-3xl sm:text-4xl font-extrabold text-ink">
                 {stats.total}
               </span>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              <span className="text-xs text-muted">
                 ({stats.drafts} bản nháp)
               </span>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.02]">
+          <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm dark:bg-surface/[0.02]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">
                 ĐÃ XUẤT BẢN
               </span>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="h-4 w-4" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft text-accent">
+                <CheckCircle className="h-4 w-4" />
               </div>
             </div>
             <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-extrabold text-zinc-950 dark:text-white">
+              <span className="text-3xl sm:text-4xl font-extrabold text-ink">
                 {stats.published}
               </span>
               <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
@@ -325,33 +319,33 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.02]">
+          <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm dark:bg-surface/[0.02]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">
                 LƯỢT ĐỌC TÍCH LŨY
               </span>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft text-accent">
                 <Eye className="h-4 w-4" />
               </div>
             </div>
             <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-extrabold text-zinc-950 dark:text-white">
+              <span className="text-3xl sm:text-4xl font-extrabold text-ink">
                 {stats.totalViews.toLocaleString()}
               </span>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">lượt xem</span>
+              <span className="text-xs text-muted">lượt xem</span>
             </div>
           </div>
         </div>
 
         {/* Bộ lọc & Tìm kiếm */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.02]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-line bg-surface p-4 shadow-sm dark:bg-surface/[0.02]">
           <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
             <button
               onClick={() => setStatusFilter('all')}
               className={`rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition ${
                 statusFilter === 'all'
-                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
-                  : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/5'
+                  ? 'bg-accent text-accent-ink shadow-sm'
+                  : 'text-muted hover:bg-raised dark:text-faint dark:hover:bg-surface/5'
               }`}
             >
               Tất cả ({stats.total})
@@ -360,8 +354,8 @@ export default function DashboardPage() {
               onClick={() => setStatusFilter('published')}
               className={`rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition ${
                 statusFilter === 'published'
-                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
-                  : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/5'
+                  ? 'bg-accent text-accent-ink shadow-sm'
+                  : 'text-muted hover:bg-raised dark:text-faint dark:hover:bg-surface/5'
               }`}
             >
               Đã xuất bản ({stats.published})
@@ -370,8 +364,8 @@ export default function DashboardPage() {
               onClick={() => setStatusFilter('draft')}
               className={`rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition ${
                 statusFilter === 'draft'
-                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
-                  : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/5'
+                  ? 'bg-accent text-accent-ink shadow-sm'
+                  : 'text-muted hover:bg-raised dark:text-faint dark:hover:bg-surface/5'
               }`}
             >
               Bản nháp ({stats.drafts})
@@ -379,29 +373,29 @@ export default function DashboardPage() {
           </div>
 
           <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <MagnifyingGlass className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-faint" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm tiêu đề bài viết..."
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-10 pr-4 py-2 text-xs text-zinc-900 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+              className="w-full rounded-xl border border-line bg-canvas/50 pl-10 pr-4 py-2 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/[0.03] transition"
             />
           </div>
         </div>
 
         {/* Bảng Dữ liệu */}
-        <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm dark:border-white/[0.08] dark:bg-white/[0.02]">
+        <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm dark:bg-surface/[0.02]">
           {loading ? (
-            <div className="flex min-h-[30vh] flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
-              <Loader2 className="h-7 w-7 animate-spin text-accent dark:text-rose-600" />
+            <div className="flex min-h-[30vh] flex-col items-center justify-center gap-3 text-muted">
+              <CircleNotch className="h-7 w-7 animate-spin text-accent dark:text-rose-600" />
               <p className="text-xs">Đang nạp danh sách bài viết...</p>
             </div>
           ) : filteredPosts.length === 0 ? (
             <div className="p-16 text-center">
-              <BookOpen className="mx-auto h-10 w-10 text-zinc-400 dark:text-zinc-600 mb-3" />
-              <h3 className="text-base font-bold text-zinc-900 dark:text-white">Chưa có bài viết nào</h3>
-              <p className="text-xs text-zinc-500 mt-1">
+              <BookOpen className="mx-auto h-10 w-10 text-faint dark:text-muted mb-3" />
+              <h3 className="text-base font-bold text-ink">Chưa có bài viết nào</h3>
+              <p className="text-xs text-muted mt-1">
                 Bấm vào nút &quot;Soạn bài mới&quot; để xuất bản ấn phẩm đầu tiên!
               </p>
             </div>
@@ -409,7 +403,7 @@ export default function DashboardPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-zinc-200/80 bg-zinc-50/70 text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:border-white/[0.06] dark:bg-white/[0.02] dark:text-zinc-400">
+                  <tr className="border-b border-line bg-canvas/70 text-[11px] font-bold uppercase tracking-wider text-muted dark:bg-surface/[0.02] dark:text-faint">
                     <th className="py-3.5 px-6">TIÊU ĐỀ BÀI VIẾT</th>
                     <th className="py-3.5 px-6">CHUYÊN MỤC</th>
                     <th className="py-3.5 px-6">TRẠNG THÁI</th>
@@ -427,22 +421,22 @@ export default function DashboardPage() {
                     const uniqueKey = post.id ?? raw._id ?? `post-${idx}`;
 
                     return (
-                      <tr key={uniqueKey} className="group hover:bg-zinc-50/80 dark:hover:bg-white/[0.02] transition">
+                      <tr key={uniqueKey} className="group hover:bg-canvas/80 dark:hover:bg-surface/[0.02] transition">
                         <td className="py-4 px-6 max-w-md">
                           <Link
                             href={`/posts/${post.id}`}
-                            className="font-bold text-zinc-950 dark:text-white hover:text-accent dark:hover:text-rose-600 line-clamp-1 transition"
+                            className="font-bold text-ink hover:text-accent dark:hover:text-rose-600 line-clamp-1 transition"
                             title={post.title}
                           >
                             {post.title || 'Chưa đặt tiêu đề'}
                           </Link>
-                          <p className="text-[11px] text-zinc-500 line-clamp-1 mt-0.5">
+                          <p className="text-[11px] text-muted line-clamp-1 mt-0.5">
                             {post.slug || 'slug-tu-dong'}
                           </p>
                         </td>
 
                         <td className="py-4 px-6 whitespace-nowrap">
-                          <span className="rounded-md border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-[11px] font-medium text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">
+                          <span className="rounded-md border border-line bg-raised px-2.5 py-1 text-[11px] font-medium text-ink dark:bg-surface/5">
                             {getCategoryName(catId)}
                           </span>
                         </td>
@@ -476,11 +470,11 @@ export default function DashboardPage() {
                           )}
                         </td>
 
-                        <td className="py-4 px-6 text-center font-semibold text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
+                        <td className="py-4 px-6 text-center font-semibold text-ink whitespace-nowrap">
                           {viewCount.toLocaleString()}
                         </td>
 
-                        <td className="py-4 px-6 text-zinc-500 whitespace-nowrap">
+                        <td className="py-4 px-6 text-muted whitespace-nowrap">
                           {raw.created_at ? new Date(raw.created_at).toLocaleDateString('vi-VN') : 'Mới đây'}
                         </td>
 
@@ -488,26 +482,26 @@ export default function DashboardPage() {
                           <div className="flex items-center justify-end gap-2">
                             <Link
                               href={`/posts/${post.id}`}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-white/5 dark:hover:text-white transition"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-faint hover:bg-raised hover:text-ink dark:hover:bg-surface/5 transition"
                               title="Xem trực tiếp"
                             >
-                              <ExternalLink className="h-4 w-4" />
+                              <ArrowSquareOut className="h-4 w-4" />
                             </Link>
 
                             <Link
                               href={`/dashboard/posts/edit/${post.id}`}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-50 hover:text-accent dark:hover:bg-accent-hover/10 dark:hover:text-rose-600 transition"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-faint hover:bg-red-50 hover:text-accent dark:hover:bg-accent-hover/10 dark:hover:text-rose-600 transition"
                               title="Chỉnh sửa"
                             >
-                              <Edit3 className="h-4 w-4" />
+                              <PencilSimple className="h-4 w-4" />
                             </Link>
 
                             <button
                               onClick={() => handleDeletePost(post.id, post.title)}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 transition"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-faint hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 transition"
                               title="Xóa bài viết"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -525,17 +519,17 @@ export default function DashboardPage() {
       {/* Modal Soạn bài mới */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="w-full max-w-2xl rounded-3xl border border-zinc-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-white/10 dark:bg-[#0c101a] text-zinc-900 dark:text-white my-8 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-4">
+          <div className="w-full max-w-2xl rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-2xl text-ink my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-line pb-4">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10 text-accent dark:bg-accent/20 dark:text-rose-600">
-                  <PenSquare className="h-4 w-4" />
+                  <NotePencil className="h-4 w-4" />
                 </div>
                 <h3 className="text-base font-bold">Soạn thảo ấn phẩm mới</h3>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-white/5 dark:hover:text-white"
+                className="rounded-lg p-1 text-faint hover:bg-raised hover:text-ink dark:hover:bg-surface/5"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -543,14 +537,14 @@ export default function DashboardPage() {
 
             {modalError && (
               <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-600 dark:text-rose-400">
-                <AlertCircle className="h-4 w-4" />
+                <WarningCircle className="h-4 w-4" />
                 <span>{modalError}</span>
               </div>
             )}
 
             <form onSubmit={handleCreatePost} className="mt-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                   Tiêu đề bài viết
                 </label>
                 <input
@@ -558,14 +552,14 @@ export default function DashboardPage() {
                   value={newTitle}
                   onChange={(e) => handleTitleChange(e.target.value)}
                   placeholder="Nhập tiêu đề truyền cảm hứng..."
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
+                  className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5 transition"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                     Đường dẫn tĩnh (Slug - tự sinh an toàn)
                   </label>
                   <input
@@ -573,18 +567,18 @@ export default function DashboardPage() {
                     value={newSlug}
                     onChange={(e) => setNewSlug(e.target.value)}
                     placeholder="tieu-de-bai-viet-xxxx"
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
+                    className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5 transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                     Chuyên mục
                   </label>
                   <select
                     value={newCategoryId ?? ''}
                     onChange={(e) => setNewCategoryId(Number(e.target.value))}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-white transition"
+                    className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink focus:border-accent focus:outline-none transition"
                   >
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
@@ -596,7 +590,7 @@ export default function DashboardPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                   Trích đoạn ngắn (Excerpt)
                 </label>
                 <input
@@ -604,28 +598,28 @@ export default function DashboardPage() {
                   value={newExcerpt}
                   onChange={(e) => setNewExcerpt(e.target.value)}
                   placeholder="Mô tả tóm tắt nội dung bài viết..."
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
+                  className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5 transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                   URL Ảnh bìa (Cover Image)
                 </label>
                 <div className="relative">
-                  <ImageIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                  <ImageIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-faint" />
                   <input
                     type="url"
                     value={newCoverImage}
                     onChange={(e) => setNewCoverImage(e.target.value)}
                     placeholder="https://images.unsplash.com/..."
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-zinc-500 transition"
+                    className="w-full rounded-xl border border-line bg-canvas pl-10 pr-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5 transition"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                   Nội dung bài viết
                 </label>
                 <textarea
@@ -633,17 +627,17 @@ export default function DashboardPage() {
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                   placeholder="Chia sẻ nội dung hoặc câu chuyện của bạn..."
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/5 dark:focus:bg-white/[0.08] dark:text-white dark:placeholder-zinc-500 transition leading-relaxed"
+                  className="w-full rounded-xl border border-line bg-canvas p-3.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5 transition leading-relaxed"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                   Chế độ lưu
                 </label>
                 <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300 cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs text-ink cursor-pointer">
                     <input
                       type="radio"
                       name="status"
@@ -654,7 +648,7 @@ export default function DashboardPage() {
                     />
                     Xuất bản ngay lập tức
                   </label>
-                  <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300 cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs text-ink cursor-pointer">
                     <input
                       type="radio"
                       name="status"
@@ -668,11 +662,11 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-zinc-200 dark:border-white/10 pt-4">
+              <div className="flex items-center justify-end gap-3 border-t border-line pt-4">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="rounded-xl px-4 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/5 transition"
+                  className="rounded-xl px-4 py-2 text-xs font-medium text-muted hover:bg-raised dark:text-faint dark:hover:bg-surface/5 transition"
                 >
                   Hủy bỏ
                 </button>
@@ -681,7 +675,7 @@ export default function DashboardPage() {
                   disabled={creating}
                   className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-accent/25 hover:bg-accent-hover active:scale-95 disabled:opacity-50 transition"
                 >
-                  {creating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {creating && <CircleNotch className="h-3.5 w-3.5 animate-spin" />}
                   {newStatus === 'published' ? 'Đăng bài viết' : 'Lưu bản nháp'}
                 </button>
               </div>

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { SignOut, SquaresFour, UserCircle } from '@phosphor-icons/react';
+import { ShieldWarning, SignOut, SquaresFour, UserCircle } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface UserMenuProps {
@@ -82,6 +82,15 @@ export default function UserMenu({ compact = false }: UserMenuProps) {
                 >
                   <SquaresFour className="h-4 w-4" /> Bảng điều khiển
                 </Link>
+                {user?.role === 'Admin' && (
+                  <Link
+                    href="/users"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-muted transition hover:bg-raised hover:text-ink"
+                  >
+                    <ShieldWarning className="h-4 w-4" /> Quản trị hệ thống
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     setOpen(false);

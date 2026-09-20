@@ -114,6 +114,26 @@ export const NOTIFICATION_META: Record<
   },
 };
 
+/** Thông báo cho khách chưa đăng nhập (welcome + hướng dẫn). */
+export const GUEST_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: 101,
+    type: 'system',
+    title: 'Chào mừng đến Blog Platform!',
+    detail: 'Khám phá các bài viết đang được đọc nhiều nhất ở trang chủ.',
+    time: 'Mới',
+    read: false,
+  },
+  {
+    id: 102,
+    type: 'system',
+    title: 'Muốn viết bài? Tài khoản mở miễn phí',
+    detail: 'Đăng ký để soạn thảo, nộp bản và theo dõi lượt đọc của bạn.',
+    time: 'Hôm nay',
+    read: false,
+  },
+];
+
 /** Dữ liệu mock — thay bằng fetch /v1/notifications khi BE sẵn sàng. */
 export const SEED_NOTIFICATIONS: AppNotification[] = [
   {

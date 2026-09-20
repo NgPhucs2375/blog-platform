@@ -1,15 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  BarChart3,
-  Users,
-  Eye,
-  FileText,
-  Activity,
-  Loader2,
-  RefreshCw,
-} from 'lucide-react';
+import { ArrowClockwise as ArrowClockwise, ChartBar as ChartBar, CircleNotch as CircleNotch, Eye, FileText, Pulse as Pulse, Users } from '@phosphor-icons/react';
 import { postApi, PostItem, Category } from '@/services/postApi';
 import { adminApi, ReportSummary } from '@/services/adminApi';
 
@@ -44,6 +36,7 @@ export default function ReportsPage() {
     categoryBreakdown: [],
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- hàm reload theo timeRange, gọi lại khi timeRange đổi
   const loadRealAnalytics = async () => {
     try {
       setLoading(true);
@@ -203,7 +196,7 @@ export default function ReportsPage() {
       label: 'Tổng số ấn phẩm',
       value: reportData.totalPosts.toLocaleString(),
       note: `${reportData.categoryBreakdown.length} chủ đề đang mở`,
-      icon: Activity,
+      icon: Pulse,
       color: 'text-amber-600 dark:text-amber-400',
       bg: 'bg-amber-50 dark:bg-amber-500/10',
     },
@@ -213,15 +206,15 @@ export default function ReportsPage() {
     <div className="p-6 sm:p-10 max-w-7xl mx-auto space-y-8">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 dark:border-white/[0.08] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-6">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-accent dark:text-rose-600">
-            <BarChart3 className="h-3.5 w-3.5" /> BÁO CÁO & GIÁM SÁT THỜI GIAN THỰC
+            <ChartBar className="h-3.5 w-3.5" /> BÁO CÁO & GIÁM SÁT THỜI GIAN THỰC
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
             Tổng quan Hoạt động Nền tảng
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-xs sm:text-sm text-muted">
             Dữ liệu thống kê trực tiếp từ cơ sở dữ liệu hệ thống Blog Platform.
           </p>
         </div>
@@ -230,13 +223,13 @@ export default function ReportsPage() {
           <button
             onClick={handleManualRefresh}
             disabled={refreshing || loading}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 shadow-sm hover:bg-zinc-100 dark:border-white/10 dark:bg-[#0c121e] dark:text-zinc-300 dark:hover:bg-white/[0.05] transition"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-surface text-muted shadow-sm hover:bg-raised dark:hover:bg-surface/[0.05] transition"
             title="Làm mới dữ liệu"
           >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin text-accent' : ''}`} />
+            <ArrowClockwise className={`h-4 w-4 ${refreshing ? 'animate-spin text-accent' : ''}`} />
           </button>
 
-          <div className="flex items-center gap-1 rounded-xl border border-zinc-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-[#0c121e]">
+          <div className="flex items-center gap-1 rounded-xl border border-line bg-surface p-1 shadow-sm">
             {(['7d', '30d', 'quarter'] as const).map((r) => (
               <button
                 key={r}
@@ -244,7 +237,7 @@ export default function ReportsPage() {
                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                   timeRange === r
                     ? 'bg-accent text-white shadow-sm'
-                    : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white'
+                    : 'text-muted hover:text-ink dark:text-faint'
                 }`}
               >
                 {r === '7d' ? '7 ngày' : r === '30d' ? '30 ngày' : 'Quý này'}
@@ -255,8 +248,8 @@ export default function ReportsPage() {
       </div>
 
       {loading ? (
-        <div className="flex min-h-[45vh] flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
-          <Loader2 className="h-8 w-8 animate-spin text-accent dark:text-rose-600" />
+        <div className="flex min-h-[45vh] flex-col items-center justify-center gap-3 text-muted">
+          <CircleNotch className="h-8 w-8 animate-spin text-accent dark:text-rose-600" />
           <p className="text-xs font-medium tracking-wide">Đang truy vấn số liệu từ máy chủ...</p>
         </div>
       ) : (
@@ -268,10 +261,10 @@ export default function ReportsPage() {
               return (
                 <div
                   key={idx}
-                  className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/70 space-y-4"
+                  className="rounded-2xl border border-line bg-surface p-6 shadow-sm/70 space-y-4"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
                       {item.label}
                     </span>
                     <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${item.bg} ${item.color}`}>
@@ -280,10 +273,10 @@ export default function ReportsPage() {
                   </div>
 
                   <div>
-                    <div className="text-3xl font-extrabold text-zinc-950 dark:text-white">
+                    <div className="text-3xl font-extrabold text-ink">
                       {item.value}
                     </div>
-                    <div className="flex items-center gap-1.5 mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                    <div className="flex items-center gap-1.5 mt-2 text-xs text-muted">
                       <span>{item.note}</span>
                     </div>
                   </div>
@@ -296,13 +289,13 @@ export default function ReportsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             {/* Biểu đồ cột đã sửa hoàn chỉnh lỗi CSS */}
-            <div className="lg:col-span-7 rounded-3xl border border-zinc-200/80 bg-white p-6 sm:p-8 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/70 space-y-6">
+            <div className="lg:col-span-7 rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-sm/70 space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-bold text-zinc-950 dark:text-white">
+                  <h3 className="text-base font-bold text-ink">
                     Xu hướng tương tác theo tháng
                   </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  <p className="text-xs text-muted mt-0.5">
                     Lưu lượng bài viết và tương tác qua các mốc thời gian thực tế
                   </p>
                 </div>
@@ -333,11 +326,11 @@ export default function ReportsPage() {
                 </div>
 
                 {/* Trục hoành: Nhãn các tháng */}
-                <div className="flex justify-between gap-3 sm:gap-4 pt-3 border-t border-zinc-200/80 dark:border-white/[0.06]">
+                <div className="flex justify-between gap-3 sm:gap-4 pt-3 border-t border-line">
                   {reportData.viewsTrend.map((item, i) => (
                     <span
                       key={i}
-                      className="flex-1 text-center text-[11px] font-semibold text-zinc-500 dark:text-zinc-400"
+                      className="flex-1 text-center text-[11px] font-semibold text-muted"
                     >
                       {item.label}
                     </span>
@@ -347,27 +340,27 @@ export default function ReportsPage() {
             </div>
 
             {/* Phân bổ theo chuyên mục */}
-            <div className="lg:col-span-5 rounded-3xl border border-zinc-200/80 bg-white p-6 sm:p-8 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/70 space-y-6">
+            <div className="lg:col-span-5 rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-sm/70 space-y-6">
               <div>
-                <h3 className="text-base font-bold text-zinc-950 dark:text-white">
+                <h3 className="text-base font-bold text-ink">
                   Phân bổ theo chuyên mục
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <p className="text-xs text-muted mt-0.5">
                   Tỷ lệ phần trăm các bài viết thuộc từng đề tài
                 </p>
               </div>
 
               {reportData.categoryBreakdown.length === 0 ? (
-                <p className="text-xs text-zinc-500">Chưa có dữ liệu danh mục bài viết.</p>
+                <p className="text-xs text-muted">Chưa có dữ liệu danh mục bài viết.</p>
               ) : (
                 <div className="space-y-4">
                   {reportData.categoryBreakdown.map((cat, idx) => (
                     <div key={idx} className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-zinc-900 dark:text-zinc-100">{cat.name}</span>
-                        <span className="text-zinc-500 dark:text-zinc-400">{cat.count} bài ({cat.percentage}%)</span>
+                        <span className="font-semibold text-ink">{cat.name}</span>
+                        <span className="text-muted">{cat.count} bài ({cat.percentage}%)</span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-zinc-100 dark:bg-white/[0.06] overflow-hidden">
+                      <div className="h-2 w-full rounded-full bg-raised dark:bg-surface/[0.06] overflow-hidden">
                         <div
                           style={{ width: `${cat.percentage}%` }}
                           className={`h-full rounded-full ${cat.color}`}

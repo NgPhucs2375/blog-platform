@@ -8,10 +8,3 @@ npm-debug.log*
 *.log
 .env
 .env.local
-
-**/bin
-**/obj
-.git
-.vs
-.idea
-node_modules

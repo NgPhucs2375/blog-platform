@@ -2,16 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import {
-  FolderKanban,
-  Search,
-  Edit3,
-  Trash2,
-  Check,
-  X,
-  Loader2,
-  Tag,
-} from 'lucide-react';
+import { Check, CircleNotch as CircleNotch, MagnifyingGlass as MagnifyingGlass, PencilSimple as PencilSimple, Tag, Trash as Trash, X } from '@phosphor-icons/react';
 import { postApi, Category } from '@/services/postApi';
 
 export default function CategoriesPage() {
@@ -118,15 +109,15 @@ export default function CategoriesPage() {
     <div className="p-6 sm:p-10 max-w-7xl mx-auto space-y-8">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 dark:border-white/[0.08] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-6">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-accent dark:text-rose-600">
             <Tag className="h-3.5 w-3.5" /> QUẢN TRỊ NỘI DUNG
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
             Quản lý Chuyên mục
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-xs sm:text-sm text-muted">
             Tổ chức, phân loại cây nội dung và định hướng chủ đề cho nền tảng blog.
           </p>
         </div>
@@ -134,11 +125,11 @@ export default function CategoriesPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/users"
-            className="text-xs font-semibold text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white transition"
+            className="text-xs font-semibold text-muted hover:text-ink dark:text-faint transition"
           >
             Quản trị người dùng
           </Link>
-          <span className="text-zinc-300 dark:text-zinc-700">•</span>
+          <span className="text-zinc-300 dark:text-ink">•</span>
           <Link
             href="/dashboard"
             className="text-xs font-semibold text-accent hover:text-accent dark:text-rose-600 transition"
@@ -162,19 +153,19 @@ export default function CategoriesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Form thêm mới / Sửa chuyên mục */}
-        <div className="lg:col-span-5 rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/70 space-y-5">
+        <div className="lg:col-span-5 rounded-3xl border border-line bg-surface p-6 shadow-sm/70 space-y-5">
           <div>
-            <h2 className="text-base font-bold text-zinc-950 dark:text-white">
+            <h2 className="text-base font-bold text-ink">
               {editingId ? 'Chỉnh sửa chuyên mục' : 'Thêm chuyên mục mới'}
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            <p className="text-xs text-muted mt-0.5">
               Tạo thẻ phân loại bài viết mới
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                 Tên chuyên mục
               </label>
               <input
@@ -183,12 +174,12 @@ export default function CategoriesPage() {
                 onChange={(e) => handleNameChange(e.target.value)}
                 placeholder="Ví dụ: Điện toán đám mây"
                 required
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/[0.03] transition"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                 Đường dẫn tĩnh (Slug)
               </label>
               <input
@@ -197,12 +188,12 @@ export default function CategoriesPage() {
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder="dien-toan-dam-may"
                 required
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/[0.03] transition"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
                 Mô tả ngắn
               </label>
               <textarea
@@ -210,7 +201,7 @@ export default function CategoriesPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Giới thiệu nội dung phân loại này..."
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/[0.03] transition"
               />
             </div>
 
@@ -220,7 +211,7 @@ export default function CategoriesPage() {
                 disabled={submitting}
                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-accent py-2.5 text-xs font-bold text-white shadow-md shadow-accent/25 hover:bg-accent-hover active:scale-95 disabled:opacity-50 transition"
               >
-                {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {submitting && <CircleNotch className="h-3.5 w-3.5 animate-spin" />}
                 {editingId ? 'Lưu thay đổi' : 'Thêm chuyên mục'}
               </button>
 
@@ -233,7 +224,7 @@ export default function CategoriesPage() {
                     setSlug('');
                     setDescription('');
                   }}
-                  className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400"
+                  className="rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-semibold text-muted hover:bg-raised dark:bg-surface/[0.03] dark:text-faint"
                 >
                   Hủy
                 </button>
@@ -246,40 +237,40 @@ export default function CategoriesPage() {
         <div className="lg:col-span-7 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-bold text-zinc-950 dark:text-white">
+              <h2 className="text-base font-bold text-ink">
                 Danh sách chuyên mục
               </h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-muted">
                 Tổng cộng {categories.length} danh mục
               </p>
             </div>
 
             <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+              <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-faint" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Tìm chuyên mục..."
-                className="w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-3 py-1.5 text-xs text-zinc-950 placeholder-zinc-400 shadow-sm focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c121e]/70 dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-xl border border-line bg-surface pl-9 pr-3 py-1.5 text-xs text-ink placeholder:text-faint shadow-sm focus:border-accent focus:outline-none/70 transition"
               />
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/70">
+          <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm/70">
             {loading ? (
-              <div className="flex min-h-[25vh] flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
-                <Loader2 className="h-7 w-7 animate-spin text-accent dark:text-rose-600" />
+              <div className="flex min-h-[25vh] flex-col items-center justify-center gap-3 text-muted">
+                <CircleNotch className="h-7 w-7 animate-spin text-accent dark:text-rose-600" />
                 <p className="text-xs">Đang tải chuyên mục...</p>
               </div>
             ) : filtered.length === 0 ? (
               <div className="p-12 text-center">
-                <p className="text-xs font-semibold text-zinc-950 dark:text-white">Không tìm thấy chuyên mục nào</p>
+                <p className="text-xs font-semibold text-ink">Không tìm thấy chuyên mục nào</p>
               </div>
             ) : (
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-zinc-200/80 bg-zinc-50/80 text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:border-white/[0.06] dark:bg-white/[0.02] dark:text-zinc-400">
+                  <tr className="border-b border-line bg-canvas/80 text-[11px] font-bold uppercase tracking-wider text-muted dark:bg-surface/[0.02] dark:text-faint">
                     <th className="py-3 px-4">TÊN CHUYÊN MỤC</th>
                     <th className="py-3 px-4">SLUG</th>
                     <th className="py-3 px-4 text-center">SỐ BÀI</th>
@@ -288,31 +279,31 @@ export default function CategoriesPage() {
                 </thead>
                 <tbody className="divide-y divide-zinc-200/60 dark:divide-white/[0.04]">
                   {filtered.map((cat, idx) => (
-                    <tr key={cat.id} className="hover:bg-zinc-50/80 dark:hover:bg-white/[0.02] transition">
-                      <td className="py-3.5 px-4 font-bold text-zinc-950 dark:text-white">
+                    <tr key={cat.id} className="hover:bg-canvas/80 dark:hover:bg-surface/[0.02] transition">
+                      <td className="py-3.5 px-4 font-bold text-ink">
                         {cat.name}
                       </td>
-                      <td className="py-3.5 px-4 font-mono text-zinc-500 dark:text-zinc-400">
+                      <td className="py-3.5 px-4 font-mono text-muted">
                         /{cat.slug}
                       </td>
-                      <td className="py-3.5 px-4 text-center font-medium text-zinc-600 dark:text-zinc-400">
+                      <td className="py-3.5 px-4 text-center font-medium text-muted">
                         # {idx * 3 + 3}
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => handleEdit(cat)}
-                            className="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-accent dark:hover:bg-white/5 dark:hover:text-rose-600 transition"
+                            className="p-1.5 rounded-lg text-muted hover:bg-raised hover:text-accent dark:hover:bg-surface/5 dark:hover:text-rose-600 transition"
                             title="Sửa"
                           >
-                            <Edit3 className="h-3.5 w-3.5" />
+                            <PencilSimple className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => handleDelete(cat.id, cat.name)}
-                            className="p-1.5 rounded-lg text-zinc-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 transition"
+                            className="p-1.5 rounded-lg text-muted hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 transition"
                             title="Xóa"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </td>

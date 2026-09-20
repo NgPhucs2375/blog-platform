@@ -1,26 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  PenSquare,
-  Eye,
-  Send,
-  Save,
-  Loader2,
-  AlertCircle,
-  Check,
-  Image as ImageIcon,
-} from 'lucide-react';
-import { postApi, Category, PostItem } from '@/services/postApi';
-import { useAuth } from '@/contexts/AuthContext';
+import { ArrowLeft, Check, CircleNotch as CircleNotch, Eye, FloppyDisk as FloppyDisk, Image as ImageIcon, PaperPlaneTilt as PaperPlaneTilt, WarningCircle as WarningCircle } from '@phosphor-icons/react';
+import { postApi, Category } from '@/services/postApi';
 
 export default function EditPostPage() {
   const params = useParams();
-  const router = useRouter();
-  const { user } = useAuth();
   const id = params?.id as string;
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -111,15 +98,15 @@ export default function EditPostPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 bg-zinc-50 dark:bg-[#06080e] text-zinc-500 dark:text-zinc-400 transition-colors">
-        <Loader2 className="h-8 w-8 animate-spin text-accent dark:text-rose-600" />
+      <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 bg-canvas text-muted transition-colors">
+        <CircleNotch className="h-8 w-8 animate-spin text-accent dark:text-rose-600" />
         <p className="text-xs font-medium">Đang tải bản thảo bài viết...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#06080e] dark:text-zinc-100 transition-colors duration-200 pb-24">
+    <div className="min-h-screen bg-canvas text-ink transition-colors duration-200 pb-24">
       
       {/* Glow effect */}
       <div className="absolute inset-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.12),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.18),rgba(255,255,255,0))]" />
@@ -127,21 +114,21 @@ export default function EditPostPage() {
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-10 space-y-8">
         
         {/* Header điều hướng & Nút thao tác */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 dark:border-white/[0.08] pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-6">
           <div className="flex items-center gap-3">
             <Link
               href="/dashboard"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 shadow-sm hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400 dark:hover:text-white transition"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-surface text-muted shadow-sm hover:bg-raised dark:bg-surface/[0.03] dark:text-faint transition"
               title="Quay lại Dashboard"
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
                 Chỉnh sửa bài viết
               </h1>
-              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                Cập nhật nội dung bài viết và định dạng ấn phẩm trên OpenBlog.
+              <p className="text-xs sm:text-sm text-muted">
+                Cập nhật nội dung bài viết và định dạng ấn phẩm trên Blog Platform.
               </p>
             </div>
           </div>
@@ -153,7 +140,7 @@ export default function EditPostPage() {
               className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition ${
                 previewMode
                   ? 'border-rose-800 bg-red-50 text-accent dark:bg-accent/20 dark:text-red-300'
-                  : 'border-zinc-200 bg-white text-zinc-700 shadow-sm hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300'
+                  : 'border-line bg-surface text-ink shadow-sm hover:bg-raised dark:bg-surface/[0.03]'
               }`}
             >
               <Eye className="h-3.5 w-3.5" />
@@ -164,9 +151,9 @@ export default function EditPostPage() {
               type="button"
               disabled={submitting}
               onClick={() => handleUpdate('draft')}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-semibold text-zinc-700 shadow-sm hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 transition"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3.5 py-2 text-xs font-semibold text-ink shadow-sm hover:bg-raised dark:bg-surface/[0.03] transition"
             >
-              <Save className="h-3.5 w-3.5" />
+              <FloppyDisk className="h-3.5 w-3.5" />
               <span>Lưu nháp</span>
             </button>
 
@@ -176,7 +163,7 @@ export default function EditPostPage() {
               onClick={() => handleUpdate('published')}
               className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2 text-xs font-bold text-white shadow-lg shadow-accent/25 hover:bg-accent-hover active:scale-95 disabled:opacity-50 transition"
             >
-              {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+              {submitting ? <CircleNotch className="h-3.5 w-3.5 animate-spin" /> : <PaperPlaneTilt className="h-3.5 w-3.5" />}
               <span>Xuất bản</span>
             </button>
           </div>
@@ -192,35 +179,35 @@ export default function EditPostPage() {
 
         {error && (
           <div className="flex items-center gap-2 rounded-2xl border border-rose-500/30 bg-rose-50 px-4 py-3 text-xs font-medium text-accent dark:bg-rose-500/10 dark:text-rose-300 animate-in fade-in">
-            <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+            <WarningCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Form Chỉnh sửa hoặc Preview */}
         {previewMode ? (
-          <div className="rounded-3xl border border-zinc-200/80 bg-white p-8 sm:p-12 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/80 space-y-6">
+          <div className="rounded-3xl border border-line bg-surface p-8 sm:p-12 shadow-sm/80 space-y-6">
             <div className="inline-flex items-center gap-2 rounded-md bg-red-50 dark:bg-accent/10 px-2.5 py-1 text-xs font-bold text-accent dark:text-rose-600 uppercase">
               {categories.find((c) => c.id === categoryId)?.name || 'Chuyên mục'}
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold font-serif text-zinc-950 dark:text-white">
+            <h2 className="text-3xl sm:text-4xl font-extrabold font-serif text-ink">
               {title || 'Chưa đặt tiêu đề'}
             </h2>
             {excerpt && (
-              <p className="text-base text-zinc-500 dark:text-zinc-400 italic">
+              <p className="text-base text-muted italic">
                 {excerpt}
               </p>
             )}
-            <div className="pt-4 border-t border-zinc-100 dark:border-white/10 text-base leading-relaxed text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">
+            <div className="pt-4 border-t border-line text-base leading-relaxed text-zinc-800 whitespace-pre-wrap">
               {content || 'Chưa có nội dung bài viết.'}
             </div>
           </div>
         ) : (
-          <div className="rounded-3xl border border-zinc-200/80 bg-white p-6 sm:p-10 shadow-sm dark:border-white/[0.08] dark:bg-[#0c121e]/80 space-y-6">
+          <div className="rounded-3xl border border-line bg-surface p-6 sm:p-10 shadow-sm/80 space-y-6">
             
             {/* Tiêu đề */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-1.5">
                 TIÊU ĐỀ BÀI VIẾT
               </label>
               <input
@@ -229,14 +216,14 @@ export default function EditPostPage() {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Nhập tiêu đề bài viết..."
                 required
-                className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-sm font-semibold text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/[0.03] transition"
               />
             </div>
 
             {/* Slug & Chuyên mục */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-1.5">
                   ĐƯỜNG DẪN TĨNH (SLUG)
                 </label>
                 <input
@@ -244,18 +231,18 @@ export default function EditPostPage() {
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   placeholder="tieu-de-bai-viet"
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                  className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/[0.03] transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-1.5">
                   CHUYÊN MỤC
                 </label>
                 <select
                   value={categoryId}
                   onChange={(e) => setCategoryId(Number(e.target.value))}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-[#0c101a] dark:text-white transition"
+                  className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink focus:border-accent focus:outline-none transition"
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -268,7 +255,7 @@ export default function EditPostPage() {
 
             {/* Excerpt */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-1.5">
                 TRÍCH ĐOẠN NGẮN (EXCERPT)
               </label>
               <input
@@ -276,30 +263,30 @@ export default function EditPostPage() {
                 value={excerpt}
                 onChange={(e) => setExcerpt(e.target.value)}
                 placeholder="Mô tả tóm tắt nội dung bài viết trong 1-2 câu..."
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/[0.03] transition"
               />
             </div>
 
             {/* Cover Image */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-1.5">
                 URL ẢNH BÌA
               </label>
               <div className="relative">
-                <ImageIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <ImageIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-faint" />
                 <input
                   type="url"
                   value={coverImage}
                   onChange={(e) => setCoverImage(e.target.value)}
                   placeholder="https://images.unsplash.com/..."
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-3.5 py-2.5 text-xs text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                  className="w-full rounded-xl border border-line bg-canvas pl-10 pr-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/[0.03] transition"
                 />
               </div>
             </div>
 
             {/* Nội dung chi tiết */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-1.5">
                 NỘI DUNG CHI TIẾT
               </label>
               <textarea
@@ -308,7 +295,7 @@ export default function EditPostPage() {
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Nhập nội dung bài viết đầy đủ tại đây..."
                 required
-                className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition leading-relaxed font-mono"
+                className="w-full rounded-2xl border border-line bg-canvas p-4 text-xs sm:text-sm text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/[0.03] transition leading-relaxed font-mono"
               />
             </div>
 

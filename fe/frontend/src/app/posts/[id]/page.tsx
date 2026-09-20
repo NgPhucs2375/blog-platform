@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, useScroll, useSpring } from 'motion/react';
@@ -161,10 +161,7 @@ export default function PostDetailPage() {
     setCommentText('');
   };
 
-  const paragraphs = useMemo(
-    () => (post?.content ? paragraphsOf(post.content) : []),
-    [post?.content],
-  );
+  const paragraphs = post?.content ? paragraphsOf(post.content) : [];
 
   if (loading) {
     return (

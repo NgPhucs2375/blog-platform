@@ -11,7 +11,12 @@ interface ThemeToggleProps {
 
 /** Nút chuyển giao diện sáng/tối, đồng bộ với ThemeContext. */
 export default function ThemeToggle({ className = '' }: ThemeToggleProps) {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, mounted } = useTheme();
+  
+  if (!mounted) {
+    return <div className={`h-9 w-9 rounded-xl border border-line bg-surface ${className}`} />;
+  }
+  
   const isDark = theme === 'dark';
 
   return (

@@ -51,10 +51,17 @@ function tryRefreshSession(): Promise<boolean> {
   return refreshPromise;
 }
 
+// Chặn vòng lặp reload vô hạn: 401 -> hardLogout -> reload -> fetch -> 401 ...
+let logoutRedirecting = false;
+
 function hardLogout(): void {
   tokenStorage.clear();
-  if (typeof window !== "undefined") {
-    window.location.href = "/login";
+  if (typeof window !== "undefined" && !logoutRedirecting) {
+    logoutRedirecting = true;
+    if (!window.location.pathname.startsWith("/login")) {
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- cần full reload để xoá sạch state sau phiên hết hạn
+      window.location.href = "/login";
+    }
   }
 }
 

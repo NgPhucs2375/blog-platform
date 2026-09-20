@@ -20,7 +20,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password) {
-      setErrorMessage('Vui lòng nhập đầy đủ email và mật khẩu.');
+      setErrorMessage('Vui lòng nhập đầy đủ email/tên đăng nhập và mật khẩu.');
       return;
     }
 
@@ -69,15 +69,15 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
-              Địa chỉ Email
+              Email hoặc tên đăng nhập
             </label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="usertest hoặc you@example.com"
               required
-              autoComplete="email"
+              autoComplete="username"
               className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
             />
           </div>

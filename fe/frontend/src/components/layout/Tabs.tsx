@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion } from 'motion/react';
 
 export interface TabItem {
   /** Định danh tab (hoặc đường dẫn nếu dùng chế độ link) */
@@ -36,7 +36,6 @@ export default function Tabs({
   layoutId = 'tabs-pill',
   className = '',
 }: TabsProps) {
-  const reduce = useReducedMotion();
 
   const isActive = (item: TabItem) =>
     item.href ? activeId === item.id || activeId.startsWith(item.id) : activeId === item.id;

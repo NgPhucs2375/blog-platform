@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { postApi, Category } from '@/services/postApi';
-import { ArrowLeft, Save, Send, Eye, Edit3 } from 'lucide-react';
+import { ArrowLeft, Eye, FloppyDisk as FloppyDisk, PaperPlaneTilt as PaperPlaneTilt, PencilSimple as PencilSimple } from '@phosphor-icons/react';
 
 export default function CreatePostPage() {
   const router = useRouter();
@@ -110,7 +110,7 @@ export default function CreatePostPage() {
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  <Edit3 className="h-3.5 w-3.5" />
+                  <PencilSimple className="h-3.5 w-3.5" />
                   Soạn
                 </button>
                 <button
@@ -133,7 +133,7 @@ export default function CreatePostPage() {
                 onClick={() => handleSave('draft')}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-50"
               >
-                <Save className="h-3.5 w-3.5" />
+                <FloppyDisk className="h-3.5 w-3.5" />
                 Lưu nháp
               </button>
 
@@ -143,7 +143,7 @@ export default function CreatePostPage() {
                 onClick={() => handleSave('published')}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-accent/20 hover:bg-accent-hover transition disabled:opacity-50"
               >
-                <Send className="h-3.5 w-3.5" />
+                <PaperPlaneTilt className="h-3.5 w-3.5" />
                 Xuất bản
               </button>
             </div>

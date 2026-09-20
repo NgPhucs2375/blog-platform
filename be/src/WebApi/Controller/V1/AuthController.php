@@ -72,12 +72,21 @@ class AuthController extends BaseController
     {
         $data = $this->getJsonBody();
 
-        if (empty($data['email']) || empty($data['password'])) {
-            $this->error("Vui lòng nhập Email và Mật khẩu.", 422);
+        // Chấp nhận đăng nhập bằng email HOẶC tên đăng nhập.
+        // Khoan dung với lỗi gõ thường gặp: hoa/thường (bàn phím tự viết hoa
+        // chữ cái đầu) và dấu cách thừa khi copy-paste.
+        $login = trim((string)($data['email'] ?? $data['username'] ?? ''));
+        $password = trim((string)($data['password'] ?? ''));
+
+        if ($login === '' || $password === '') {
+            $this->error("Vui lòng nhập Email/Tên đăng nhập và Mật khẩu.", 422);
         }
 
-        $user = $this->userRepository->findByEmail(trim((string)$data['email']));
-        if (!$user || !password_verify((string)$data['password'], $user->getPasswordHash())) {
+        $user = $this->userRepository->findByEmail($login)
+            ?? $this->userRepository->findByEmail(strtolower($login))
+            ?? $this->userRepository->findByUserName($login)
+            ?? $this->userRepository->findByUserName(strtolower($login));
+        if (!$user || !password_verify($password, $user->getPasswordHash())) {
             $this->error("Tài khoản hoặc mật khẩu không chính xác.", 401);
         }
 

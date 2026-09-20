@@ -55,7 +55,12 @@ NEXT_PUBLIC_API_URL=http://localhost/api npm run dev   # http://localhost:3001
 ```
 
 Không trỏ được BE thì dùng mock API nội bộ để xem giao diện (dữ liệu giả):
-`NEXT_PUBLIC_API_URL=http://127.0.0.1:4000/api` kèm mock server riêng.
+`NEXT_PUBLIC_API_URL=http://127.0.0.1:4000/api` kèm mock server riêng
+(`node /tmp/blogmock/server.mjs`, port 4000). Mock hỗ trợ: posts, categories,
+**CRUD user management đầy đủ** (list/search/filter/pagination, tạo, đổi role,
+khóa/mở khóa, xóa mềm/vĩnh viễn, thao tác hàng loạt), **reports** (views trend
+14 ngày, phân bố chuyên mục) và **auth** (login/register/logout) — toàn bộ
+luồng demo chạy được, kể cả đăng nhập superadmin/usertest.
 
 ## Ghi chú kỹ thuật FE
 

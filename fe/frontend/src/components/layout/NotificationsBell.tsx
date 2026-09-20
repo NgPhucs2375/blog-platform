@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Bell, Checks } from '@phosphor-icons/react';
 import {
+  GUEST_NOTIFICATIONS,
   NOTIFICATION_META,
   SEED_NOTIFICATIONS,
   type AppNotification,
 } from '@/config/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Chuông thông báo với dropdown panel.
@@ -15,11 +17,21 @@ import {
  * /v1/notifications thì thay state nội bộ bằng fetch là xong.
  */
 export default function NotificationsBell() {
+  const { user } = useAuth() as { user?: unknown };
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<AppNotification[]>(SEED_NOTIFICATIONS);
+  // Khách: thông báo chào mừng; đã đăng nhập: thông báo cá nhân (mock -> BE sau)
+  const [items, setItems] = useState<AppNotification[]>(
+    typeof window === 'undefined' ? SEED_NOTIFICATIONS : [],
+  );
+  const [hydrated, setHydrated] = useState(false);
   const reduce = useReducedMotion();
 
-  const unreadCount = items.filter((n) => !n.read).length;
+  useEffect(() => {
+    setItems(user ? SEED_NOTIFICATIONS : GUEST_NOTIFICATIONS);
+    setHydrated(true);
+  }, [user]);
+
+  const unreadCount = hydrated ? items.filter((n) => !n.read).length : 0;
 
   const markAllRead = () =>
     setItems((prev) => prev.map((n) => ({ ...n, read: true })));

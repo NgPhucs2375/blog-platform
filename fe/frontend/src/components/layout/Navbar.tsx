@@ -41,7 +41,12 @@ export default function Navbar() {
   const [catOpen, setCatOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [spySection, setSpySection] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const reduce = useReducedMotion();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     postApi
@@ -75,7 +80,6 @@ export default function Navbar() {
         break;
       }
     }
-    document.documentElement.dataset.spy = next;
     setSpySection((prev) => (prev === next ? prev : next));
   });
 
@@ -197,7 +201,7 @@ export default function Navbar() {
             </AnimatePresence>
           </div>
 
-          {user && (
+          {mounted && user && (
             <Link
               href="/dashboard"
               className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
@@ -213,10 +217,10 @@ export default function Navbar() {
 
         {/* Khu hành động */}
         <div className="flex shrink-0 items-center gap-2.5">
-          {user && <NotificationsBell />}
+          {mounted && user && <NotificationsBell />}
           <ThemeToggle />
 
-          {!user ? (
+          {mounted && !user ? (
             <div className="hidden items-center gap-2 sm:flex">
               <Link
                 href="/login"
@@ -231,8 +235,23 @@ export default function Navbar() {
                 Bắt đầu
               </Link>
             </div>
-          ) : (
+          ) : mounted && user ? (
             <UserMenu />
+          ) : (
+            <div className="hidden items-center gap-2 sm:flex">
+              <Link
+                href="/login"
+                className="rounded-xl border border-line bg-surface px-3.5 py-2 text-xs font-semibold text-ink shadow-sm transition hover:border-accent/40"
+              >
+                Đăng nhập
+              </Link>
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#0f766e] to-[#134e4a] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#0f766e]/25 transition hover:opacity-90"
+              >
+                Bắt đầu
+              </Link>
+            </div>
           )}
 
           <button
@@ -271,7 +290,7 @@ export default function Navbar() {
                   </Link>
                 );
               })}
-              {user && (
+              {mounted && user && (
                 <Link
                   href="/dashboard"
                   className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-muted"
@@ -279,7 +298,7 @@ export default function Navbar() {
                   Bảng điều khiển
                 </Link>
               )}
-              {!user && (
+              {mounted && !user && (
                 <div className="grid grid-cols-2 gap-2 pt-2">
                   <Link
                     href="/login"
