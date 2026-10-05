@@ -14,6 +14,7 @@ use src\Domain\Enums\PostStatus;
 use src\Domain\Enums\LogAction;
 use src\Domain\Enums\LogTargetType;
 use src\Infrastructure\Repositories\UserRepository;
+use src\Application\Services\ContentModerationService;
 use Exception;
 
 class PostController extends BaseController
@@ -21,7 +22,8 @@ class PostController extends BaseController
     public function __construct(
         private PostRepository $postRepository,
         private SystemLogRepository $logRepository,
-        private UserRepository $userRepository
+        private UserRepository $userRepository,
+        private ContentModerationService $moderation
     ) {}
 
     #[Route('GET', '/api/v1/posts')]
@@ -84,6 +86,7 @@ class PostController extends BaseController
                 (int)$data['categoryId'],
                 $status
             );
+            $moderation = $this->moderateIfPublishing($status === PostStatus::PUBLISHED, $post);
 
             $this->postRepository->save($post);
             $savedPost = $this->postRepository->findBySlug($post->getSlug());
@@ -104,14 +107,17 @@ class PostController extends BaseController
                 'title' => $post->getTitle(),
                 'slug' => $post->getSlug(),
                 'content' => $post->getContent(),
-                'status' => $status->value,
+                'status' => $post->getStatus()->value,
                 'categoryId' => $post->getCategoryId(),
                 'authorId' => $post->getAuthorId(),
                 'viewCount' => 0,
                 'createdAt' => date('Y-m-d H:i:s'),
             ];
 
-            $this->json($responseData, 201, "Tạo bài viết thành công.");
+            $message = $moderation['outcome'] === 'reject'
+                ? (string)$moderation['reason']
+                : ($moderation['outcome'] === 'error' ? 'Bộ lọc gặp lỗi; bài viết đang chờ Admin xử lý.' : 'Tạo bài viết thành công.');
+            $this->json($responseData, 201, $message);
         } catch (Exception $e) {
             $this->error($e->getMessage(), 400);
         }
@@ -156,6 +162,9 @@ class PostController extends BaseController
         if (!$post) {
             $this->error("Không tìm thấy bài viết.", 404);
         }
+        if (!$post->isPublished()) {
+            $this->error("Không tìm thấy bài viết.", 404);
+        }
 
         $data = $post->toArray();
 
@@ -164,6 +173,19 @@ class PostController extends BaseController
         $data['author_name'] = $author ? $author->getUsername() : 'Ẩn danh';
 
         $this->json($data, 200, "Lấy chi tiết bài viết thành công.");
+    }
+
+    /** Ban quan ly danh cho tac gia/Admin, giu Draft/Pending/Reject khong lo ra cong khai. */
+    #[Route('GET', '/api/v1/posts/{id}/manage', auth: true)]
+    public function manage(array $user, int $id): void
+    {
+        $post = $this->postRepository->findById($id);
+        if (!$post) $this->error('Không tìm thấy bài viết.', 404);
+        $userId = (int)($user['sub'] ?? $user['id'] ?? 0);
+        if (($user['role'] ?? 'Member') !== 'Admin' && $post->getAuthorId() !== $userId) {
+            $this->error('Bạn không có quyền xem bài viết này.', 403);
+        }
+        $this->json($post->toArray(), 200, 'Lấy bản quản lý bài viết thành công.');
     }
 
     #[Route('POST', '/api/v1/posts/{id}/view')]
@@ -203,10 +225,15 @@ class PostController extends BaseController
         if (!empty($data['slug'])) $post->setSlug((string)$data['slug']);
         if (!empty($data['content'])) $post->setContent((string)$data['content']);
         if (!empty($data['categoryId'])) $post->setCategoryId((int)$data['categoryId']);
-        if (!empty($data['status'])) {
-            $status = strtoupper($data['status']) === 'PUBLISHED' ? PostStatus::PUBLISHED : PostStatus::DRAFT;
+        $requestedStatus = !empty($data['status']) ? strtoupper((string)$data['status']) : null;
+        if ($requestedStatus !== null) {
+            $status = $requestedStatus === 'PUBLISHED' ? PostStatus::PUBLISHED : PostStatus::DRAFT;
             $post->setStatus($status);
         }
+
+        // Sua mot bai da public (hoac gui dang) phai duoc kiem duyet lai.
+        $shouldModerate = $post->getStatus() === PostStatus::PUBLISHED;
+        $moderation = $this->moderateIfPublishing($shouldModerate, $post);
 
         $this->postRepository->update($post);
 
@@ -224,7 +251,10 @@ class PostController extends BaseController
             // Không làm gián đoạn response nếu ghi log gặp lỗi phụ
         }
 
-        $this->json($post->toArray(), 200, "Cập nhật bài viết thành công.");
+        $message = $moderation['outcome'] === 'reject'
+            ? (string)$moderation['reason']
+            : ($moderation['outcome'] === 'error' ? 'Bộ lọc gặp lỗi; bài viết chuyển sang chờ Admin xử lý.' : 'Cập nhật bài viết thành công.');
+        $this->json($post->toArray(), 200, $message);
     }
 
     #[Route('DELETE', '/api/v1/posts/{id}', auth: true)]
@@ -261,5 +291,23 @@ class PostController extends BaseController
         }
 
         $this->json(null, 200, "Đã xóa bài viết thành công.");
+    }
+
+    /** Draft khong bi quet. Khong co rule dang bat se tu dong Published. */
+    private function moderateIfPublishing(bool $shouldModerate, Post $post): array
+    {
+        if (!$shouldModerate) return ['outcome' => 'skipped', 'reason' => null, 'matchedRules' => []];
+        $result = $this->moderation->check($post->getTitle(), $post->getContent());
+        if ($result['outcome'] === 'reject') {
+            $post->reject();
+            $post->setModerationReason($result['reason']);
+        } elseif ($result['outcome'] === 'error') {
+            $post->submitForReview();
+            $post->setModerationReason($result['reason']);
+        } else {
+            $post->approve();
+            $post->setModerationReason(null);
+        }
+        return $result;
     }
 }

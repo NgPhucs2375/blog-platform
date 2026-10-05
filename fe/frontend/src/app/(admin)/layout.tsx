@@ -7,6 +7,7 @@ import {
   Users,
   FolderKanban,
   BarChart3,
+  ShieldAlert,
   ArrowLeft,
   Shield,
 } from 'lucide-react';
@@ -22,6 +23,7 @@ export default function AdminLayout({
     { href: '/users', label: 'Quản lý người dùng', icon: Users },
     { href: '/categories', label: 'Quản lý chuyên mục', icon: FolderKanban },
     { href: '/reports', label: 'Báo cáo & Thống kê', icon: BarChart3 },
+    { href: '/moderation-rules', label: 'Quy tắc kiểm duyệt', icon: ShieldAlert },
   ];
 
   return (

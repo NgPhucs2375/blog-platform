@@ -41,8 +41,8 @@ export default function CreatePostPage() {
   };
 
   const handleSave = async (status: 'published' | 'draft') => {
-    if (!title.trim() || !content.trim()) {
-      setErrorMsg('Vui lòng điền tiêu đề và nội dung bài viết.');
+    if (!title.trim() || !content.trim() || !categoryId) {
+      setErrorMsg('Vui lòng điền tiêu đề, nội dung và chọn chuyên mục.');
       return;
     }
 
@@ -50,7 +50,7 @@ export default function CreatePostPage() {
     setErrorMsg(null);
 
     try {
-      await postApi.createPost({
+      const created = await postApi.createPost({
         title,
         slug: slug || `post-${Date.now()}`,
         category_id: categoryId,
@@ -59,6 +59,17 @@ export default function CreatePostPage() {
         featured_image: featuredImage,
         status,
       });
+      const raw = created as any;
+      if (String(raw.status || '').toLowerCase() === 'reject') {
+        setErrorMsg(raw.moderationReason || 'Bài viết có chứa ngôn từ không phù hợp và đã bị từ chối xuất bản.');
+        setSubmitting(false);
+        return;
+      }
+      if (String(raw.status || '').toLowerCase() === 'pending') {
+        setErrorMsg('Bộ lọc gặp lỗi; bài viết đang chờ Admin xử lý.');
+        setSubmitting(false);
+        return;
+      }
       router.push('/dashboard');
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Có lỗi xảy ra khi lưu bài viết.');

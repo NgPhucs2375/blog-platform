@@ -20,6 +20,7 @@ export interface PostItem {
   author?: { id?: number; userName?: string; username?: string };
   createdAt?: string;
   created_at?: string;
+  moderationReason?: string;
 }
 
 export interface Category {
@@ -61,6 +62,18 @@ export const postApi = {
       return unwrapData(res.data);
     } catch (err: any) {
       console.error(`Lỗi khi tải bài viết ID ${id}:`, err?.message);
+      return null;
+    }
+  },
+
+  // Route co xac thuc de tac gia/Admin xem duoc nhap, pending va reject.
+  getManagePostById: async (id: number | string): Promise<PostItem | null> => {
+    if (!id || id === 'undefined' || id === 'null') return null;
+    try {
+      const res = await api.get(`/v1/posts/${id}/manage`);
+      return unwrapData(res.data);
+    } catch (err: any) {
+      console.error(`Lỗi khi tải bài viết quản lý ID ${id}:`, err?.message);
       return null;
     }
   },

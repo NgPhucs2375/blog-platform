@@ -22,7 +22,7 @@ class CorsMiddleware
      */
     public function __construct(
         ?array $allowedOrigins = null,
-        private string $allowedMethods = 'GET, POST, PUT, DELETE, OPTIONS',
+        private string $allowedMethods = 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
         private string $allowedHeaders = 'Content-Type, Authorization',
         private int $maxAge = 86400
     ) {

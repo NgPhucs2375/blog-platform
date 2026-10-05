@@ -77,7 +77,7 @@ export default function LoginPage() {
               placeholder="you@example.com"
               required
               autoComplete="email"
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
             />
           </div>
 
@@ -93,7 +93,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 required
                 autoComplete="current-password"
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-4 pr-10 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-4 pr-10 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
               />
               <button
                 type="button"

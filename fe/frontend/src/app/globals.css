@@ -24,3 +24,18 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+/* Form controls: nhiều page dùng focus:bg-white cho light mode. Khi dark mode,
+   rule này giữ nền tối và chữ sáng cho toàn bộ input/textarea/select. */
+.dark input:not([type="checkbox"]):not([type="radio"]):focus,
+.dark textarea:focus,
+.dark select:focus {
+  background-color: #171b26 !important;
+  color: #f8fafc !important;
+}
+
+/* Option native kế thừa text trắng từ select nên cần nền tối tương phản. */
+.dark select option {
+  background-color: #171b26;
+  color: #f8fafc;
+}
