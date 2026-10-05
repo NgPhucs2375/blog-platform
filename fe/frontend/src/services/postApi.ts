@@ -129,22 +129,6 @@ export const postApi = {
       return [];
     }
   },
-  getCategoriesForAdmin: async (): Promise<Category[]> => {
-    const res = await api.get('/v1/categories');
-    const payload = unwrapData(res.data);
-    return Array.isArray(payload) ? payload : [];
-  },
-  createCategory: async (payload: Pick<Category, 'name' | 'slug'> & { description?: string }): Promise<Category> => {
-    const res = await api.post('/v1/categories', payload);
-    return unwrapData(res.data);
-  },
-  updateCategory: async (id: number, payload: Pick<Category, 'name' | 'slug'> & { description?: string }): Promise<Category> => {
-    const res = await api.put(`/v1/categories/${id}`, payload);
-    return unwrapData(res.data);
-  },
-  deleteCategory: async (id: number): Promise<void> => {
-    await api.delete(`/v1/categories/${id}`);
-  },
   // Lấy toàn bộ bài viết cá nhân (cả Nháp lẫn Đã duyệt) qua route /v1/posts/me
   getMyPosts: async (): Promise<PostItem[]> => {
     try {

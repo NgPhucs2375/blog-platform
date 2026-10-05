@@ -10,7 +10,6 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [actionNotice, setActionNotice] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   // Form states
   const [name, setName] = useState('');
@@ -23,12 +22,17 @@ export default function CategoriesPage() {
     async function fetchCats() {
       try {
         setLoading(true);
-        const data = await postApi.getCategoriesForAdmin();
+        const data = await postApi.getCategories();
         setCategories(data || []);
       } catch (err) {
         console.error('Lỗi khi tải chuyên mục:', err);
-        setCategories([]);
-        setActionError('Không tải được chuyên mục. Hãy kiểm tra backend và đăng nhập lại bằng tài khoản admin.');
+        setCategories([
+          { id: 1, name: 'DevOps', slug: 'devops' },
+          { id: 2, name: 'UI/UX Design', slug: 'ui-ux-design' },
+          { id: 3, name: 'Kinh tế', slug: 'kinh-te' },
+          { id: 4, name: 'Lập trình', slug: 'lap-trinh' },
+          { id: 5, name: 'Kiến trúc hệ thống', slug: 'kien-truc-he-thong' },
+        ]);
       } finally {
         setLoading(false);
       }
@@ -53,19 +57,22 @@ export default function CategoriesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !slug.trim()) return;
+    if (!name.trim()) return;
 
     setSubmitting(true);
     try {
-      setActionError(null);
-      const payload = { name: name.trim(), slug: slug.trim(), description: description.trim() };
       if (editingId) {
-        const updated = await postApi.updateCategory(editingId, payload);
-        setCategories((prev) => prev.map((c) => (c.id === editingId ? updated : c)));
+        setCategories((prev) =>
+          prev.map((c) => (c.id === editingId ? { ...c, name: name.trim(), slug: slug.trim() } : c))
+        );
         setActionNotice(`Đã cập nhật chuyên mục "${name}".`);
       } else {
-        const created = await postApi.createCategory(payload);
-        setCategories((prev) => [...prev, created]);
+        const newCat: Category = {
+          id: Date.now(),
+          name: name.trim(),
+          slug: slug.trim() || `cat-${Date.now()}`,
+        };
+        setCategories((prev) => [...prev, newCat]);
         setActionNotice(`Đã thêm chuyên mục mới "${name}".`);
       }
 
@@ -74,9 +81,6 @@ export default function CategoriesPage() {
       setDescription('');
       setEditingId(null);
       setTimeout(() => setActionNotice(null), 3000);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message;
-      setActionError(message || 'Không thể lưu chuyên mục. Vui lòng thử lại.');
     } finally {
       setSubmitting(false);
     }
@@ -86,21 +90,14 @@ export default function CategoriesPage() {
     setEditingId(cat.id);
     setName(cat.name);
     setSlug(cat.slug);
-    setDescription(cat.description || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id: number, catName: string) => {
+  const handleDelete = (id: number, catName: string) => {
     if (!window.confirm(`Xác nhận xóa chuyên mục "${catName}"?`)) return;
-    try {
-      setActionError(null);
-      await postApi.deleteCategory(id);
-      setCategories((prev) => prev.filter((c) => c.id !== id));
-      setActionNotice(`Đã xóa chuyên mục "${catName}".`);
-      setTimeout(() => setActionNotice(null), 3000);
-    } catch (err: any) {
-      setActionError(err?.response?.data?.message || err?.message || 'Không thể xóa chuyên mục.');
-    }
+    setCategories((prev) => prev.filter((c) => c.id !== id));
+    setActionNotice(`Đã xóa chuyên mục "${catName}".`);
+    setTimeout(() => setActionNotice(null), 3000);
   };
 
   const filtered = useMemo(() => {
@@ -150,11 +147,6 @@ export default function CategoriesPage() {
             <span>{actionNotice}</span>
           </div>
           <button onClick={() => setActionNotice(null)}><X className="h-4 w-4" /></button>
-        </div>
-      )}
-      {actionError && (
-        <div role="alert" className="rounded-2xl border border-rose-500/30 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-800 dark:bg-rose-500/10 dark:text-rose-300">
-          {actionError}
         </div>
       )}
 

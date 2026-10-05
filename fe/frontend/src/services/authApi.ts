@@ -19,11 +19,18 @@ export const authApi = {
     return res.data.data;
   },
 
-  /** Đổi Google ID credential đã được backend xác minh lấy phiên đăng nhập. */
-  async socialLogin(provider: SocialProvider, credential?: string): Promise<AuthResponse> {
+  /**
+   * Đăng nhập bằng nhà cung cấp ngoài (OAuth). BE cần hiện thực endpoint
+   * POST /v1/auth/social/{provider} nhận { access_token } hoặc hệ thức
+   * authorization-code và trả về AuthResponse giống login thường.
+   * Khi BE chưa có endpoint, request sẽ 404 và UI hiển thị thông báo.
+   */
+  async socialLogin(provider: SocialProvider, payload?: {
+    accessToken?: string;
+  }): Promise<AuthResponse> {
     const res = await api.post<ApiResponse<AuthResponse>>(
       `/v1/auth/social/${provider}`,
-      credential ? { credential } : {},
+      payload ?? {},
     );
     return res.data.data;
   },

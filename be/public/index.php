@@ -1,20 +1,28 @@
 <?php
+declare(strict_types=1);
 
-use Illuminate\Foundation\Application;
-use Illuminate\Http\Request;
+/**
+ * Front Controller — entry point duy nhất của API (nginx trỏ mọi /api/* về đây).
+ * Chỉ làm bootstrap: dựng Container → CORS → Router dispatch.
+ * Route, middleware, DI wiring nằm trong src/WebApi (xem Container::class).
+ */
 
-define('LARAVEL_START', microtime(true));
+require_once __DIR__ . '/../vendor/autoload.php';
 
-// Determine if the application is in maintenance mode...
-if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
-    require $maintenance;
+use src\WebApi\Container;
+use src\WebApi\Services\ResponseService;
+
+header('Content-Type: application/json; charset=utf-8');
+
+try {
+    $container = new Container();
+
+    // Preflight OPTIONS kết thúc tại đây (204), request thường đi tiếp.
+    $container->cors()->handle();
+
+    $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $container->router()->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $uri);
+} catch (Throwable $e) {
+    // Lưới an toàn cuối: lỗi boot (DB, JWT_SECRET, trùng route...) → JSON 500.
+    ResponseService::error('Lỗi hệ thống: ' . $e->getMessage(), 500);
 }
-
-// Register the Composer autoloader...
-require __DIR__.'/../vendor/autoload.php';
-
-// Bootstrap Laravel and handle the request...
-/** @var Application $app */
-$app = require_once __DIR__.'/../bootstrap/app.php';
-
-$app->handleRequest(Request::capture());

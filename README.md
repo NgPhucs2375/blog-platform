@@ -1,115 +1,73 @@
 # Blog Platform
 
-Nền tảng blog gồm giao diện Next.js, chatbot, và backend Laravel MVC dùng MySQL. Hướng dẫn này dành cho Windows + Laragon; không cần Docker.
+Nền tảng blog đa người dùng với quản trị nội dung: đăng bài, chuyên mục,
+kiểm duyệt, bình luận, báo cáo thống kê. Bài đọc hướng thiết kế editorial
+(tạp chí điện tử) với chế độ sáng/tối.
 
-## Thư mục chính
+## Cấu trúc dự án
 
-- `be/`: Laravel API, migration, seeder và model.
-- `fe/frontend/`: giao diện Next.js và chatbot.
-- `README.md`: hướng dẫn cài đặt và chạy dự án.
-
-## Yêu cầu
-
-- Laragon có PHP 8.3 trở lên và MySQL.
-- Composer, Node.js/npm và Git.
-- Dự án đã được clone vào một thư mục, ví dụ `C:\laragon\www\blog-platform-luan`.
-
-> **Lưu ý:** Bật MySQL trong Laragon trước khi chạy. Mỗi lệnh `cd` và lệnh server phải chạy ở đúng thư mục; giữ các cửa sổ server mở.
-
-## Cài lần đầu
-
-### 1. Cài backend Laravel
-
-Mở Laragon Terminal hoặc Cmder. Đổi đường dẫn trong lệnh nếu dự án nằm ở thư mục khác:
-
-```cmd
-cd /d "C:\laragon\www\blog-platform-luan\be"
+```
+blog-platform/
+├── be/                  # Backend PHP thuần (không framework), REST API /api/v1
+│   ├── database/
+│   │   ├── migrations/  # Migration SQL (chạy theo thứ tự tên file)
+│   │   └── seeders/     # Seeder tài khoản mặc định
+│   └── src/             # Application / Domain / Infrastructure / WebApi
+├── fe/frontend/         # Next.js 16 (App Router) + Tailwind CSS v4 + Motion
+├── docker/              # Cấu hình nginx, backend, frontend cho Docker
+└── docker-compose.yml   # Toàn bộ stack
 ```
 
-Tạo cấu hình local và cài thư viện:
+## Chạy bằng Docker (khuyên dùng)
 
-```cmd
-copy .env.example .env
-composer install
+```bash
+docker compose up -d --build
+docker compose exec backend php database/migrate.php          # tạo bảng
+docker compose exec backend php database/seeders/seed_admin.php  # seed tài khoản
 ```
 
-Mở `be/.env` bằng Notepad, kiểm tra thông tin MySQL (`DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`). Database mặc định `blog_platform_laravel` được tạo riêng, không ghi đè database cũ.
+Sau đó:
 
-Để tạo tài khoản admin demo giống bản cũ, đặt các dòng sau trong `be/.env` trước khi seed:
+- Web    : http://localhost (nginx đưa FE + BE về một origin)
+- FE dev : http://localhost:3000
+- API    : http://localhost/api/v1/...
 
-```env
-ADMIN_USERNAME=superadmin
-ADMIN_EMAIL=superadmin@gmail.com
-ADMIN_PASSWORD=superadmin123@
-```
+## Tài khoản seed
 
-Mật khẩu này chỉ dùng cho demo/local. Với hệ thống công khai, hãy đặt mật khẩu riêng.
+Seeder `be/database/seeders/seed_admin.php` tạo sẵn 2 tài khoản (chạy lại
+nhiều lần không bị trùng — tài khoản đã tồn tại sẽ được bỏ qua):
 
-Tạo database, sinh app key và chạy migration cùng dữ liệu mẫu:
+| Vai trò | Username   | Email                 | Mật khẩu       | Ghi chú                              |
+|---------|------------|-----------------------|----------------|--------------------------------------|
+| Admin   | superadmin | superadmin@gmail.com  | superadmin123@ | Vào được Quản trị: users, categories, reports, moderation-rules |
+| User    | usertest   | usertest@gmail.com    | usertest123@   | Tài khoản người dùng thường để test đăng bài, bình luận |
 
-```cmd
-php artisan key:generate
-php database/create_database.php
-php artisan migrate --seed
-```
+Đăng nhập tại `/login`. Đăng nhập Google/GitHub trên trang đăng nhập cần
+backend hiện thực endpoint OAuth `POST /v1/auth/social/{provider}` (FE đã
+nối sẵn contract).
 
-### 2. Cài frontend Next.js
+## Chạy frontend ở môi trường dev
 
-Mở **tab Cmder mới**, không đóng tab backend:
-
-```cmd
-cd /d "C:\laragon\www\blog-platform-luan\fe\frontend"
-copy .env.example .env.local
+```bash
+cd fe/frontend
 npm install
+NEXT_PUBLIC_API_URL=http://localhost/api npm run dev   # http://localhost:3001
 ```
 
-Các file mẫu đã có API URL và Google Client ID của dự án. Nếu cần, kiểm tra `fe/frontend/.env.local` có các biến:
+Không trỏ được BE thì dùng mock API nội bộ để xem giao diện (dữ liệu giả):
+`NEXT_PUBLIC_API_URL=http://127.0.0.1:4000/api` kèm mock server riêng
+(`node /tmp/blogmock/server.mjs`, port 4000). Mock hỗ trợ: posts, categories,
+**CRUD user management đầy đủ** (list/search/filter/pagination, tạo, đổi role,
+khóa/mở khóa, xóa mềm/vĩnh viễn, thao tác hàng loạt), **reports** (views trend
+14 ngày, phân bố chuyên mục) và **auth** (login/register/logout) — toàn bộ
+luồng demo chạy được, kể cả đăng nhập superadmin/usertest.
 
-```env
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=Client_ID_của_dự_án
-```
+## Ghi chú kỹ thuật FE
 
-Trong `be/.env` cũng cần có cùng Client ID:
-
-```env
-GOOGLE_CLIENT_ID=Client_ID_của_dự_án
-```
-
-### 3. Chạy dự án
-
-Bật MySQL trong Laragon. Mở một tab terminal cho Laravel:
-
-```cmd
-cd /d "C:\laragon\www\blog-platform-luan\be" && php artisan serve --host=127.0.0.1 --port=8000
-```
-
-Mở tab terminal thứ hai cho Next.js:
-
-```cmd
-cd /d "C:\laragon\www\blog-platform-luan\fe\frontend" && npm run dev -- --port 3001
-```
-
-Giữ cả hai tab mở. Khi Next.js báo `Ready`, truy cập [http://localhost:3001](http://localhost:3001). Trang đăng nhập: [http://localhost:3001/login](http://localhost:3001/login). Backend health check: [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health).
-
-## Đăng nhập Google
-
-Client ID được điền sẵn trong các file `.env.example`; mỗi máy vẫn cần sao chép thành `.env` và `.env.local` theo hướng dẫn. Origin local là `http://localhost:3001`. Nếu ứng dụng OAuth đang ở trạng thái **Testing**, chủ dự án phải thêm email Google của từng bạn vào danh sách **Test users** trong Google Auth Platform. [Hướng dẫn Client ID của Google](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid) · [Quy định Test users](https://support.google.com/cloud/answer/15549945?hl=en).
-
-Luồng này không cần Client Secret. Không commit `.env` hoặc `.env.local`; Client ID không phải bí mật. Tài khoản Google mới được tạo với quyền User.
-
-## Tài khoản admin demo
-
-Nếu đặt các biến `ADMIN_*` ở trên trước khi chạy `php artisan migrate --seed`, có thể đăng nhập bằng `superadmin@gmail.com` và mật khẩu `superadmin123@`. Mỗi máy có database riêng nên tài khoản được seed riêng trên máy đó.
-
-## Lỗi thường gặp
-
-- **`php` không được nhận diện:** mở Laragon Terminal để PHP của Laragon có trong PATH.
-- **`next` không được nhận diện:** chạy `npm install` trong `fe/frontend`.
-- **`ERR_CONNECTION_REFUSED` ở cổng 3001:** Next.js chưa chạy hoặc tab server đã đóng; chạy lại lệnh Next.js và giữ tab mở.
-- **`401: invalid_client` khi đăng nhập Google:** kiểm tra Client ID trong `be/.env` và `fe/frontend/.env.local` giống nhau, đúng với Google Cloud; sau khi đổi `.env.local`, khởi động lại Next.js.
-- **Không kết nối MySQL:** kiểm tra MySQL đang bật và thông tin DB trong `be/.env`.
-
-## Đưa code lên GitHub
-
-Push toàn bộ thư mục repository, gồm `be/`, `fe/frontend/` và README này. Không push `.env`, `.env.local`, `vendor/`, `node_modules/` hoặc mật khẩu. Kiểm tra bằng `git status` tại thư mục gốc trước khi commit.
+- Bảng màu & token: `src/app/globals.css` (khối `:root` / `.dark`) +
+  gradient thương hiệu ở `src/lib/chipColors.ts`.
+- Nội dung banner / vé sự kiện trang chủ: `src/config/promotions.ts`.
+- Menu điều hướng + thông báo: `src/config/navigation.ts`.
+- Chatbot Anums (rule-based, dữ liệu thật): `src/components/Chatbot.tsx`,
+  tài liệu kiến trúc tại `fe/frontend/docs/CHATBOT.md`.
+- Icon: Phosphor Icons (`@phosphor-icons/react`).
