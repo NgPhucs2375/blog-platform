@@ -8,17 +8,20 @@ interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   resolvedTheme: 'light' | 'dark';
+  mounted: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system');
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setThemeState] = useState<Theme>('light');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const [mounted, setMounted] = useState(false);
 
-  // Nạp theme đã lưu từ localStorage khi khởi động
+  // Nạp theme đã lưu từ localStorage khi khởi động (mặc định light: thân thiện khi báo cáo/demo)
   useEffect(() => {
-    const savedTheme = (localStorage.getItem('app_theme') as Theme) || 'system';
+    setMounted(true);
+    const savedTheme = (localStorage.getItem('app_theme') as Theme) || 'light';
     setThemeState(savedTheme);
   }, []);
 
@@ -59,7 +62,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme, mounted }}>
       {children}
     </ThemeContext.Provider>
   );

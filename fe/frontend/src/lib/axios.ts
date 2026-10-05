@@ -1,7 +1,7 @@
 import axios, { type InternalAxiosRequestConfig } from "axios";
 import { tokenStorage } from "@/services/tokenStorage";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost/api";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
 const api = axios.create({
   baseURL,
@@ -15,6 +15,7 @@ const api = axios.create({
 const NO_AUTO_REFRESH_URLS = [
   "/v1/auth/login",
   "/v1/auth/register",
+  "/v1/auth/social/",
   "/v1/auth/refresh",
   "/v1/auth/logout",
 ];
@@ -51,10 +52,17 @@ function tryRefreshSession(): Promise<boolean> {
   return refreshPromise;
 }
 
+// Chặn vòng lặp reload vô hạn: 401 -> hardLogout -> reload -> fetch -> 401 ...
+let logoutRedirecting = false;
+
 function hardLogout(): void {
   tokenStorage.clear();
-  if (typeof window !== "undefined") {
-    window.location.href = "/login";
+  if (typeof window !== "undefined" && !logoutRedirecting) {
+    logoutRedirecting = true;
+    if (!window.location.pathname.startsWith("/login")) {
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- cần full reload để xoá sạch state sau phiên hết hạn
+      window.location.href = "/login";
+    }
   }
 }
 

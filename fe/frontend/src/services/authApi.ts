@@ -11,9 +11,20 @@ import type {
   RegisterResponse,
 } from "@/types/auth";
 
+export type SocialProvider = "google" | "github";
+
 export const authApi = {
   async login(data: LoginRequest): Promise<AuthResponse> {
     const res = await api.post<ApiResponse<AuthResponse>>("/v1/auth/login", data);
+    return res.data.data;
+  },
+
+  /** Đổi Google ID credential đã được backend xác minh lấy phiên đăng nhập. */
+  async socialLogin(provider: SocialProvider, credential?: string): Promise<AuthResponse> {
+    const res = await api.post<ApiResponse<AuthResponse>>(
+      `/v1/auth/social/${provider}`,
+      credential ? { credential } : {},
+    );
     return res.data.data;
   },
 

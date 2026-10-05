@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { LoaderCircle } from 'lucide-react';
+import { CircleNotch } from '@phosphor-icons/react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -38,7 +38,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return (
       <div className="flex items-center justify-center py-20">
         <div className="flex flex-col gap-2 items-center">
-          <LoaderCircle className="animate-spin h-10 w-10 text-zinc-500" />
+          <CircleNotch className="animate-spin h-10 w-10 text-zinc-500" />
         </div>
       </div>
     );

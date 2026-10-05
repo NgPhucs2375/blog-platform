@@ -13,8 +13,16 @@ fe/frontend/out/
 pgdata/
 redis_data/
 
-# IDE & OS
+# IDE & OS 
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+
+# thu vien ngoai
+.agents/
+.claude/
+
+node_modules/
+fe/frontend/src/.next/
+*.log
