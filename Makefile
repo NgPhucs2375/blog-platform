@@ -1,4 +1,4 @@
-.PHONY: help up down restart build logs ps install update test migrate backend-sh frontend-sh db-sh clean
+.PHONY: help up down restart build logs ps install update test migrate backend-sh frontend-sh db-sh clean autoload
 
 # Hiển thị danh sách các lệnh hỗ trợ make help	
 help:
@@ -15,7 +15,7 @@ help:
 	@echo "  make migrate      - Chạy migration CSDL (tạo/cập nhật bảng)"
 	@echo "  make backend-sh   - Truy cập vào shell của container PHP Backend"
 	@echo "  make frontend-sh  - Truy cập vào shell của container Next.js Frontend"
-	@echo "  make db-sh        - Mở cửa sổ dòng lệnh PostgreSQL (psql)"
+	@echo "  make db-sh        - Mở cửa sổ dòng lệnh MySQL"
 	@echo "  make clean        - Xóa toàn bộ container và ổ đĩa volume (Reset DB)"
 
 # Quản lý Container
@@ -49,10 +49,10 @@ update:
 	docker compose exec backend composer update
 
 test:
-	docker compose exec backend ./vendor/bin/phpunit
+	docker compose exec backend php artisan test
 
 migrate:
-	docker compose exec backend php database/migrate.php
+	docker compose exec backend php artisan migrate --seed
 
 # Truy cập Terminal nội bộ Container
 backend-sh:
@@ -62,7 +62,7 @@ frontend-sh:
 	docker compose exec frontend sh
 
 db-sh:
-	docker compose exec postgres psql -U blog_user -d blog_db
+	docker compose exec mysql mysql -u blog_user -p blog_platform
 
 # Reset toàn bộ môi trường và dữ liệu
 clean:
@@ -71,6 +71,3 @@ clean:
 
 autoload:
 	docker compose exec backend composer dump-autoload
-
-test:
-	docker compose exec backend vendor/bin/phpunit
