@@ -1,7 +1,7 @@
 import axios, { type InternalAxiosRequestConfig } from "axios";
 import { tokenStorage } from "@/services/tokenStorage";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost/api";
 
 const api = axios.create({
   baseURL,
@@ -15,7 +15,6 @@ const api = axios.create({
 const NO_AUTO_REFRESH_URLS = [
   "/v1/auth/login",
   "/v1/auth/register",
-  "/v1/auth/social/",
   "/v1/auth/refresh",
   "/v1/auth/logout",
 ];

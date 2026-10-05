@@ -20,7 +20,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (data: LoginRequest) => Promise<User>;
-  loginWithProvider: (provider: SocialProvider, credential?: string) => Promise<User>;
+  loginWithProvider: (provider: SocialProvider) => Promise<User>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -44,9 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return res.user;
   }, []);
 
-  // Google GIS trả ID credential; Laravel xác minh trước khi phát hành phiên.
-  const loginWithProvider = useCallback(async (provider: SocialProvider, credential?: string) => {
-    const res = await authApi.socialLogin(provider, credential);
+  // Đăng nhập qua Google/GitHub: BE trả AuthResponse giống login thường.
+  // Khi BE chưa hiện thực endpoint OAuth, lỗi 404 sẽ ném lên UI hiển thị.
+  const loginWithProvider = useCallback(async (provider: SocialProvider) => {
+    const res = await authApi.socialLogin(provider);
     tokenStorage.save(res.access_token, res.refresh_token, res.user);
     setToken(res.access_token);
     setUser(res.user);

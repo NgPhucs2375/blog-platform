@@ -1,12 +1,18 @@
-# Chạy tùy chọn bằng Docker
+# CHẠY 1 LẦN DUY NHẤT #
+# ############################################### #
+# khởi động toàn bộ cụm (Dựng và tải các máy chủ ảo)
+    docker compose up -d --build
+# chạy composer bên trong container BE (tải thư viện PHP)
+    docker compose exec backend composer install
+# ################################################ #
 
-Laragon là cách chạy được hướng dẫn chính trong repo. Docker Compose hiện cũng dùng Laravel + MySQL:
+# Checl trạng thái cáci container
+    docker compose ps
+# Dừng và tắt hệ thống
+    docker compose down
+# Xem logs
+    docker compose logs -f
 
-```bash
-docker compose up -d --build
-docker compose exec backend php artisan migrate --seed
-```
-
-Web: `http://localhost`; frontend dev: `http://localhost:3000`; API: `http://localhost/api/health`.
-
-Compose dùng MySQL port `3307` trên máy host để tránh đụng MySQL của Laragon đang ở `3306`. Không chạy cả Docker Nginx và Apache Laragon cùng cổng `80`; khi dùng Laragon, chỉ cần chạy MySQL và Laravel qua `php artisan serve`.
+# ################################################ #
+# lệnh bật
+    docker compose up -d
