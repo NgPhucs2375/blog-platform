@@ -8,11 +8,38 @@ Nền tảng blog gồm giao diện Next.js, chatbot, và backend Laravel MVC d�
 - `fe/frontend/`: giao diện Next.js và chatbot.
 - `README.md`: hướng dẫn cài đặt và chạy dự án.
 
+## Các cập nhật tính năng
+
+### Tính năng mạng xã hội cho blog
+
+- Feed bài viết và trang tác giả, cộng đồng.
+- Theo dõi tác giả, bình luận, chia sẻ và đăng lại bài viết.
+- Bình chọn, tag, thông báo và bộ lọc nội dung.
+- Chỉnh sửa hồ sơ, kiểm duyệt bài viết và báo cáo nội dung.
+
+### Đăng nhập và email
+
+- Xác minh email bằng OTP; hỗ trợ quên và đặt lại mật khẩu.
+- Gửi email xác thực và đặt lại mật khẩu qua Brevo API. Resend từng được dùng để thử nghiệm.
+- Cấu hình Brevo bằng các biến môi trường; không lưu API key thật trong mã nguồn.
+
 ## Yêu cầu
 
 - Laragon có PHP 8.3 trở lên và MySQL.
 - Composer, Node.js/npm và Git.
 - Dự án đã được clone vào một thư mục, ví dụ `C:\laragon\www\blog-platform-luan`.
+
+## Cách chạy dự án
+
+Mở Laragon Terminal (hoặc terminal có Git), chọn thư mục muốn lưu dự án rồi chạy:
+
+```cmd
+cd /d "C:\laragon\www"
+git clone -b dev_hung https://github.com/nguyenhung1204/blog-platform-laravel.git blog-platform-luan
+cd /d "C:\laragon\www\blog-platform-luan"
+```
+
+Nếu mã nguồn đã được gộp sang nhánh khác, thay `dev_hung` bằng tên nhánh được nhóm thống nhất. Sau đó làm theo phần **Cài lần đầu** bên dưới.
 
 > **Lưu ý:** Bật MySQL trong Laragon trước khi chạy. Mỗi lệnh `cd` và lệnh server phải chạy ở đúng thư mục; giữ các cửa sổ server mở.
 
@@ -97,21 +124,16 @@ Luồng này không cần Client Secret. Không commit `.env` hoặc `.env.local
 
 Khi đăng ký bằng email (bao gồm Gmail), hệ thống gửi mã OTP 6 chữ số. Mã hết hạn sau 10 phút; nhập mã ở trang xác minh email trước khi đăng nhập. Trang **Quên mật khẩu** gửi liên kết đặt lại mật khẩu, có hiệu lực 60 phút.
 
-Để email được gửi thật tới Gmail, mở `be/.env` và cấu hình SMTP bằng Gmail của bạn cùng **Google App Password** (mật khẩu ứng dụng), không dùng mật khẩu đăng nhập Gmail:
+OTP đăng ký và đặt lại mật khẩu được gửi qua Brevo API. Để thử luồng này trên máy mới, người chạy cần có API key Brevo và một địa chỉ gửi đã xác minh trong tài khoản Brevo của mình. Mở `be/.env` và điền:
 
 ```env
-MAIL_MAILER=smtp
-MAIL_SCHEME=smtp
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=your-address@gmail.com
-MAIL_PASSWORD=your-16-character-app-password
-MAIL_FROM_ADDRESS=your-address@gmail.com
-MAIL_FROM_NAME="Blog Platform"
+BREVO_API_KEY=your_brevo_api_key
+BREVO_FROM_EMAIL=your_verified_sender@example.com
+BREVO_FROM_NAME="Blog Platform"
 FRONTEND_URL=http://localhost:3000
 ```
 
-Tạo App Password trong Google Account sau khi bật xác minh 2 bước. Giữ giá trị thật trong `.env` cục bộ; không gửi mật khẩu ứng dụng trong chat hoặc commit lên GitHub. Sau khi sửa cấu hình, chạy `php artisan config:clear` trong thư mục `be` rồi khởi động lại Laravel. Nếu `MAIL_MAILER=log`, email chỉ được ghi vào log của Laravel chứ không tới hộp thư.
+Mỗi người nên dùng API key riêng; không gửi key qua chat, không điền key thật vào file mẫu và tuyệt đối không commit `.env` lên GitHub. Nếu chỉ chạy giao diện mà chưa thử OTP thì có thể để trống các biến Brevo. Sau khi sửa cấu hình, chạy `php artisan config:clear` trong thư mục `be` rồi khởi động lại ứng dụng. Việc gửi bằng Gmail miễn phí có thể bị giới hạn hoặc vào Spam; dùng địa chỉ thuộc tên miền đã xác thực sẽ đáng tin cậy hơn.
 
 ## Tài khoản admin demo
 
