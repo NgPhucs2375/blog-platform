@@ -45,7 +45,7 @@ export default function RegisterPage() {
         email: email.trim(),
         password,
       });
-      router.push('/login');
+      router.push(`/verify-email?email=${encodeURIComponent(email.trim())}`);
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
@@ -58,18 +58,18 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md space-y-8">
+    <div className="dark flex min-h-screen items-center justify-center bg-[#111111] px-4 py-12 text-[#f5f5f5]">
+      <div className="w-full max-w-md space-y-7 rounded-3xl bg-[#1a1a1a] px-6 py-8 sm:px-10">
         
         {/* Header Form */}
         <div className="text-center space-y-3">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 border border-red-200/60 text-accent dark:bg-accent/15 dark:border-accent/30 dark:text-rose-600 shadow-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-[#0095f6]/25 bg-[#0095f6]/10 text-[#4ea8ff] shadow-sm">
             <Feather className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Tạo tài khoản
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-base leading-relaxed text-[#b7b7b7]">
             Bắt đầu hành trình xuất bản và kết nối trên Blog Platform.
           </p>
         </div>
@@ -85,39 +85,39 @@ export default function RegisterPage() {
         {/* Form Đăng ký */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+            <label className="mb-2 block text-base font-semibold text-white">
               Tên người dùng
             </label>
             <input
               type="text"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
-              placeholder="NguyenVanA"
+              placeholder="Nhập tên người dùng"
               required
               minLength={3}
               maxLength={50}
               autoComplete="username"
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
+              className="w-full rounded-2xl border border-[#48484a] bg-transparent px-4 py-4 text-base text-white placeholder:text-[#a8a8a8] outline-none transition focus:border-[#777] focus:bg-[#1c1c1e]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+            <label className="mb-2 block text-base font-semibold text-white">
               Địa chỉ Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="Nhập email của bạn"
               required
               autoComplete="email"
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
+              className="w-full rounded-2xl border border-[#48484a] bg-transparent px-4 py-4 text-base text-white placeholder:text-[#a8a8a8] outline-none transition focus:border-[#777] focus:bg-[#1c1c1e]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+            <label className="mb-2 block text-base font-semibold text-white">
               Mật khẩu
             </label>
             <div className="relative">
@@ -129,12 +129,12 @@ export default function RegisterPage() {
                 required
                 minLength={8}
                 autoComplete="new-password"
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-4 pr-10 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-2xl border border-[#48484a] bg-transparent py-4 pl-4 pr-12 text-base text-white placeholder:text-[#a8a8a8] outline-none transition focus:border-[#777] focus:bg-[#1c1c1e]"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a8a8a8] transition hover:text-white"
                 tabIndex={-1}
               >
                 {showPassword ? <EyeSlash className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -143,7 +143,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
+            <label className="mb-2 block text-base font-semibold text-white">
               Xác nhận mật khẩu
             </label>
             <div className="relative">
@@ -154,12 +154,12 @@ export default function RegisterPage() {
                 placeholder="Nhập lại mật khẩu"
                 required
                 autoComplete="new-password"
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-4 pr-10 py-2.5 text-xs sm:text-sm text-zinc-950 placeholder-zinc-400 focus:border-accent focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.03] dark:focus:bg-white/[0.06] dark:text-white dark:placeholder-zinc-500 transition"
+                className="w-full rounded-2xl border border-[#48484a] bg-transparent py-4 pl-4 pr-12 text-base text-white placeholder:text-[#a8a8a8] outline-none transition focus:border-[#777] focus:bg-[#1c1c1e]"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a8a8a8] transition hover:text-white"
                 tabIndex={-1}
               >
                 {showConfirm ? <EyeSlash className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -170,7 +170,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-accent py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-accent/25 hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50 transition"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0095f6] py-4 text-base font-bold text-white transition hover:bg-[#1877f2] disabled:opacity-50"
           >
             {loading ? <CircleNotch className="h-4 w-4 animate-spin" /> : null}
             <span>Đăng ký</span>
@@ -181,11 +181,11 @@ export default function RegisterPage() {
         <SocialAuthButtons />
 
         {/* Chân trang chuyển hướng */}
-        <div className="text-center text-xs text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-100 dark:border-white/[0.06]">
+        <div className="text-center text-sm text-[#a8a8a8] pt-5 border-t border-white/10">
           Đã có tài khoản?{' '}
           <Link
             href="/login"
-            className="font-semibold text-accent dark:text-rose-600 hover:underline inline-flex items-center gap-0.5"
+            className="font-semibold text-[#4ea8ff] hover:underline inline-flex items-center gap-0.5"
           >
             Đăng nhập <ArrowRight className="h-3 w-3 inline" />
           </Link>

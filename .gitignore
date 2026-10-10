@@ -2,6 +2,7 @@
 .env
 be/.env
 fe/frontend/.env.local
+be/.mcp.json.local-backup
 
 # Thư viện tải về (Docker sẽ tự sinh bên trong container)
 be/vendor/
@@ -12,6 +13,7 @@ fe/frontend/out/
 # Dữ liệu database cục bộ
 pgdata/
 redis_data/
+/local-backups/
 
 # IDE & OS 
 .vscode/

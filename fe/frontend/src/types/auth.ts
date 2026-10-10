@@ -1,6 +1,7 @@
 export interface User {
   id: number;
   userName: string;
+  avatarUrl?: string | null;
   email: string;
   role: "Admin" | "User";
   status: "Active" | "Locked";
@@ -119,4 +120,5 @@ export interface UpdateProfileRequest {
 export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
+  newPassword_confirmation: string;
 }

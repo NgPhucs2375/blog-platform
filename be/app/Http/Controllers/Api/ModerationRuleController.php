@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\ModerationRule;
+use App\Services\PostModerationService;
 use Illuminate\Http\Request;
 
 class ModerationRuleController extends ApiController
@@ -52,15 +53,9 @@ class ModerationRuleController extends ApiController
     public function test(Request $request)
     {
         $data = $request->validate(['title' => 'required|string', 'content' => 'required|string']);
-        $text = $data['title'].' '.$data['content'];
-        $matches = [];
-        foreach (ModerationRule::where('is_enabled', true)->get() as $rule) {
-            $matched = $rule->rule_type === 'regex' ? @preg_match($rule->pattern, $text) === 1 : mb_stripos($text, $rule->pattern) !== false;
-            if ($matched) {
-                $matches[] = $rule->apiArray();
-            }
-        }
+        $matches = collect(app(PostModerationService::class)->matchingRules($data['title'], $data['content']))
+            ->map(fn (ModerationRule $rule) => $rule->apiArray());
 
-        return $this->ok(['outcome' => $matches ? 'reject' : 'pass', 'reason' => $matches[0]['reason'] ?? null, 'matchedRules' => $matches]);
+        return $this->ok(['outcome' => $matches->isNotEmpty() ? 'reject' : 'pass', 'reason' => $matches->first()['reason'] ?? null, 'matchedRules' => $matches->values()]);
     }
 }

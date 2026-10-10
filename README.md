@@ -66,7 +66,8 @@ npm install
 Các file mẫu đã có API URL và Google Client ID của dự án. Nếu cần, kiểm tra `fe/frontend/.env.local` có các biến:
 
 ```env
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api
+NEXT_PUBLIC_API_URL=/api
+LARAVEL_API_URL=http://127.0.0.1:8000
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=Client_ID_của_dự_án
 ```
 
@@ -78,25 +79,39 @@ GOOGLE_CLIENT_ID=Client_ID_của_dự_án
 
 ### 3. Chạy dự án
 
-Bật MySQL trong Laragon. Mở một tab terminal cho Laravel:
+Bật MySQL trong Laragon. Từ thư mục gốc dự án, chạy `run-local.bat` hoặc mở PowerShell và chạy:
 
-```cmd
-cd /d "C:\laragon\www\blog-platform-luan\be" && php artisan serve --host=127.0.0.1 --port=8000
+```powershell
+.\run-local.bat
 ```
 
-Mở tab terminal thứ hai cho Next.js:
-
-```cmd
-cd /d "C:\laragon\www\blog-platform-luan\fe\frontend" && npm run dev -- --port 3001
-```
-
-Giữ cả hai tab mở. Khi Next.js báo `Ready`, truy cập [http://localhost:3001](http://localhost:3001). Trang đăng nhập: [http://localhost:3001/login](http://localhost:3001/login). Backend health check: [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health).
+Script tự khởi động Laravel API ở phía sau và Next.js ở cổng 3000. Bạn chỉ cần mở [http://localhost:3000](http://localhost:3000); các lời gọi API được chuyển tiếp tự động, không cần mở địa chỉ cổng 8000. Nhấn `Ctrl+C` trong cửa sổ chạy để dừng.
 
 ## Đăng nhập Google
 
-Client ID được điền sẵn trong các file `.env.example`; mỗi máy vẫn cần sao chép thành `.env` và `.env.local` theo hướng dẫn. Origin local là `http://localhost:3001`. Nếu ứng dụng OAuth đang ở trạng thái **Testing**, chủ dự án phải thêm email Google của từng bạn vào danh sách **Test users** trong Google Auth Platform. [Hướng dẫn Client ID của Google](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid) · [Quy định Test users](https://support.google.com/cloud/answer/15549945?hl=en).
+Client ID được điền sẵn trong các file `.env.example`; mỗi máy vẫn cần sao chép thành `.env` và `.env.local` theo hướng dẫn. Origin local là `http://localhost:3000`. Nếu ứng dụng OAuth đang ở trạng thái **Testing**, chủ dự án phải thêm email Google của từng bạn vào danh sách **Test users** trong Google Auth Platform. [Hướng dẫn Client ID của Google](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid) · [Quy định Test users](https://support.google.com/cloud/answer/15549945?hl=en).
 
 Luồng này không cần Client Secret. Không commit `.env` hoặc `.env.local`; Client ID không phải bí mật. Tài khoản Google mới được tạo với quyền User.
+
+## OTP đăng ký và quên mật khẩu
+
+Khi đăng ký bằng email (bao gồm Gmail), hệ thống gửi mã OTP 6 chữ số. Mã hết hạn sau 10 phút; nhập mã ở trang xác minh email trước khi đăng nhập. Trang **Quên mật khẩu** gửi liên kết đặt lại mật khẩu, có hiệu lực 60 phút.
+
+Để email được gửi thật tới Gmail, mở `be/.env` và cấu hình SMTP bằng Gmail của bạn cùng **Google App Password** (mật khẩu ứng dụng), không dùng mật khẩu đăng nhập Gmail:
+
+```env
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-address@gmail.com
+MAIL_PASSWORD=your-16-character-app-password
+MAIL_FROM_ADDRESS=your-address@gmail.com
+MAIL_FROM_NAME="Blog Platform"
+FRONTEND_URL=http://localhost:3000
+```
+
+Tạo App Password trong Google Account sau khi bật xác minh 2 bước. Giữ giá trị thật trong `.env` cục bộ; không gửi mật khẩu ứng dụng trong chat hoặc commit lên GitHub. Sau khi sửa cấu hình, chạy `php artisan config:clear` trong thư mục `be` rồi khởi động lại Laravel. Nếu `MAIL_MAILER=log`, email chỉ được ghi vào log của Laravel chứ không tới hộp thư.
 
 ## Tài khoản admin demo
 

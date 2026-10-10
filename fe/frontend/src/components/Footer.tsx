@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowUp, Check, PaperPlaneTilt } from '@phosphor-icons/react';
 import { postApi, Category } from '@/services/postApi';
 import { FOOTER_COLUMNS } from '@/config/navigation';
+import api from '@/lib/axios';
 
 // Footer editorial: brand + newsletter + cột liên kết (chuyên mục lấy động
 // từ API) + thanh dưới với nút về đầu trang.
@@ -53,6 +54,8 @@ export default function Footer() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [subscribeError, setSubscribeError] = useState('');
 
   useEffect(() => {
     postApi
@@ -61,11 +64,16 @@ export default function Footer() {
       .catch(() => setCategories([]));
   }, []);
 
-  const subscribe = (e: React.FormEvent) => {
+  const subscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.includes('@')) return;
-    // UI-only: backend chưa có endpoint nhận bản tin.
-    setSubscribed(true);
+    if (sending) return;
+    setSending(true); setSubscribeError('');
+    try {
+      await api.post('/v1/newsletter/subscribe', { email: email.trim() });
+      setSubscribed(true);
+    } catch { setSubscribeError('Chưa gửi được email xác nhận. Vui lòng thử lại sau.'); }
+    finally { setSending(false); }
   };
 
   const backToTop = () =>
@@ -88,12 +96,12 @@ export default function Footer() {
 
             <div className="mt-6">
               <p className="text-[11px] font-bold uppercase tracking-widest text-faint">
-                Nhận bản tin tuần
+                Nhận bài viết mới
               </p>
               {subscribed ? (
                 <p className="mt-3 inline-flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-semibold text-accent">
                   <Check className="h-4 w-4" />
-                  Đã ghi danh — hẹn gặp bạn trong số tuần này!
+                  Hãy mở email để xác nhận đăng ký nhận bài viết.
                 </p>
               ) : (
                 <form onSubmit={subscribe} className="mt-3 flex max-w-sm gap-2">
@@ -108,6 +116,7 @@ export default function Footer() {
                   />
                   <button
                     type="submit"
+                    disabled={sending}
                     aria-label="Đăng ký bản tin"
                     className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-r from-[#0f766e] to-[#134e4a] text-white shadow-md shadow-[#0f766e]/25 transition hover:opacity-90"
                   >
@@ -115,6 +124,7 @@ export default function Footer() {
                   </button>
                 </form>
               )}
+              {subscribeError && <p role="alert" className="mt-3 text-xs text-rose-500">{subscribeError}</p>}
             </div>
 
             <div className="mt-6 flex items-center gap-2">

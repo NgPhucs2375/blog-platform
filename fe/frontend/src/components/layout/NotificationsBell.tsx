@@ -1,136 +1,56 @@
 'use client';
-
-import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { Bell, Checks } from '@phosphor-icons/react';
-import {
-  GUEST_NOTIFICATIONS,
-  NOTIFICATION_META,
-  SEED_NOTIFICATIONS,
-  type AppNotification,
-} from '@/config/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-
-/**
- * Chuông thông báo với dropdown panel.
- * Dữ liệu đang là mock từ config/navigation.ts — khi BE có
- * /v1/notifications thì thay state nội bộ bằng fetch là xong.
- */
+import api from '@/lib/axios';
+interface Notice { id: string; read_at: string | null; created_at: string; data: { title?: string; slug?: string; postId?: number; message?: string }; }
 export default function NotificationsBell() {
-  const { user } = useAuth() as { user?: unknown };
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  // Khách: thông báo chào mừng; đã đăng nhập: thông báo cá nhân (mock -> BE sau)
-  const [items, setItems] = useState<AppNotification[]>(
-    typeof window === 'undefined' ? SEED_NOTIFICATIONS : [],
-  );
-  const [hydrated, setHydrated] = useState(false);
-  const reduce = useReducedMotion();
-
-  useEffect(() => {
-    setItems(user ? SEED_NOTIFICATIONS : GUEST_NOTIFICATIONS);
-    setHydrated(true);
+  const [items, setItems] = useState<Notice[]>([]);
+  const [unread, setUnread] = useState(0);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const generation = useRef(0);
+  const panel = useRef<HTMLDivElement>(null);
+  const load = useCallback(async () => {
+    if (!user) return;
+    const version = generation.current;
+    try {
+      const res = await api.get('/v1/notifications?limit=100');
+      if (version !== generation.current) return;
+      setItems(res.data.data.notifications.data); setUnread(res.data.data.unreadCount); setError('');
+    } catch { if (version === generation.current) setError('Chưa tải được thông báo.'); }
   }, [user]);
-
-  const unreadCount = hydrated ? items.filter((n) => !n.read).length : 0;
-
-  const markAllRead = () =>
-    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-label={
-          unreadCount > 0
-            ? `Thông báo, ${unreadCount} chưa đọc`
-            : 'Thông báo'
-        }
-        aria-expanded={open}
-        className="relative grid h-9 w-9 place-items-center rounded-xl border border-line bg-surface text-muted shadow-sm transition hover:text-ink"
-      >
-        <Bell className="h-4 w-4" />
-        {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[9px] font-bold text-accent-ink">
-            {unreadCount}
-          </span>
-        )}
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <>
-            {/* Lớp bắt click ra ngoài */}
-            <div
-              aria-hidden
-              className="fixed inset-0 z-40"
-              onClick={() => setOpen(false)}
-            />
-            <motion.div
-              initial={reduce ? false : { opacity: 0, y: 8, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={reduce ? undefined : { opacity: 0, y: 6, scale: 0.98 }}
-              transition={{ duration: reduce ? 0 : 0.18, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl shadow-black/10"
-            >
-              <div className="flex items-center justify-between border-b border-line px-4 py-3">
-                <p className="text-sm font-bold text-ink">Thông báo</p>
-                <button
-                  onClick={markAllRead}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent transition hover:text-accent-hover"
-                >
-                  <Checks className="h-3.5 w-3.5" /> Đọc hết
-                </button>
-              </div>
-
-              <div className="scroll-slim max-h-80 overflow-y-auto">
-                {items.length === 0 ? (
-                  <p className="px-4 py-8 text-center text-xs text-faint">
-                    Chưa có thông báo nào.
-                  </p>
-                ) : (
-                  items.map((n) => {
-                    const meta = NOTIFICATION_META[n.type];
-                    const Icon = meta.icon;
-                    return (
-                      <div
-                        key={n.id}
-                        className={`flex gap-3 border-b border-line px-4 py-3 last:border-0 ${
-                          n.read ? 'opacity-60' : ''
-                        }`}
-                      >
-                        <span
-                          className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${meta.cls}`}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="flex items-center gap-1.5">
-                            <span className="line-clamp-1 text-xs font-bold text-ink">
-                              {n.title}
-                            </span>
-                            {!n.read && (
-                              <span
-                                aria-label="chưa đọc"
-                                className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
-                              />
-                            )}
-                          </span>
-                          <span className="mt-0.5 line-clamp-2 block text-[11px] leading-relaxed text-muted">
-                            {n.detail}
-                          </span>
-                          <span className="mt-1 block text-[10px] text-faint">
-                            {meta.label} · {n.time}
-                          </span>
-                        </span>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+  useEffect(() => {
+    generation.current++; setItems([]); setUnread(0); setError(''); setOpen(false); void load();
+    const timer = window.setInterval(() => { if (!document.hidden) void load(); }, 30000);
+    return () => { generation.current++; window.clearInterval(timer); };
+  }, [load]);
+  useEffect(() => {
+    if (!open) return;
+    void load();
+    const close = (e: MouseEvent) => { if (!panel.current?.contains(e.target as Node)) setOpen(false); };
+    const escape = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('click', close); document.addEventListener('keydown', escape);
+    return () => { document.removeEventListener('click', close); document.removeEventListener('keydown', escape); };
+  }, [open, load]);
+  async function markRead(id?: string) {
+    setBusy(true);
+    try { await api.patch(id ? `/v1/notifications/${id}/read` : '/v1/notifications/read-all'); await load(); }
+    catch { setError('Không thể đánh dấu đã đọc. Hãy thử lại.'); }
+    finally { setBusy(false); }
+  }
+  return <div className="relative" ref={panel}>
+    <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-label={`Thông báo, ${unread} chưa đọc`} className="relative grid h-9 w-9 place-items-center rounded-xl border border-line bg-surface text-muted"><Bell className="h-4 w-4" />{unread > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-accent px-1 text-[10px] font-bold text-white">{unread > 99 ? '99+' : unread}</span>}</button>
+    {open && <div className="absolute right-0 z-50 mt-3 w-[min(320px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl" aria-label="Danh sách thông báo">
+      <div className="flex items-center justify-between border-b border-line p-4"><strong className="text-sm text-ink">Thông báo</strong>{user && <button disabled={busy || !unread} onClick={() => void markRead()} className="flex items-center gap-1 text-xs text-accent disabled:opacity-40"><Checks />Đọc hết</button>}</div>
+      {error && <div role="alert" className="p-3 text-xs text-rose-500">{error} <button onClick={() => void load()} className="underline">Thử lại</button></div>}
+      <div className="max-h-96 overflow-y-auto">{!user ? <p className="p-6 text-sm text-muted"><Link href="/login" className="underline">Đăng nhập</Link> để xem thông báo.</p> : items.length === 0 && !error ? <p className="p-6 text-sm text-muted">Chưa có thông báo nào.</p> : items.map(item => <div key={item.id} className={`border-b border-line p-4 ${item.read_at ? 'opacity-60' : 'bg-accent/5'}`}>
+        <Link href={item.data.slug || item.data.postId ? `/posts/${encodeURIComponent(item.data.slug || String(item.data.postId))}` : '/dashboard'} onClick={() => { if (!item.read_at) void markRead(item.id); setOpen(false); }} className="block text-sm font-semibold text-ink">{item.data.message || 'Bài viết mới'}<span className="mt-1 block font-normal">{item.data.title || 'Thông báo từ Blog Platform'}</span></Link>
+        <div className="mt-2 flex items-center justify-between text-[11px] text-muted"><time>{new Date(item.created_at).toLocaleString('vi-VN')}</time>{!item.read_at && <button disabled={busy} onClick={() => void markRead(item.id)} className="text-accent">Đã đọc</button>}</div>
+      </div>)}</div>
+    </div>}
+  </div>;
 }

@@ -6,6 +6,7 @@ import { CaretLeft as CaretLeft, Check, CaretRight, CircleNotch as CircleNotch, 
 import { adminApi } from '@/services/adminApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUsers } from '@/hooks/useUsers';
+import AuthorHoverCard from '@/components/AuthorHoverCard';
 
 const ROLE_OPTIONS = [
   { value: 'Admin', label: 'Admin' },
@@ -419,12 +420,11 @@ export default function UsersPage() {
                         {/* Tên người dùng */}
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-2">
-                            <Link
-                              href={`/users/${user.id}`}
-                              className="font-bold text-ink hover:text-accent dark:hover:text-rose-600 transition"
-                            >
-                              {user.userName}
-                            </Link>
+                            <AuthorHoverCard username={user.userName} name={user.userName}>
+                              <Link href={`/users/${user.id}`} className="font-bold text-ink hover:text-accent dark:hover:text-rose-600 transition">
+                                {user.userName}
+                              </Link>
+                            </AuthorHoverCard>
                             {isSelf && (
                               <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-[10px] font-bold text-ink dark:bg-surface/10">
                                 BẠN

@@ -33,6 +33,27 @@ export const authApi = {
     return res.data.data;
   },
 
+  async verifyEmailCode(email: string, code: string): Promise<void> {
+    await api.post<ApiResponse<{ verified: boolean }>>("/v1/auth/email/verify-code", { email, code });
+  },
+
+  async resendEmailCode(email: string): Promise<void> {
+    await api.post<ApiResponse<null>>("/v1/auth/email/resend-code", { email });
+  },
+
+  async requestPasswordReset(email: string): Promise<void> {
+    await api.post<ApiResponse<null>>('/v1/auth/password/forgot', { email });
+  },
+
+  async resetPassword(data: {
+    email: string;
+    code: string;
+    password: string;
+    password_confirmation: string;
+  }): Promise<void> {
+    await api.post<ApiResponse<null>>('/v1/auth/password/reset', data);
+  },
+
   /** Đổi refresh token lấy cặp mới (kèm xoay vòng ở BE). */
   async refresh(data: RefreshRequest): Promise<RefreshResponse> {
     const res = await api.post<ApiResponse<RefreshResponse>>("/v1/auth/refresh", data);

@@ -124,7 +124,7 @@ function TrendingRow({ post, index }: { post: PostItem; index: number }) {
 
 function LatestCard({ post, category, catId }: { post: PostItem; category: string; catId?: number }) {
   return (
-    <article className="group flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-[0_6px_30px_-14px_rgba(217,4,41,0.18)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_-14px_rgba(166,13,32,0.28)]">
+    <article className="group flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-[0_6px_30px_-14px_rgba(15,118,110,0.14)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_-14px_rgba(15,118,110,0.24)]">
       <Link href={`/posts/${post.id}`} className="relative block overflow-hidden" tabIndex={-1} aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -158,7 +158,7 @@ function LatestCard({ post, category, catId }: { post: PostItem; category: strin
           {(post as any).excerpt || post.content}
         </p>
         <p className="mt-4 flex items-center gap-2 border-t border-line pt-3 text-[11px] text-faint">
-          <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-[#0f766e] to-[#042f2e] text-[9px] font-bold text-white">
+          <span className="grid h-5 w-5 place-items-center rounded-full bg-accent text-[9px] font-bold text-white">
             {((post as any).author_name || 'B').charAt(0).toUpperCase()}
           </span>
           {(post as any).author_name || 'Ban biên tập'}
@@ -296,7 +296,7 @@ export default function HomePage() {
                 </Link>
               </motion.div>
               <Link
-                href="/dashboard"
+                href="/dashboard/posts/create"
                 className="text-sm font-semibold text-ink underline decoration-line decoration-2 underline-offset-4 transition hover:text-accent hover:decoration-accent"
               >
                 Hoặc viết bài ngay
@@ -489,7 +489,7 @@ export default function HomePage() {
             <>
               {/* Lead story: thẻ sáng lớn */}
               <Reveal className="lg:col-span-8">
-                <article className="group overflow-hidden rounded-3xl border border-line bg-surface shadow-[0_10px_45px_-16px_rgba(217,4,41,0.25)] transition duration-300 hover:shadow-[0_22px_60px_-16px_rgba(166,13,32,0.35)]">
+                <article className="group overflow-hidden rounded-3xl border border-line bg-surface shadow-[0_10px_45px_-16px_rgba(15,118,110,0.18)] transition duration-300 hover:shadow-[0_22px_60px_-16px_rgba(15,118,110,0.27)]">
                   <Link href={`/posts/${leadPost.id}`} className="block overflow-hidden" tabIndex={-1} aria-hidden>
                     <motion.img
                       src={coverOf(leadPost, 1200, 675)}
@@ -523,7 +523,7 @@ export default function HomePage() {
                     </p>
                     <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-xs">
                       <span className="flex items-center gap-2.5">
-                        <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-[#0f766e] to-[#042f2e] text-[11px] font-bold text-white">
+                        <span className="grid h-8 w-8 place-items-center rounded-full bg-accent text-[11px] font-bold text-white">
                           {((leadPost as any).author_name || 'B').charAt(0).toUpperCase()}
                         </span>
                         <span className="font-semibold text-ink">
@@ -548,9 +548,9 @@ export default function HomePage() {
 
               {/* Bảng xếp hạng đọc nhiều */}
               <Reveal delay={0.12} className="lg:col-span-4">
-                <div className="rounded-3xl border border-line bg-surface p-6 shadow-[0_6px_30px_-14px_rgba(217,4,41,0.18)]">
+                <div className="rounded-3xl border border-line bg-surface p-6 shadow-[0_6px_30px_-14px_rgba(15,118,110,0.14)]">
                   <p className="flex items-center gap-2 border-b border-line pb-3 text-xs font-bold uppercase tracking-wider text-ink">
-                    <Flame className="h-4 w-4 text-fuchsia-500" /> Đọc nhiều nhất tuần
+                    <Flame className="h-4 w-4 text-accent" /> Đọc nhiều nhất tuần
                   </p>
                   <div className="divide-y divide-line">
                     {trending.map((p, i) => (
@@ -578,7 +578,7 @@ export default function HomePage() {
             {/* Ấn phẩm nổi bật thứ hai: card ngang lớn */}
             {widePost && (
               <Reveal className="mt-8">
-                <article className="group grid overflow-hidden rounded-3xl border border-line bg-surface shadow-[0_8px_36px_-16px_rgba(217,4,41,0.2)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-16px_rgba(166,13,32,0.3)] sm:grid-cols-2">
+                <article className="group grid overflow-hidden rounded-3xl border border-line bg-surface shadow-[0_8px_36px_-16px_rgba(15,118,110,0.16)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-16px_rgba(15,118,110,0.25)] sm:grid-cols-2">
                   <Link href={`/posts/${widePost.id}`} className="block overflow-hidden" tabIndex={-1} aria-hidden>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -610,7 +610,7 @@ export default function HomePage() {
                       {(widePost as any).excerpt || widePost.content}
                     </p>
                     <p className="mt-5 flex items-center gap-2 text-[11px] text-faint">
-                      <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-[#0f766e] to-[#042f2e] text-[10px] font-bold text-white">
+                      <span className="grid h-6 w-6 place-items-center rounded-full bg-accent text-[10px] font-bold text-white">
                         {((widePost as any).author_name || 'B').charAt(0).toUpperCase()}
                       </span>
                       {(widePost as any).author_name || 'Ban biên tập'}
@@ -659,7 +659,7 @@ export default function HomePage() {
         {/* Manifesto */}
         <section className="border-t border-line py-20 text-center sm:py-24">
           <Reveal>
-            <Sparkle className="mx-auto h-6 w-6 text-fuchsia-500" />
+            <Sparkle className="mx-auto h-6 w-6 text-accent" />
             <p className="mx-auto mt-5 max-w-3xl font-serif text-3xl font-bold leading-snug tracking-tight text-ink sm:text-5xl sm:leading-tight">
               Mỗi câu chuyện đều xứng đáng được{' '}
               <span className={GRADIENT_TEXT}>kể đúng cách</span>.
@@ -671,7 +671,7 @@ export default function HomePage() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <motion.div whileHover={reduce ? undefined : { y: -2 }} whileTap={{ scale: 0.97 }}>
                 <Link
-                  href="/dashboard"
+                  href="/dashboard/posts/create"
                   className={`inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-bold ${GRADIENT_BUTTON}`}
                 >
                   <Pen className="h-4 w-4" /> Bắt đầu viết bài
