@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Channels\ResendChannel;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -11,7 +12,7 @@ class PasswordResetCodeNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return [ResendChannel::class];
     }
 
     public function toMail(object $notifiable): MailMessage
