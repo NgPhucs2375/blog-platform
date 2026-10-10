@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Notifications\Channels\ResendChannel;
+use App\Notifications\Channels\BrevoChannel;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -12,7 +12,7 @@ class EmailVerificationCodeNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return [ResendChannel::class];
+        return [BrevoChannel::class];
     }
 
     public function toMail(object $notifiable): MailMessage

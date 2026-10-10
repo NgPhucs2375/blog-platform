@@ -8,7 +8,7 @@ class EmailVerificationController extends ApiController
  public function send(Request $request,EmailVerificationCodeService $codes)
  {
   $user=$request->user(); if($user->hasVerifiedEmail())return $this->ok(null,'Email đã được xác minh.');
-  try { $codes->send($user); } catch (\Throwable $exception) { report($exception); return $this->fail('Chưa gửi được email xác minh. Vui lòng kiểm tra cấu hình SMTP rồi thử lại.',503); }
+  try { $codes->send($user); } catch (\Throwable $exception) { report($exception); return $this->fail('Chưa gửi được email xác minh. Vui lòng kiểm tra cấu hình dịch vụ email rồi thử lại.',503); }
   return $this->ok(null,'Đã gửi mã xác minh email. Mã có hiệu lực trong 10 phút.');
  }
  public function resend(Request $request,EmailVerificationCodeService $codes)
@@ -16,7 +16,7 @@ class EmailVerificationController extends ApiController
   $data=$request->validate(['email'=>'required|email|max:255']);
   $user=User::where('email',mb_strtolower(trim($data['email'])))->first();
   if($user&&!$user->hasVerifiedEmail()) {
-   try { $codes->send($user); } catch (\Throwable $exception) { report($exception); return $this->fail('Chưa gửi được email xác minh. Vui lòng kiểm tra cấu hình SMTP rồi thử lại.',503); }
+   try { $codes->send($user); } catch (\Throwable $exception) { report($exception); return $this->fail('Chưa gửi được email xác minh. Vui lòng kiểm tra cấu hình dịch vụ email rồi thử lại.',503); }
   }
   return $this->ok(null,'Nếu email thuộc tài khoản chưa xác minh, mã mới sẽ được gửi đến hộp thư đó.');
  }

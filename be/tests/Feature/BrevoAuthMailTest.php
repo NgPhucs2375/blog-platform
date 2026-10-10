@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
-class ResendAuthMailTest extends TestCase
+class BrevoAuthMailTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -17,23 +17,23 @@ class ResendAuthMailTest extends TestCase
     {
         parent::setUp();
         config([
-            'services.resend.key' => 're_test_key',
-            'services.resend.from' => 'onboarding@resend.dev',
-            'mail.from.name' => 'Blog Platform',
+            'services.brevo.api_key' => 'xkeysib-test-key',
+            'services.brevo.from_email' => 'sender@example.test',
+            'services.brevo.from_name' => 'Blog Platform',
         ]);
         Http::preventStrayRequests();
     }
 
     public function test_registration_sends_a_usable_verification_code_over_https(): void
     {
-        Http::fake(['https://api.resend.com/emails' => Http::response(['id' => 'email-1'])]);
+        Http::fake(['https://api.brevo.com/v3/smtp/email' => Http::response(['messageId' => 'email-1'])]);
         $this->registerReader()->assertCreated();
 
         $request = Http::recorded()->last()[0];
         self::assertSame('POST', $request->method());
-        self::assertTrue($request->hasHeader('Authorization', 'Bearer re_test_key'));
-        self::assertSame(['reader@example.test'], $request['to']);
-        self::assertSame('Blog Platform <onboarding@resend.dev>', $request['from']);
+        self::assertTrue($request->hasHeader('api-key', 'xkeysib-test-key'));
+        self::assertSame([['email' => 'reader@example.test']], $request['to']);
+        self::assertSame(['name' => 'Blog Platform', 'email' => 'sender@example.test'], $request['sender']);
         self::assertSame('Mã xác minh email Blog Platform', $request['subject']);
 
         $this->postJson('/api/v1/auth/email/verify-code', [
@@ -45,7 +45,7 @@ class ResendAuthMailTest extends TestCase
 
     public function test_failed_delivery_can_be_retried_without_registering_again(): void
     {
-        Http::fake(['https://api.resend.com/emails' => Http::sequence()
+        Http::fake(['https://api.brevo.com/v3/smtp/email' => Http::sequence()
             ->push(['message' => 'Sender domain is not verified'], 403)
             ->push(['id' => 'email-2'])]);
 
@@ -67,7 +67,7 @@ class ResendAuthMailTest extends TestCase
 
     public function test_password_reset_code_sent_over_https_resets_the_password(): void
     {
-        Http::fake(['https://api.resend.com/emails' => Http::response(['id' => 'email-3'])]);
+        Http::fake(['https://api.brevo.com/v3/smtp/email' => Http::response(['messageId' => 'email-3'])]);
         $this->registerReader()->assertCreated();
         $this->postJson('/api/v1/auth/password/forgot', ['email' => 'reader@example.test'])->assertOk();
 
@@ -93,7 +93,7 @@ class ResendAuthMailTest extends TestCase
 
     private function lastSentCode(): string
     {
-        $html = Http::recorded()->last()[0]['html'];
+        $html = Http::recorded()->last()[0]['htmlContent'];
         self::assertSame(1, preg_match('/>\s*(\d{6})\s*</', $html, $matches));
 
         return $matches[1];
