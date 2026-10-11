@@ -4,7 +4,7 @@ services:
     runtime: docker
     plan: free
     region: singapore
-    branch: dev_hung
+    branch: main
     dockerfilePath: ./be/Dockerfile
     dockerContext: ./be
     healthCheckPath: /up
@@ -66,13 +66,13 @@ services:
       - key: BREVO_FROM_NAME
         sync: false
       - key: MAIL_MAILER
-        sync: false
+        value: smtp
       - key: MAIL_SCHEME
-        sync: false
+        value: smtp
       - key: MAIL_HOST
-        sync: false
+        value: smtp-relay.brevo.com
       - key: MAIL_PORT
-        sync: false
+        value: "587"
       - key: MAIL_USERNAME
         sync: false
       - key: MAIL_PASSWORD

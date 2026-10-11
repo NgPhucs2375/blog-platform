@@ -120,6 +120,24 @@ Client ID được điền sẵn trong các file `.env.example`; mỗi máy vẫ
 
 Luồng này không cần Client Secret. Không commit `.env` hoặc `.env.local`; Client ID không phải bí mật. Tài khoản Google mới được tạo với quyền User.
 
+## Triển khai backend Laravel lên Render
+
+Repository có Blueprint tại `render.yaml` và Dockerfile tại `be/Dockerfile`. Tạo Blueprint trên Render từ repo này và chọn nhánh `main`; Render sẽ build image Laravel, kiểm tra health tại `/up`, chạy migration rồi khởi động Apache và Laravel scheduler qua `be/render-entrypoint.sh`.
+
+Trong lần tạo Blueprint, điền các biến được đánh dấu `sync: false`. Nếu service đã tồn tại, Render không tự cập nhật các biến `sync: false` khi Blueprint thay đổi, nên cần kiểm tra/điền chúng trong **Dashboard → service → Environment**. Các giá trị secret chỉ nhập trong Dashboard, không commit vào YAML hoặc repo. [Tài liệu Blueprint và biến môi trường của Render](https://render.com/docs/blueprint-spec).
+
+Các biến bắt buộc để API hoạt động:
+
+- `APP_KEY`: tạo bằng `php artisan key:generate --show` trong thư mục `be` ở máy local; giữ nguyên khóa hiện tại khi đã có dữ liệu mã hóa.
+- `SUPABASE_DB_USERNAME`, `SUPABASE_DB_PASSWORD`: thông tin pooler của Supabase; các giá trị host/database/port/SSL đã có trong Blueprint.
+- `FRONTEND_URL`, `CORS_ALLOWED_ORIGINS`: URL frontend đã triển khai, ví dụ `https://ten-web-cua-ban.vercel.app` và cùng origin đó trong danh sách CORS.
+- `BREVO_API_KEY`, `BREVO_FROM_EMAIL`, `BREVO_FROM_NAME`: API key và người gửi đã xác minh trong Brevo. OTP xác minh email và đặt lại mật khẩu gửi bằng Brevo API.
+- `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`: thông tin Cloudflare R2 nếu cần tải/lưu ảnh; bucket mặc định trong Blueprint là `blog-platform-media`.
+
+Blueprint đặt sẵn `MAIL_MAILER=smtp`, `MAIL_HOST=smtp-relay.brevo.com`, `MAIL_PORT=587` và `MAIL_SCHEME=smtp`. Nhập `MAIL_USERNAME` (SMTP login), `MAIL_PASSWORD` (SMTP key) và `MAIL_FROM_ADDRESS` đã xác minh trong Brevo Dashboard; SMTP password không phải `BREVO_API_KEY`. Các email OTP xác minh và đặt lại mật khẩu gửi bằng API qua `BREVO_*`; SMTP phục vụ các luồng Laravel dùng mailer mặc định, như newsletter.
+
+Khi Render báo service **Live**, kiểm tra `https://<api-service>.onrender.com/up` trả về HTTP thành công, sau đó cập nhật URL API và CORS trên frontend. Không dùng `APP_DEBUG=true` trên môi trường công khai.
+
 ## OTP đăng ký và quên mật khẩu
 
 Khi đăng ký bằng email (bao gồm Gmail), hệ thống gửi mã OTP 6 chữ số. Mã hết hạn sau 10 phút; nhập mã ở trang xác minh email trước khi đăng nhập. Trang **Quên mật khẩu** gửi liên kết đặt lại mật khẩu, có hiệu lực 60 phút.
