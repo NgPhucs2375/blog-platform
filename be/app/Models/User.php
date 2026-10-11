@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['username', 'email', 'password', 'role', 'status', 'bio', 'avatar_url', 'google_id', 'github_id', 'created_by', 'updated_by', 'deleted_by'])]
+#[Fillable(['username', 'display_name', 'email', 'password', 'role', 'status', 'bio', 'avatar_url', 'interests', 'profile_link', 'podcast_url', 'instagram_url', 'show_instagram', 'show_views', 'google_id', 'github_id', 'created_by', 'updated_by', 'deleted_by'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmailContract
 {
@@ -33,6 +33,9 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'deleted_at' => 'datetime',
+            'interests' => 'array',
+            'show_instagram' => 'boolean',
+            'show_views' => 'boolean',
         ];
     }
 
@@ -91,11 +94,18 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return [
             'id' => $this->id,
             'userName' => $this->username,
+            'displayName' => $this->display_name ?: $this->username,
             'email' => $this->email,
             'role' => $this->role,
             'status' => $this->status,
             'bio' => $this->bio,
             'avatarUrl' => $this->avatar_url,
+            'interests' => $this->interests ?? [],
+            'profileLink' => $this->profile_link,
+            'podcastUrl' => $this->podcast_url,
+            'instagramUrl' => $this->instagram_url,
+            'showInstagram' => (bool) $this->show_instagram,
+            'showViews' => (bool) $this->show_views,
             'emailVerifiedAt' => $this->email_verified_at?->toISOString(),
             'followersCount' => $this->followers()->count(),
             'followingCount' => $this->following()->count(),

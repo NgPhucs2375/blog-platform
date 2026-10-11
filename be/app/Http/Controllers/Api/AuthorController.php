@@ -37,7 +37,7 @@ class AuthorController extends ApiController
             $posts->getCollection()->transform(fn ($post) => $post->apiArray());
         }
 
-        $payload = ['author' => ['id' => $author->id, 'username' => $author->username, 'bio' => $author->bio, 'avatarUrl' => $author->avatar_url, 'followersCount' => $author->followers()->count(), 'followingCount' => $author->following()->count(), 'postsCount' => $author->posts()->where('status', 'Published')->count(), 'viewsCount' => (int) $author->posts()->where('status', 'Published')->sum('view_count'), 'isFollowing' => $request->user() ? $request->user()->following()->whereKey($author->id)->exists() : false], 'tab' => $tab];
+        $payload = ['author' => ['id' => $author->id, 'username' => $author->username, 'displayName' => $author->display_name ?: $author->username, 'bio' => $author->bio, 'avatarUrl' => $author->avatar_url, 'interests' => $author->interests ?? [], 'profileLink' => $author->profile_link, 'podcastUrl' => $author->podcast_url, 'instagramUrl' => $author->show_instagram ? $author->instagram_url : null, 'showViews' => (bool) $author->show_views, 'followersCount' => $author->followers()->count(), 'followingCount' => $author->following()->count(), 'postsCount' => $author->posts()->where('status', 'Published')->count(), 'viewsCount' => (int) $author->posts()->where('status', 'Published')->sum('view_count'), 'isFollowing' => $request->user() ? $request->user()->following()->whereKey($author->id)->exists() : false], 'tab' => $tab];
         if ($comments) {
             $payload['comments'] = $comments;
         } else {

@@ -21,6 +21,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (data: LoginRequest) => Promise<User>;
   loginWithProvider: (provider: SocialProvider, credential?: string) => Promise<User>;
+  updateUser: (user: User) => void;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -53,6 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return res.user;
   }, []);
 
+  const updateUser = useCallback((updatedUser: User) => {
+    tokenStorage.updateUser(updatedUser);
+    setUser(updatedUser);
+  }, []);
+
   const register = useCallback(async (data: RegisterRequest) => {
     await authApi.register(data);
   }, []);
@@ -80,10 +86,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       login,
       loginWithProvider,
+      updateUser,
       register,
       logout,
     }),
-    [user, token, isLoading, login, loginWithProvider, register, logout]
+    [user, token, isLoading, login, loginWithProvider, updateUser, register, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

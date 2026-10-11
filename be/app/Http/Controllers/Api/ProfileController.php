@@ -23,18 +23,50 @@ class ProfileController extends ApiController
         $user = $request->user();
         $data = $request->validate([
             'userName' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('users', 'username')->ignore($user->id)],
+            'displayName' => 'sometimes|nullable|string|max:120',
             'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'bio' => 'sometimes|nullable|string|max:1000',
-            'avatarUrl' => 'sometimes|nullable|url|max:1000',
+            'avatarUrl' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:1000',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value !== null && filter_var($value, FILTER_VALIDATE_URL) === false && ! str_starts_with($value, '/api/v1/media/')) {
+                        $fail('Ảnh đại diện phải là URL hợp lệ hoặc ảnh đã tải lên hệ thống.');
+                    }
+                },
+            ],
+            'interests' => 'sometimes|array|max:12',
+            'interests.*' => 'required|string|max:40',
+            'profileLink' => 'sometimes|nullable|url|max:2048',
+            'podcastUrl' => 'sometimes|nullable|url|max:2048',
+            'instagramUrl' => 'sometimes|nullable|url|max:2048',
+            'showInstagram' => 'sometimes|boolean',
+            'showViews' => 'sometimes|boolean',
         ]);
         $emailChanged = isset($data['email']) && $data['email'] !== $user->email;
-        $user->update(array_filter([
-            'username' => $data['userName'] ?? null,
-            'email' => $data['email'] ?? null,
-            'bio' => $data['bio'] ?? null,
-            'avatar_url' => $data['avatarUrl'] ?? null,
-            'updated_by' => $user->id,
-        ], fn ($value) => $value !== null));
+        $fieldMap = [
+            'userName' => 'username',
+            'displayName' => 'display_name',
+            'email' => 'email',
+            'bio' => 'bio',
+            'avatarUrl' => 'avatar_url',
+            'interests' => 'interests',
+            'profileLink' => 'profile_link',
+            'podcastUrl' => 'podcast_url',
+            'instagramUrl' => 'instagram_url',
+            'showInstagram' => 'show_instagram',
+            'showViews' => 'show_views',
+        ];
+        $updates = [];
+        foreach ($fieldMap as $requestField => $modelField) {
+            if (array_key_exists($requestField, $data)) {
+                $updates[$modelField] = $data[$requestField];
+            }
+        }
+        $updates['updated_by'] = $user->id;
+        $user->update($updates);
         if ($emailChanged) {
             $user->forceFill(['email_verified_at' => null])->save();
             $user->sendEmailVerificationNotification();

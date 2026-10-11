@@ -21,6 +21,7 @@ export default function UserMenu({ compact = false }: UserMenuProps) {
 
   const username =
     user.userName || (user as any)?.username || 'Tác giả';
+  const displayName = user.displayName || username;
   const role = user.role || 'User';
 
   return (
@@ -36,12 +37,12 @@ export default function UserMenu({ compact = false }: UserMenuProps) {
         } ${compact ? 'flex-row-reverse text-right' : ''}`}
       >
         <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[#0d9488] to-[#042f2e] text-[11px] font-bold text-white">
-          {username.charAt(0).toUpperCase()}
+          {displayName.charAt(0).toUpperCase()}
         </span>
         {!compact && (
           <span className="hidden flex-col items-start leading-none sm:flex">
             <span className="max-w-[120px] truncate text-xs font-bold text-ink">
-              {username}
+              {displayName}
             </span>
             <span className="mt-0.5 text-[10px] text-faint">{role}</span>
           </span>
@@ -64,12 +65,12 @@ export default function UserMenu({ compact = false }: UserMenuProps) {
               className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl shadow-black/10"
             >
               <div className="border-b border-line px-4 py-3">
-                <p className="truncate text-sm font-bold text-ink">{username}</p>
+                <p className="truncate text-sm font-bold text-ink">{displayName}</p>
                 <p className="mt-0.5 text-[11px] text-faint">{role}</p>
               </div>
               <div className="p-1.5">
                 <Link
-                  href="/profile"
+                  href={`/authors/${encodeURIComponent(username)}`}
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-muted transition hover:bg-raised hover:text-ink"
                 >

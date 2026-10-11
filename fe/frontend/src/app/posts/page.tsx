@@ -9,6 +9,7 @@ import SocialPostCard from '@/components/SocialPostCard';
 import api from '@/lib/axios';
 
 type FeedKind = 'discover' | 'following' | 'saved' | 'liked' | 'profile' | 'activity' | `custom-${number}` | `public-${number}`;
+type ColumnKind = FeedKind | 'search' | 'insights';
 type FeedFilterKind = 'category' | 'tag' | 'community' | 'author';
 const readerControlLabels: Record<string, string> = { block: 'Đã chặn', mute: 'Đã ẩn tác giả', hide_post: 'Đã ẩn bài viết', less_category: 'Ít bài chuyên mục' };
 
@@ -44,9 +45,12 @@ export default function PostsPage() {
   const [readerControls, setReaderControls] = useState<any[]>([]);
   const [showReaderControls, setShowReaderControls] = useState(false);
   const [multiColumn, setMultiColumn] = useState(false);
-  const [columnFeeds, setColumnFeeds] = useState<FeedKind[]>(['discover', 'following']);
+  const [columnFeeds, setColumnFeeds] = useState<ColumnKind[]>(['discover']);
   const [columnData, setColumnData] = useState<Record<string, { posts: PostItem[]; activities: any[] }>>({});
   const [columnsLoading, setColumnsLoading] = useState(false);
+  const [columnSearch, setColumnSearch] = useState<Record<number, string>>({});
+  const [addColumnOpen, setAddColumnOpen] = useState(false);
+  const [otherFeedsOpen, setOtherFeedsOpen] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -102,6 +106,7 @@ export default function PostsPage() {
     setColumnsLoading(true);
     Promise.all(columnFeeds.map(async kind => {
       try {
+        if (kind === 'search' || kind === 'insights') return [kind, { posts: await postApi.getPosts(), activities: [] }] as const;
         if (kind === 'discover') return [kind, { posts: await postApi.getPosts(), activities: [] }] as const;
         if (kind === 'following') return [kind, { posts: user ? await postApi.getFeed('following') : [], activities: [] }] as const;
         if (kind === 'saved') return [kind, { posts: user ? await postApi.getFeed('bookmarks') : [], activities: [] }] as const;
@@ -126,6 +131,12 @@ export default function PostsPage() {
   function selectFeed(kind: FeedKind) {
     setFeed(kind);
     localStorage.setItem('blog-active-feed', kind);
+  }
+
+  function addColumn(kind: ColumnKind) {
+    setColumnFeeds(current => current.length >= 3 ? current : [...current, kind]);
+    setAddColumnOpen(false);
+    setOtherFeedsOpen(false);
   }
 
   async function createFeed(event: React.FormEvent) {
@@ -182,6 +193,13 @@ export default function PostsPage() {
     ...[...customFeeds].sort((a, b) => Number(pinnedFeedIds.includes(Number(b.id))) - Number(pinnedFeedIds.includes(Number(a.id)))).map(item => ({ kind: `custom-${item.id}` as FeedKind, label: `${item.name}${pinnedFeedIds.includes(Number(item.id)) ? ' · Đã ghim' : ''}`, icon: House })),
     ...publicFeeds.map(item => ({ kind: `public-${item.id}` as FeedKind, label: `${item.name} · @${item.creator?.username || 'cộng đồng'}`, icon: House })),
   ];
+  const columnOptions: { kind: ColumnKind; label: string; icon: typeof House }[] = [
+    { kind: 'search', label: 'Tìm kiếm', icon: MagnifyingGlass },
+    { kind: 'activity', label: 'Hoạt động', icon: icons.activity },
+    { kind: 'profile', label: 'Trang cá nhân', icon: icons.profile },
+    { kind: 'insights', label: 'Thông tin chi tiết', icon: ChartLineUp },
+    ...feedOptions.filter(option => option.kind !== 'activity' && option.kind !== 'profile'),
+  ];
   const activeLabel = feed.startsWith('custom-') ? customFeeds.find(item => item.id === Number(feed.slice(7)))?.name || 'Bảng tin tùy chỉnh' : feed.startsWith('public-') ? publicFeeds.find(item => item.id === Number(feed.slice(7)))?.name || 'Bảng tin công khai' : labels[feed];
 
   return <main className="min-h-[calc(100dvh-4rem)] bg-canvas px-4 pb-20 pt-5 sm:px-6">
@@ -208,7 +226,7 @@ export default function PostsPage() {
         <section className={multiColumn ? 'hidden' : 'min-w-0'}>
           <header className="mb-4 flex items-center justify-between gap-3">
             <div><p className="text-xs font-semibold text-accent">BLOG PLATFORM</p><h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">{activeLabel}</h1></div>
-            <div className="flex items-center gap-2"><button onClick={() => setMultiColumn(true)} className="hidden rounded-full border border-line px-3 py-2 text-xs font-semibold text-muted hover:bg-raised lg:inline-flex">Nhiều cột</button>{user ? <Link href="/dashboard/posts/create" className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-accent px-4 text-sm font-bold text-white transition hover:opacity-90"><Plus size={18} />Viết bài</Link> : <Link href="/login" className="rounded-full bg-accent px-4 py-2.5 text-sm font-bold text-white">Đăng nhập</Link>}</div>
+            <div className="flex items-center gap-2"><button onClick={() => { setColumnFeeds([feed]); setColumnSearch({}); setMultiColumn(true); }} className="hidden rounded-full border border-line px-3 py-2 text-xs font-semibold text-muted hover:bg-raised lg:inline-flex">Nhiều cột</button>{user ? <Link href="/dashboard/posts/create" className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-accent px-4 text-sm font-bold text-white transition hover:opacity-90"><Plus size={18} />Viết bài</Link> : <Link href="/login" className="rounded-full bg-accent px-4 py-2.5 text-sm font-bold text-white">Đăng nhập</Link>}</div>
           </header>
 
           <div className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:px-0 lg:hidden">
@@ -244,12 +262,27 @@ export default function PostsPage() {
         </section>
 
         {multiColumn && <section className="min-w-0 lg:col-start-2">
-          <header className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold text-accent">BLOG PLATFORM</p><h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">Bảng tin nhiều cột</h1></div><div className="flex items-center gap-2"><button onClick={() => setColumnFeeds(items => items.length >= 3 ? items : [...items, 'saved'])} disabled={columnFeeds.length >= 3} className="rounded-full border border-line px-3 py-2 text-xs font-semibold text-muted hover:bg-raised disabled:opacity-40">Thêm cột</button><button onClick={() => setMultiColumn(false)} className="rounded-full bg-accent px-3 py-2 text-xs font-semibold text-white">Đóng</button></div></header>
-          <div className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">{columnFeeds.map((kind, index) => {
+          <header className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold text-accent">BLOG PLATFORM</p><h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">Bảng tin nhiều cột</h1></div><div className="flex items-center gap-2"><div className="relative"><button type="button" aria-label="Thêm cột" aria-expanded={addColumnOpen} onClick={() => { setAddColumnOpen(open => !open); setOtherFeedsOpen(false); }} disabled={columnFeeds.length >= 3} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line px-3 text-sm font-semibold text-muted transition hover:bg-raised hover:text-ink disabled:opacity-40"><Plus size={18} />Thêm cột</button>{addColumnOpen && <div className="absolute right-0 top-12 z-30 w-60 rounded-2xl border border-line bg-surface p-2 shadow-2xl"><p className="px-3 py-2 text-xs font-medium text-faint">Thêm cột</p>{otherFeedsOpen ? <><button type="button" onClick={() => setOtherFeedsOpen(false)} className="w-full rounded-xl px-3 py-2 text-left text-xs text-muted hover:bg-raised">← Bảng feed khác</button>{feedOptions.map(option => { const Icon = option.icon; return <button key={option.kind} type="button" onClick={() => addColumn(option.kind)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-ink hover:bg-raised"><Icon size={18} />{option.label}</button>; })}</> : <>{columnOptions.filter(option => option.kind === 'search' || option.kind === 'activity' || option.kind === 'profile' || option.kind === 'insights').map(option => { const Icon = option.icon; return <button key={option.kind} type="button" onClick={() => addColumn(option.kind)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-ink hover:bg-raised"><Icon size={18} />{option.label}</button>; })}<button type="button" onClick={() => setOtherFeedsOpen(true)} className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-ink hover:bg-raised">Bảng feed khác <span aria-hidden>›</span></button></>}</div>}</div><button onClick={() => { setMultiColumn(false); setAddColumnOpen(false); }} className="rounded-full bg-accent px-4 py-2.5 text-xs font-semibold text-white">Đóng</button></div></header>
+          <div className={`grid gap-4 ${columnFeeds.length > 1 ? 'xl:grid-cols-2 2xl:grid-cols-3' : 'max-w-[760px]'}`}>{columnFeeds.map((kind, index) => {
             const items = columnData[kind];
+            const postsInColumn = items?.posts || [];
+            const searchTerm = columnSearch[index]?.trim().toLowerCase() || '';
+            const searchResults = postsInColumn.filter(post => `${post.title} ${post.content} ${post.tags?.map(tag => tag.name).join(' ') || ''}`.toLowerCase().includes(searchTerm));
+            const tagCounts = new Map<string, number>();
+            postsInColumn.forEach(post => post.tags?.forEach(tag => tagCounts.set(tag.name, (tagCounts.get(tag.name) || 0) + 1)));
+            const trendingTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const popularPosts = [...postsInColumn].sort((a, b) => Number(b.view_count ?? b.viewCount ?? 0) - Number(a.view_count ?? a.viewCount ?? 0)).slice(0, 5);
+            const authors = [...new Map(postsInColumn.filter(post => post.author?.username || post.author?.userName || post.author_name || post.authorName).map(post => [post.author?.username || post.author?.userName || post.author_name || post.authorName || '', post])).values()].slice(0, 4);
+            const totalViews = postsInColumn.reduce((sum, post) => sum + Number(post.view_count ?? post.viewCount ?? 0), 0);
             return <section key={`${kind}-${index}`} className="min-w-0 overflow-hidden rounded-2xl border border-line bg-surface">
-              <header className="flex items-center justify-between gap-2 border-b border-line px-4 py-3"><select aria-label={`Chọn feed cho cột ${index + 1}`} value={kind} onChange={event => setColumnFeeds(current => current.map((item, position) => position === index ? event.target.value as FeedKind : item))} className="min-w-0 flex-1 bg-transparent text-sm font-bold text-ink outline-none">{feedOptions.map(option => <option key={option.kind} value={option.kind}>{option.label}</option>)}</select><button aria-label="Làm mới cột" onClick={() => setColumnFeeds(current => [...current])} className="rounded-full px-2 py-1 text-xs text-muted hover:bg-raised">↻</button>{columnFeeds.length > 2 && <button aria-label="Đóng cột" onClick={() => setColumnFeeds(current => current.filter((_, position) => position !== index))} className="rounded-full px-2 py-1 text-xs text-muted hover:bg-raised">×</button>}</header>
-              <div className="max-h-[75vh] overflow-y-auto divide-y divide-line">{columnsLoading && !items ? <p className="p-5 text-sm text-muted">Đang tải…</p> : kind === 'activity' ? items?.activities.length ? items.activities.map(activity => <article key={activity.id} className="p-4"><p className="text-sm font-semibold text-ink">{activity.data?.title || activity.data?.message || 'Thông báo mới'}</p><p className="mt-1 text-sm text-muted">{activity.data?.body || activity.data?.message || ''}</p></article>) : <p className="p-5 text-sm text-muted">Chưa có hoạt động.</p> : items?.posts.length ? items.posts.map(post => <SocialPostCard key={post.id} post={post} variant="feed" onReaderControl={() => setColumnFeeds(current => [...current])} />) : <p className="p-5 text-sm text-muted">Chưa có bài viết trong cột này.</p>}</div>
+              <header className="flex items-center gap-2 border-b border-line px-3 py-3">{kind === 'search' ? <><div className="relative min-w-0 flex-1"><MagnifyingGlass size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" /><input value={columnSearch[index] || ''} onChange={event => setColumnSearch(current => ({ ...current, [index]: event.target.value }))} placeholder="Tìm kiếm" aria-label={`Tìm kiếm trong cột ${index + 1}`} className="h-10 w-full rounded-full bg-raised pl-9 pr-3 text-sm text-ink outline-none placeholder:text-faint focus:ring-1 focus:ring-accent" /></div><button type="button" aria-label="Bộ lọc tìm kiếm" title="Tìm theo bài viết và hashtag" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted hover:bg-raised"><MagnifyingGlass size={17} /></button></> : <select aria-label={`Chọn feed cho cột ${index + 1}`} value={kind} onChange={event => { setColumnFeeds(current => current.map((item, position) => position === index ? event.target.value as ColumnKind : item)); setColumnSearch(current => ({ ...current, [index]: '' })); }} className="min-w-0 flex-1 bg-transparent text-sm font-bold text-ink outline-none">{columnOptions.map(option => <option key={option.kind} value={option.kind}>{option.label}</option>)}</select>}<button aria-label="Làm mới cột" onClick={() => setColumnFeeds(current => [...current])} className="rounded-full px-2 py-1 text-xs text-muted hover:bg-raised">↻</button>{columnFeeds.length > 1 && <button aria-label="Đóng cột" onClick={() => { setColumnFeeds(current => current.filter((_, position) => position !== index)); setColumnSearch(current => { const next = { ...current }; delete next[index]; return next; }); }} className="rounded-full px-2 py-1 text-xs text-muted hover:bg-raised">×</button>}</header>
+              <div className="max-h-[75vh] overflow-y-auto divide-y divide-line">
+                {columnsLoading && !items ? <p className="p-5 text-sm text-muted">Đang tải…</p>
+                  : kind === 'search' ? searchTerm ? searchResults.length ? searchResults.map(post => <Link href={`/posts/${post.id}`} key={post.id} className="block px-4 py-3 hover:bg-raised"><p className="line-clamp-2 text-sm font-semibold text-ink">{post.title}</p><p className="mt-1 line-clamp-2 text-xs text-muted">{post.excerpt || post.content}</p></Link>) : <p className="p-5 text-sm text-muted">Không tìm thấy bài viết phù hợp.</p> : <div className="p-4"><div className="mb-4 flex items-center justify-between"><span className="rounded-full bg-raised px-3 py-1.5 text-xs font-semibold text-muted">Khám phá</span><span className="text-xs text-faint">Đề xuất</span></div><h2 className="text-lg font-bold text-accent">Đang thịnh hành</h2><p className="mb-3 mt-1 text-xs text-faint">Chủ đề được quan tâm trong cộng đồng</p>{trendingTags.length ? <div className="divide-y divide-line">{trendingTags.map(([tag, count], rank) => <button key={tag} type="button" onClick={() => setColumnSearch(current => ({ ...current, [index]: tag }))} className="flex w-full items-center justify-between gap-3 py-3 text-left hover:bg-raised"><span><span className="block text-xs text-muted">#{rank + 1} · Chủ đề</span><span className="mt-1 block text-sm font-bold text-ink">#{tag}</span></span><span className="text-xs text-faint">{count} bài viết</span></button>)}</div> : <div className="divide-y divide-line">{popularPosts.map((post, rank) => <Link key={post.id} href={`/posts/${post.id}`} className="block py-3 hover:bg-raised"><span className="text-xs text-muted">#{rank + 1} · Bài viết nổi bật</span><p className="mt-1 line-clamp-2 text-sm font-semibold text-ink">{post.title}</p><p className="mt-1 text-xs text-faint">{Number(post.view_count ?? post.viewCount ?? 0).toLocaleString('vi-VN')} lượt xem</p></Link>)}</div>}{authors.length > 0 && <div className="mt-5 border-t border-line pt-4"><h3 className="text-sm font-bold text-ink">Gợi ý theo dõi</h3><div className="mt-2 divide-y divide-line">{authors.map(post => { const username = post.author?.username || post.author?.userName || post.author_name || post.authorName || ''; const name = post.author?.userName || post.authorName || post.author_name || username; return <div key={username} className="flex items-center justify-between gap-3 py-3"><div className="min-w-0"><p className="truncate text-sm font-semibold text-ink">{name}</p><p className="truncate text-xs text-muted">@{username}</p></div><Link href={`/authors/${encodeURIComponent(username)}`} className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink hover:bg-raised">Xem hồ sơ</Link></div>; })}</div></div>}</div>
+                  : kind === 'insights' ? <div className="space-y-3 p-4"><h2 className="text-lg font-bold text-ink">Thông tin chi tiết</h2><p className="text-sm text-muted">Tổng quan nội dung đang có trong bảng tin.</p><div className="grid grid-cols-2 gap-2"><div className="rounded-xl bg-raised p-3"><p className="text-xs text-muted">Bài viết</p><p className="mt-1 text-xl font-bold text-ink">{postsInColumn.length}</p></div><div className="rounded-xl bg-raised p-3"><p className="text-xs text-muted">Lượt xem</p><p className="mt-1 text-xl font-bold text-ink">{totalViews.toLocaleString('vi-VN')}</p></div></div><Link href="/insights" className="inline-flex rounded-full border border-line px-4 py-2 text-sm font-semibold text-ink hover:bg-raised">Mở thống kê chi tiết</Link></div>
+                  : kind === 'activity' ? items?.activities.length ? items.activities.map(activity => <article key={activity.id} className="p-4"><p className="text-sm font-semibold text-ink">{activity.data?.title || activity.data?.message || 'Thông báo mới'}</p><p className="mt-1 text-sm text-muted">{activity.data?.body || activity.data?.message || ''}</p></article>) : <p className="p-5 text-sm text-muted">Chưa có hoạt động.</p>
+                  : items?.posts.length ? items.posts.map(post => <SocialPostCard key={post.id} post={post} variant="feed" onReaderControl={() => setColumnFeeds(current => [...current])} />) : <p className="p-5 text-sm text-muted">Chưa có bài viết trong cột này.</p>}
+              </div>
             </section>;
           })}</div>
         </section>}
