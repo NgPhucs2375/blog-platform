@@ -83,7 +83,7 @@ export default function Navbar() {
     setSpySection((prev) => (prev === next ? prev : next));
   });
 
-  if (!pathname || ADMIN_PREFIXES.some((p) => pathname.startsWith(p))) {
+  if (!pathname || ADMIN_PREFIXES.some((p) => pathname.startsWith(p)) || ['/login', '/register', '/verify-email', '/forgot-password', '/reset-password'].some((p) => pathname.startsWith(p))) {
     return null;
   }
 
@@ -203,14 +203,14 @@ export default function Navbar() {
 
           {mounted && user && (
             <Link
-              href="/dashboard"
+              href="/posts?feed=profile"
               className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
-                pathname.startsWith('/dashboard')
+                pathname.startsWith('/posts')
                   ? 'bg-accent-soft text-accent'
                   : 'text-muted hover:bg-raised hover:text-ink'
               }`}
             >
-              Bảng điều khiển
+              Bài viết của tôi
             </Link>
           )}
         </nav>
@@ -292,10 +292,10 @@ export default function Navbar() {
               })}
               {mounted && user && (
                 <Link
-                  href="/dashboard"
+                  href="/posts?feed=profile"
                   className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-muted"
                 >
-                  Bảng điều khiển
+                  Bài viết của tôi
                 </Link>
               )}
               {mounted && !user && (

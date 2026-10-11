@@ -63,6 +63,11 @@ export const tokenStorage = {
     localStorage.setItem(REFRESH_KEY, refreshToken);
   },
 
+  updateUser(user: User): void {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  },
+
   clear(): void {
     if (typeof window === "undefined") return;
     localStorage.removeItem(ACCESS_KEY);

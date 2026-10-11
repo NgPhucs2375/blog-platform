@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\EnsureApiAdmin;
+use App\Http\Middleware\OptionalAuthenticateApiToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,8 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+        $middleware->append(AddSecurityHeaders::class);
         $middleware->alias([
             'api.auth' => AuthenticateApiToken::class,
+            'api.optional-auth' => OptionalAuthenticateApiToken::class,
             'api.admin' => EnsureApiAdmin::class,
         ]);
     })

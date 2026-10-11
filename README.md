@@ -8,11 +8,38 @@ Nền tảng blog gồm giao diện Next.js, chatbot, và backend Laravel MVC d�
 - `fe/frontend/`: giao diện Next.js và chatbot.
 - `README.md`: hướng dẫn cài đặt và chạy dự án.
 
+## Các cập nhật tính năng
+
+### Tính năng mạng xã hội cho blog
+
+- Feed bài viết và trang tác giả, cộng đồng.
+- Theo dõi tác giả, bình luận, chia sẻ và đăng lại bài viết.
+- Bình chọn, tag, thông báo và bộ lọc nội dung.
+- Chỉnh sửa hồ sơ, kiểm duyệt bài viết và báo cáo nội dung.
+
+### Đăng nhập và email
+
+- Xác minh email bằng OTP; hỗ trợ quên và đặt lại mật khẩu.
+- Gửi email xác thực và đặt lại mật khẩu qua Brevo API. Resend từng được dùng để thử nghiệm.
+- Cấu hình Brevo bằng các biến môi trường; không lưu API key thật trong mã nguồn.
+
 ## Yêu cầu
 
 - Laragon có PHP 8.3 trở lên và MySQL.
 - Composer, Node.js/npm và Git.
 - Dự án đã được clone vào một thư mục, ví dụ `C:\laragon\www\blog-platform-luan`.
+
+## Cách chạy dự án
+
+Mở Laragon Terminal (hoặc terminal có Git), chọn thư mục muốn lưu dự án rồi chạy:
+
+```cmd
+cd /d "C:\laragon\www"
+git clone -b dev_hung https://github.com/nguyenhung1204/blog-platform-laravel.git blog-platform-luan
+cd /d "C:\laragon\www\blog-platform-luan"
+```
+
+Nếu mã nguồn đã được gộp sang nhánh khác, thay `dev_hung` bằng tên nhánh được nhóm thống nhất. Sau đó làm theo phần **Cài lần đầu** bên dưới.
 
 > **Lưu ý:** Bật MySQL trong Laragon trước khi chạy. Mỗi lệnh `cd` và lệnh server phải chạy ở đúng thư mục; giữ các cửa sổ server mở.
 
@@ -66,7 +93,8 @@ npm install
 Các file mẫu đã có API URL và Google Client ID của dự án. Nếu cần, kiểm tra `fe/frontend/.env.local` có các biến:
 
 ```env
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api
+NEXT_PUBLIC_API_URL=/api
+LARAVEL_API_URL=http://127.0.0.1:8000
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=Client_ID_của_dự_án
 ```
 
@@ -78,25 +106,34 @@ GOOGLE_CLIENT_ID=Client_ID_của_dự_án
 
 ### 3. Chạy dự án
 
-Bật MySQL trong Laragon. Mở một tab terminal cho Laravel:
+Bật MySQL trong Laragon. Từ thư mục gốc dự án, chạy `run-local.bat` hoặc mở PowerShell và chạy:
 
-```cmd
-cd /d "C:\laragon\www\blog-platform-luan\be" && php artisan serve --host=127.0.0.1 --port=8000
+```powershell
+.\run-local.bat
 ```
 
-Mở tab terminal thứ hai cho Next.js:
-
-```cmd
-cd /d "C:\laragon\www\blog-platform-luan\fe\frontend" && npm run dev -- --port 3001
-```
-
-Giữ cả hai tab mở. Khi Next.js báo `Ready`, truy cập [http://localhost:3001](http://localhost:3001). Trang đăng nhập: [http://localhost:3001/login](http://localhost:3001/login). Backend health check: [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health).
+Script tự khởi động Laravel API ở phía sau và Next.js ở cổng 3000. Bạn chỉ cần mở [http://localhost:3000](http://localhost:3000); các lời gọi API được chuyển tiếp tự động, không cần mở địa chỉ cổng 8000. Nhấn `Ctrl+C` trong cửa sổ chạy để dừng.
 
 ## Đăng nhập Google
 
-Client ID được điền sẵn trong các file `.env.example`; mỗi máy vẫn cần sao chép thành `.env` và `.env.local` theo hướng dẫn. Origin local là `http://localhost:3001`. Nếu ứng dụng OAuth đang ở trạng thái **Testing**, chủ dự án phải thêm email Google của từng bạn vào danh sách **Test users** trong Google Auth Platform. [Hướng dẫn Client ID của Google](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid) · [Quy định Test users](https://support.google.com/cloud/answer/15549945?hl=en).
+Client ID được điền sẵn trong các file `.env.example`; mỗi máy vẫn cần sao chép thành `.env` và `.env.local` theo hướng dẫn. Origin local là `http://localhost:3000`. Nếu ứng dụng OAuth đang ở trạng thái **Testing**, chủ dự án phải thêm email Google của từng bạn vào danh sách **Test users** trong Google Auth Platform. [Hướng dẫn Client ID của Google](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid) · [Quy định Test users](https://support.google.com/cloud/answer/15549945?hl=en).
 
 Luồng này không cần Client Secret. Không commit `.env` hoặc `.env.local`; Client ID không phải bí mật. Tài khoản Google mới được tạo với quyền User.
+
+## OTP đăng ký và quên mật khẩu
+
+Khi đăng ký bằng email (bao gồm Gmail), hệ thống gửi mã OTP 6 chữ số. Mã hết hạn sau 10 phút; nhập mã ở trang xác minh email trước khi đăng nhập. Trang **Quên mật khẩu** gửi liên kết đặt lại mật khẩu, có hiệu lực 60 phút.
+
+OTP đăng ký và đặt lại mật khẩu được gửi qua Brevo API. Để thử luồng này trên máy mới, người chạy cần có API key Brevo và một địa chỉ gửi đã xác minh trong tài khoản Brevo của mình. Mở `be/.env` và điền:
+
+```env
+BREVO_API_KEY=your_brevo_api_key
+BREVO_FROM_EMAIL=your_verified_sender@example.com
+BREVO_FROM_NAME="Blog Platform"
+FRONTEND_URL=http://localhost:3000
+```
+
+Mỗi người nên dùng API key riêng; không gửi key qua chat, không điền key thật vào file mẫu và tuyệt đối không commit `.env` lên GitHub. Nếu chỉ chạy giao diện mà chưa thử OTP thì có thể để trống các biến Brevo. Sau khi sửa cấu hình, chạy `php artisan config:clear` trong thư mục `be` rồi khởi động lại ứng dụng. Việc gửi bằng Gmail miễn phí có thể bị giới hạn hoặc vào Spam; dùng địa chỉ thuộc tên miền đã xác thực sẽ đáng tin cậy hơn.
 
 ## Tài khoản admin demo
 

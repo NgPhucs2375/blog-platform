@@ -1,6 +1,15 @@
 export interface User {
   id: number;
   userName: string;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  bio?: string | null;
+  interests?: string[];
+  profileLink?: string | null;
+  podcastUrl?: string | null;
+  instagramUrl?: string | null;
+  showInstagram?: boolean;
+  showViews?: boolean;
   email: string;
   role: "Admin" | "User";
   status: "Active" | "Locked";
@@ -113,10 +122,20 @@ export interface UpdateRoleRequest {
 
 export interface UpdateProfileRequest {
   userName?: string;
+  displayName?: string | null;
   email?: string;
+  bio?: string | null;
+  avatarUrl?: string | null;
+  interests?: string[];
+  profileLink?: string | null;
+  podcastUrl?: string | null;
+  instagramUrl?: string | null;
+  showInstagram?: boolean;
+  showViews?: boolean;
 }
 
 export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
+  newPassword_confirmation: string;
 }

@@ -171,46 +171,13 @@ interface AuthShellProps {
   className?: string;
 }
 
-/** Khung layout cho các trang auth (login / register):
-    panel biên tập bên trái (cố định tông ink cả 2 theme) + form bên phải. */
+/** Khung xác thực toàn màn hình, tông tối và căn giữa form. */
 export function AuthShell({ children, className }: AuthShellProps) {
   return (
-    <div className={cn("bg-canvas", className)}>
-      <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full lg:grid-cols-2">
-        <aside className="relative hidden overflow-hidden bg-gradient-to-br from-[#0f766e] via-[#134e4a] to-[#042f2e] text-white lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
-          <div
-            aria-hidden
-            className="animate-float pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/15 blur-[110px]"
-          />
-          <div
-            aria-hidden
-            className="animate-float pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-amber-300/25 blur-[110px]"
-            style={{ animationDelay: '1.8s' }}
-          />
-
-          <p className="relative font-serif text-2xl font-bold tracking-tight">
-            Blog Platform<span className="text-amber-200">.</span>
-          </p>
-
-          <div className="relative">
-            <span aria-hidden className="font-serif text-7xl leading-none text-white/60">
-              &ldquo;
-            </span>
-            <p className="mt-2 max-w-md font-serif text-4xl font-bold leading-[1.15] xl:text-5xl">
-              Mỗi câu chuyện đều xứng đáng được <em className="italic text-amber-200">kể đúng cách</em>.
-            </p>
-            <p className="mt-6 max-w-md text-sm leading-relaxed text-white/75">
-              Tham gia cộng đồng tác giả của Blog Platform: nơi tri thức, trải nghiệm
-              và góc nhìn cá nhân được xuất bản với chuẩn biên tập của một tạp chí.
-            </p>
-          </div>
-
-        </aside>
-
-        <main className="flex items-center justify-center px-6 py-16 sm:px-10">
-          <div className="relative z-10 w-full max-w-md">{children}</div>
-        </main>
-      </div>
+    <div className={cn("auth-theme dark min-h-screen bg-[#111111] text-[#f5f5f5]", className)}>
+      <main className="flex min-h-screen w-full items-center justify-center px-4 py-8 sm:px-6">
+        <div className="w-full max-w-lg">{children}</div>
+      </main>
     </div>
   );
 }

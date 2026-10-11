@@ -9,16 +9,28 @@ use Google\Client as GoogleClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class AuthController extends ApiController
 {
     public function register(Request $request)
     {
-        $data = $request->validate(['userName' => 'required|string|max:255|unique:users,username', 'email' => 'required|email|max:255|unique:users,email', 'password' => 'required|string|min:8']);
+        $data = $request->validate(
+            ['userName' => 'required|string|max:255|unique:users,username', 'email' => 'required|email|max:255|unique:users,email', 'password' => 'required|string|min:8'],
+            ['email.unique' => 'Email này đã được sử dụng. Vui lòng đăng nhập hoặc dùng địa chỉ email khác.']
+        );
+        $data['email'] = mb_strtolower(trim($data['email']));
         $user = User::create(['username' => $data['userName'], 'email' => $data['email'], 'password' => $data['password'], 'role' => 'User', 'status' => 'Active']);
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Throwable $exception) {
+            report($exception);
 
-        return $this->ok(['userId' => $user->id], 'Đăng ký thành công.', 201);
+            return $this->fail('Tài khoản đã được tạo nhưng chưa gửi được mã xác minh. Hãy kiểm tra cấu hình email rồi chọn “Gửi lại mã”.', 503);
+        }
+
+        return $this->ok(['userId' => $user->id, 'email' => $user->email], 'Đăng ký thành công. Mã xác minh đã được gửi đến email của bạn.', 201);
     }
 
     public function login(Request $request)
@@ -30,6 +42,9 @@ class AuthController extends ApiController
         }
         if ($user->status !== 'Active') {
             return $this->fail('Tài khoản đang bị khóa.', 403);
+        }
+        if (!$user->hasVerifiedEmail()) {
+            return $this->fail('Email chưa được xác minh. Hãy nhập mã đã gửi đến hộp thư của bạn.', 403, ['emailVerified' => false]);
         }
 
         return $this->ok($this->issuePair($user, $request), 'Đăng nhập thành công.');
@@ -78,6 +93,9 @@ class AuthController extends ApiController
 
     public function social(Request $request, string $provider)
     {
+        if ($provider === 'github') {
+            return $this->github($request);
+        }
         if ($provider !== 'google') {
             return $this->fail('Đăng nhập GitHub chưa được cấu hình.', 501);
         }
@@ -123,11 +141,70 @@ class AuthController extends ApiController
             ]);
         }
 
+        if (! $user->trashed() && ! $user->hasVerifiedEmail()) {
+            $user->forceFill(['email_verified_at' => now()])->save();
+        }
         if ($user->trashed() || $user->status !== 'Active') {
             return $this->fail('Tài khoản đang bị khóa hoặc đã bị xóa.', 403);
         }
 
         return $this->ok($this->issuePair($user, $request), 'Đăng nhập Google thành công.');
+    }
+
+    private function github(Request $request)
+    {
+        $data = $request->validate(['access_token' => 'required|string|max:4096']);
+        try {
+            $client = Http::withToken($data['access_token'])->acceptJson()
+                ->withHeaders(['User-Agent' => (string) config('app.name', 'Blog Platform')])
+                ->timeout(8);
+            $profile = $client->get('https://api.github.com/user');
+            if (! $profile->successful() || ! $profile->json('id')) {
+                return $this->fail('Token GitHub không hợp lệ.', 401);
+            }
+            $email = $profile->json('email');
+            if (! $email) {
+                $emails = $client->get('https://api.github.com/user/emails');
+                $primary = collect($emails->successful() ? $emails->json() : [])
+                    ->first(fn ($item) => ($item['verified'] ?? false) && ($item['primary'] ?? false));
+                $email = $primary['email'] ?? null;
+            }
+        } catch (\Throwable) {
+            return $this->fail('Không thể xác minh tài khoản GitHub lúc này. Vui lòng thử lại.', 502);
+        }
+        if (! $email || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->fail('Tài khoản GitHub cần có email đã xác minh.', 422);
+        }
+        $githubId = (string) $profile->json('id');
+        $user = User::withTrashed()->where('github_id', $githubId)->first()
+            ?? User::withTrashed()->where('email', $email)->first();
+        if (! $user) {
+            $baseUsername = Str::slug($profile->json('login') ?: Str::before($email, '@')) ?: 'github-user';
+            $username = $baseUsername;
+            $suffix = 1;
+            while (User::withTrashed()->where('username', $username)->exists()) {
+                $username = $baseUsername.'-'.$suffix++;
+            }
+            $user = User::create([
+                'username' => $username,
+                'email' => $email,
+                'password' => Str::random(64),
+                'role' => 'User',
+                'status' => 'Active',
+            ]);
+        }
+        if (! $user->trashed()) {
+            $user->forceFill([
+                'github_id' => $githubId,
+                'email_verified_at' => $user->email_verified_at ?? now(),
+                'avatar_url' => $user->avatar_url ?: $profile->json('avatar_url'),
+            ])->save();
+        }
+        if ($user->trashed() || $user->status !== 'Active') {
+            return $this->fail('Tài khoản đang bị khóa hoặc đã bị xóa.', 403);
+        }
+
+        return $this->ok($this->issuePair($user, $request), 'Đăng nhập GitHub thành công.');
     }
 
     private function issuePair(User $user, Request $request): array

@@ -24,7 +24,7 @@
   --accent-ink: #ffffff;
   */
 
-  /* ===== PALETTE: Deep Teal (đang test) — đề xuất thay đỏ vang ===== */
+  /* ===== PALETTE: Deep Teal ===== */
   --canvas: #f6f8f8;
   --surface: #ffffff;
   --raised: #eef2f1;
@@ -134,19 +134,35 @@ body {
   color: var(--accent-ink);
 }
 
+/* Auth form: giữ nền tối và chữ sáng kể cả khi trình duyệt tự điền. */
+.auth-theme input:-webkit-autofill,
+.auth-theme input:-webkit-autofill:hover,
+.auth-theme input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f5f5f5;
+  -webkit-box-shadow: 0 0 0 1000px #1c1c1e inset;
+  caret-color: #f5f5f5;
+  transition: background-color 9999s ease-out;
+}
+.auth-theme input:focus,
+.auth-theme textarea:focus,
+.auth-theme select:focus {
+  background-color: #1c1c1e !important;
+  color: #f5f5f5 !important;
+}
+
 /* Form controls: các trang admin cũ vẫn dùng focus:bg-white cho light mode.
    Rule này giữ nền tối và chữ sáng cho toàn bộ input/textarea/select trong dark. */
 .dark input:not([type="checkbox"]):not([type="radio"]):focus,
 .dark textarea:focus,
 .dark select:focus {
-  background-color: #261a1c !important;
-  color: #fdf4f4 !important;
+  background-color: var(--surface) !important;
+  color: var(--ink) !important;
 }
 
 /* Option native kế thừa text trắng từ select nên cần nền tối tương phản. */
 .dark select option {
-  background-color: #261a1c;
-  color: #fdf4f4;
+  background-color: var(--surface);
+  color: var(--ink);
 }
 
 /* Scrollbar mảnh cho khu vực cuộn nội bộ (khung chat, ticker). */
@@ -164,6 +180,15 @@ body {
 }
 .scroll-slim::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Giữ vùng cuộn của cửa sổ soạn bài nhưng ẩn thanh cuộn nổi. */
+.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -48,6 +48,7 @@ export default function SocialAuthButtons() {
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const [scriptReady, setScriptReady] = useState(false);
+  const [googleLoadError, setGoogleLoadError] = useState(false);
   const [pending, setPending] = useState<SocialProvider | null>(null);
   const [notice, setNotice] = useState('');
 
@@ -67,8 +68,13 @@ export default function SocialAuthButtons() {
   useEffect(() => {
     const googleId = window.google?.accounts?.id;
     const target = googleButtonRef.current;
-    if (!clientId || !scriptReady || !googleId || !target) return;
+    if (!clientId || !scriptReady || !target) return;
+    if (!googleId) {
+      setGoogleLoadError(true);
+      return;
+    }
 
+    setGoogleLoadError(false);
     target.replaceChildren();
     googleId.initialize({
       client_id: clientId,
@@ -87,7 +93,7 @@ export default function SocialAuthButtons() {
       shape: 'rectangular',
       logo_alignment: 'left',
       locale: 'vi',
-      width: Math.min(400, Math.max(220, window.innerWidth - 48)),
+      width: Math.max(200, Math.min(400, target.clientWidth || 400)),
     });
   }, [clientId, scriptReady, handleGoogleCredential]);
 
@@ -106,7 +112,7 @@ export default function SocialAuthButtons() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="mx-auto w-full max-w-[400px] space-y-3">
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-line" />
         <span className="text-[11px] font-medium text-faint">hoặc tiếp tục với</span>
@@ -119,9 +125,23 @@ export default function SocialAuthButtons() {
           <Script
             src="https://accounts.google.com/gsi/client?hl=vi"
             strategy="afterInteractive"
-            onLoad={() => setScriptReady(true)}
+            onReady={() => setScriptReady(true)}
+            onError={() => setGoogleLoadError(true)}
           />
-          <div className={pending === 'google' ? 'pointer-events-none opacity-60' : ''} ref={googleButtonRef} />
+          <div
+            className={`flex w-full min-w-0 justify-center ${pending === 'google' ? 'pointer-events-none opacity-60' : ''}`}
+            ref={googleButtonRef}
+          />
+          {googleLoadError && (
+            <p className="rounded-xl border border-line bg-raised px-3.5 py-2.5 text-center text-[11px] leading-relaxed text-muted">
+              Không tải được nút Google. Hãy kiểm tra kết nối mạng hoặc tắt Shields cho localhost rồi tải lại trang.
+            </p>
+          )}
+          {!scriptReady && !googleLoadError && (
+            <div className="flex h-11 w-full items-center justify-center rounded-xl border border-line bg-surface text-xs text-muted">
+              Đang tải đăng nhập Google…
+            </div>
+          )}
         </>
       )}
       {!clientId && (

@@ -18,8 +18,10 @@ return [
         'key' => env('POSTMARK_API_KEY'),
     ],
 
-    'resend' => [
-        'key' => env('RESEND_API_KEY'),
+    'brevo' => [
+        'api_key' => env('BREVO_API_KEY'),
+        'from_email' => env('BREVO_FROM_EMAIL'),
+        'from_name' => env('BREVO_FROM_NAME', env('APP_NAME', 'Blog Platform')),
     ],
 
     'ses' => [
@@ -35,6 +37,11 @@ return [
         ],
     ],
 
+    'github' => [
+        'client_id' => env('GITHUB_CLIENT_ID'),
+        'client_secret' => env('GITHUB_CLIENT_SECRET'),
+        'redirect' => env('GITHUB_REDIRECT_URI') ?: env('APP_URL', 'http://localhost').'/auth/github/callback',
+    ],
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
     ],

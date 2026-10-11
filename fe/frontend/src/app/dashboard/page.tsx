@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import PostComposer from '@/components/PostComposer';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowSquareOut as ArrowSquareOut, BookOpen, Check, CheckCircle as CheckCircle, CircleNotch as CircleNotch, Eye, FileText, Image as ImageIcon, MagnifyingGlass as MagnifyingGlass, NotePencil as NotePencil, PencilSimple as PencilSimple, Plus, Trash as Trash, WarningCircle as WarningCircle, X } from '@phosphor-icons/react';
@@ -20,16 +21,6 @@ export default function DashboardPage() {
 
   // Modal tạo bài viết
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [modalError, setModalError] = useState('');
-  const [newTitle, setNewTitle] = useState('');
-  const [newSlug, setNewSlug] = useState('');
-  const [newExcerpt, setNewExcerpt] = useState('');
-  const [newCoverImage, setNewCoverImage] = useState('');
-  const [newContent, setNewContent] = useState('');
-  const [newCategoryId, setNewCategoryId] = useState<number | null>(null);
-  const [newStatus, setNewStatus] = useState<'published' | 'draft'>('published');
-
   const currentUserId = user?.id ?? (user as any)?.userId ?? (user as any)?.sub;
   const currentUsername = (user?.userName || (user as any)?.username || '').toLowerCase().trim();
   const isAdmin = user?.role === 'Admin';
@@ -49,9 +40,7 @@ export default function DashboardPage() {
       // Tải danh mục
       const cats = await postApi.getCategories().catch(() => [] as Category[]);
       setCategories(cats || []);
-      if (cats && cats.length > 0) {
-        setNewCategoryId((prev) => (prev ? prev : cats[0].id));
-      }
+
 
       let myPosts: PostItem[] = [];
 
@@ -102,77 +91,6 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
-
-  // Tự động sinh Slug chống trùng
-  const handleTitleChange = (val: string) => {
-    setNewTitle(val);
-    const baseSlug = val
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[đĐ]/g, 'd')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .trim()
-      .replace(/\s+/g, '-');
-
-    const uniqueSuffix = Date.now().toString().slice(-4);
-    setNewSlug(baseSlug ? `${baseSlug}-${uniqueSuffix}` : '');
-  };
-
-  // Tạo bài viết
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim() || !newContent.trim() || !newCategoryId) {
-      setModalError('Vui lòng nhập tiêu đề, nội dung và chọn chuyên mục hợp lệ.');
-      return;
-    }
-
-    try {
-      setCreating(true);
-      setModalError('');
-
-      const created = await postApi.createPost({
-        title: newTitle.trim(),
-        slug: newSlug.trim() || `post-${Date.now()}`,
-        excerpt: newExcerpt.trim(),
-        coverImage: newCoverImage.trim(),
-        content: newContent.trim(),
-        categoryId: newCategoryId,
-        category_id: newCategoryId,
-        status: newStatus.toUpperCase(),
-        userId: currentUserId,
-        authorId: currentUserId,
-      });
-
-      const createdRaw = created as any;
-      const createdStatus = String(createdRaw.status || '').toLowerCase();
-      if (createdStatus === 'reject') {
-        setModalError(createdRaw.moderationReason || 'Bài viết có chứa ngôn từ không phù hợp và đã bị từ chối xuất bản.');
-        await fetchDashboardData();
-        return;
-      }
-      if (createdStatus === 'pending') {
-        setModalError('Bộ lọc gặp lỗi; bài viết đang chờ Admin xử lý.');
-        await fetchDashboardData();
-        return;
-      }
-      setIsModalOpen(false);
-      setNewTitle('');
-      setNewSlug('');
-      setNewExcerpt('');
-      setNewCoverImage('');
-      setNewContent('');
-      setActionMessage('Đã tạo ấn phẩm mới thành công.');
-      setTimeout(() => setActionMessage(null), 3500);
-
-      // Tải lại danh sách sau khi tạo
-      await fetchDashboardData();
-    } catch (err: any) {
-      setModalError(err?.response?.data?.message || err?.message || 'Không thể tạo bài viết.');
-    } finally {
-      setCreating(false);
-    }
-  };
 
   // Xóa bài viết
   const handleDeletePost = async (id: number | string, title: string) => {
@@ -516,174 +434,7 @@ export default function DashboardPage() {
 
       </div>
 
-      {/* Modal Soạn bài mới */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="w-full max-w-2xl rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-2xl text-ink my-8 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-line pb-4">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10 text-accent dark:bg-accent/20 dark:text-rose-600">
-                  <NotePencil className="h-4 w-4" />
-                </div>
-                <h3 className="text-base font-bold">Soạn thảo ấn phẩm mới</h3>
-              </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="rounded-lg p-1 text-faint hover:bg-raised hover:text-ink dark:hover:bg-surface/5"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {modalError && (
-              <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-600 dark:text-rose-400">
-                <WarningCircle className="h-4 w-4" />
-                <span>{modalError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleCreatePost} className="mt-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
-                  Tiêu đề bài viết
-                </label>
-                <input
-                  type="text"
-                  value={newTitle}
-                  onChange={(e) => handleTitleChange(e.target.value)}
-                  placeholder="Nhập tiêu đề truyền cảm hứng..."
-                  className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5 transition"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
-                    Đường dẫn tĩnh (Slug - tự sinh an toàn)
-                  </label>
-                  <input
-                    type="text"
-                    value={newSlug}
-                    onChange={(e) => setNewSlug(e.target.value)}
-                    placeholder="tieu-de-bai-viet-xxxx"
-                    className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
-                    Chuyên mục
-                  </label>
-                  <select
-                    value={newCategoryId ?? ''}
-                    onChange={(e) => setNewCategoryId(Number(e.target.value))}
-                    className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink focus:border-accent focus:outline-none transition"
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
-                  Trích đoạn ngắn (Excerpt)
-                </label>
-                <input
-                  type="text"
-                  value={newExcerpt}
-                  onChange={(e) => setNewExcerpt(e.target.value)}
-                  placeholder="Mô tả tóm tắt nội dung bài viết..."
-                  className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5 transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
-                  URL Ảnh bìa (Cover Image)
-                </label>
-                <div className="relative">
-                  <ImageIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-faint" />
-                  <input
-                    type="url"
-                    value={newCoverImage}
-                    onChange={(e) => setNewCoverImage(e.target.value)}
-                    placeholder="https://images.unsplash.com/..."
-                    className="w-full rounded-xl border border-line bg-canvas pl-10 pr-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5 transition"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
-                  Nội dung bài viết
-                </label>
-                <textarea
-                  rows={6}
-                  value={newContent}
-                  onChange={(e) => setNewContent(e.target.value)}
-                  placeholder="Chia sẻ nội dung hoặc câu chuyện của bạn..."
-                  className="w-full rounded-xl border border-line bg-canvas p-3.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/5 transition leading-relaxed"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1">
-                  Chế độ lưu
-                </label>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 text-xs text-ink cursor-pointer">
-                    <input
-                      type="radio"
-                      name="status"
-                      value="published"
-                      checked={newStatus === 'published'}
-                      onChange={() => setNewStatus('published')}
-                      className="text-accent focus:ring-rose-800"
-                    />
-                    Xuất bản ngay lập tức
-                  </label>
-                  <label className="flex items-center gap-2 text-xs text-ink cursor-pointer">
-                    <input
-                      type="radio"
-                      name="status"
-                      value="draft"
-                      checked={newStatus === 'draft'}
-                      onChange={() => setNewStatus('draft')}
-                      className="text-accent focus:ring-rose-800"
-                    />
-                    Lưu bản nháp
-                  </label>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 border-t border-line pt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="rounded-xl px-4 py-2 text-xs font-medium text-muted hover:bg-raised dark:text-faint dark:hover:bg-surface/5 transition"
-                >
-                  Hủy bỏ
-                </button>
-                <button
-                  type="submit"
-                  disabled={creating}
-                  className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-accent/25 hover:bg-accent-hover active:scale-95 disabled:opacity-50 transition"
-                >
-                  {creating && <CircleNotch className="h-3.5 w-3.5 animate-spin" />}
-                  {newStatus === 'published' ? 'Đăng bài viết' : 'Lưu bản nháp'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
+      {isModalOpen && <PostComposer onClose={() => setIsModalOpen(false)} onSaved={() => void fetchDashboardData()} />}
     </div>
   );
 }

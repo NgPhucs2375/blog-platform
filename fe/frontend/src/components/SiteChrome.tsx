@@ -17,6 +17,9 @@ const EXCLUDED_PREFIXES = [
   '/moderation-rules',
   '/login',
   '/register',
+  '/verify-email',
+  '/forgot-password',
+  '/reset-password',
 ];
 
 export default function SiteChrome() {

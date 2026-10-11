@@ -3,6 +3,7 @@ import type { IconProps } from "@phosphor-icons/react";
 import {
   Users,
   Folders,
+  Tag,
   ChartBar,
   ShieldWarning,
   Heart,
@@ -29,6 +30,8 @@ export interface AdminNavItem {
 }
 
 export const ADMIN_NAV: AdminNavItem[] = [
+  { href: '/review', label: 'Chờ duyệt', description: 'Duyệt bài viết và bình luận', icon: ShieldWarning },
+  { href: '/tags', label: 'Thẻ bài viết', description: 'Quản lý chủ đề và thẻ nội dung', icon: Tag },
   {
     href: "/users",
     label: "Người dùng",
@@ -76,7 +79,7 @@ export const FOOTER_COLUMNS: Array<{ title: string; links: FooterLink[] }> = [
     links: [
       { href: "/register", label: "Trở thành tác giả" },
       { href: "/login", label: "Đăng nhập" },
-      { href: "/dashboard", label: "Bảng điều khiển" },
+      { href: "/posts?feed=profile", label: "Bài viết của tôi" },
     ],
   },
 ];

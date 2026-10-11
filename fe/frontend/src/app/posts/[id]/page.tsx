@@ -14,10 +14,15 @@ import {
   ChatCircleText,
   PaperPlaneTilt,
   ShareNetwork,
+  Repeat,
+  UserPlus,
+  UserCheck,
 } from '@phosphor-icons/react';
 import { postApi, PostItem, Category } from '@/services/postApi';
 import { chipStyle } from '@/lib/chipColors';
 import { useAuth } from '@/contexts/AuthContext';
+import api from '@/lib/axios';
+import AuthorHoverCard from '@/components/AuthorHoverCard';
 
 // Trang đọc bài: thanh tiến độ đọc, typography Lora với drop cap,
 // khối tác giả và thảo luận. Rose chỉ dùng cho semantic "thích".
@@ -31,7 +36,6 @@ function readTime(content?: string) {
   if (!content) return 2;
   return Math.max(1, Math.ceil(content.trim().split(/\s+/).length / 200));
 }
-
 function paragraphsOf(content: string): string[] {
   return content
     .split(/\n+/)
@@ -66,16 +70,27 @@ export default function PostDetailPage() {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [bookmarked, setBookmarked] = useState(false);
+  const [reposted, setReposted] = useState(false);
+  const [repostsCount, setRepostsCount] = useState(0);
+  const [followingAuthor, setFollowingAuthor] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
   const [commentText, setCommentText] = useState('');
-  const [comments, setComments] = useState([
-    {
-      id: 1,
-      author: 'Nguyễn Hải Yến',
-      time: '2 giờ trước',
-      content: 'Bài viết súc tích và đúng trọng tâm, cảm ơn tác giả đã chia sẻ!',
-    },
-  ]);
-
+  const [comments, setComments] = useState<{ id: number; author: string; time: string; content: string }[]>([]);
+  const [interactionMessage, setInteractionMessage] = useState('');
+  const [interacting, setInteracting] = useState(false);
+  useEffect(() => {
+    if (!post?.id) return;
+    let active = true;
+    setLikeCount(Number((post as PostItem & { likesCount?: number }).likesCount || 0));
+    setRepostsCount(Number(post.repostsCount || 0));
+    setFollowersCount(Number(post.followersCount || 0));
+    setLiked(false); setBookmarked(false); setComments([]);
+    api.get(`/v1/posts/${post.id}/comments`).then(res => {
+      if (active) setComments(res.data.data.map((c: { id: number; userName?: string; createdAt: string; content: string }) => ({ id: c.id, author: c.userName || 'Người dùng', time: new Date(c.createdAt).toLocaleString('vi-VN'), content: c.content })));
+    }).catch(() => { if (active) setInteractionMessage('Không tải được bình luận.'); });
+    if (user) api.get(`/v1/posts/${post.id}/interaction`).then(res => { if (active) { setLiked(res.data.data.liked); setBookmarked(res.data.data.bookmarked); setReposted(res.data.data.reposted); setFollowingAuthor(res.data.data.followingAuthor); setLikeCount(res.data.data.likesCount); setRepostsCount(res.data.data.repostsCount); setFollowersCount(res.data.data.followersCount); } }).catch(() => {});
+    return () => { active = false; };
+  }, [post?.id, user]);
   const hasTrackedRef = useRef(false);
 
   useEffect(() => {
@@ -109,7 +124,7 @@ export default function PostDetailPage() {
           hasTrackedRef.current = true;
           sessionStorage.setItem(sessionKey, 'true');
           try {
-            const result = await postApi.trackView(id);
+            const result = await postApi.trackView(postData.id);
             const updatedViews =
               result?.viewCount ??
               Number((postData as any).view_count ?? postData.viewCount ?? 0) + 1;
@@ -141,26 +156,59 @@ export default function PostDetailPage() {
     }
   };
 
-  const handleLike = () => {
-    setLiked(!liked);
-    setLikeCount((prev) => (liked ? Math.max(0, prev - 1) : prev + 1));
+  const handleLike = async () => {
+    if (!user) { router.push('/login'); return; }
+    if (!post || interacting) return;
+    setInteracting(true);
+    try {
+      const res = liked ? await api.delete(`/v1/posts/${post.id}/likes`) : await api.post(`/v1/posts/${post.id}/likes`);
+      setLiked(res.data.data.liked); setLikeCount(res.data.data.likesCount);
+    } catch { setInteractionMessage('Không lưu được lượt thích. Hãy thử lại.'); }
+    finally { setInteracting(false); }
   };
-
-  const handleAddComment = (e: React.FormEvent) => {
+  const handleBookmark = async () => {
+    if (!user) { router.push('/login'); return; }
+    if (!post || interacting) return;
+    setInteracting(true);
+    try {
+      if (bookmarked) await api.delete(`/v1/posts/${post.id}/bookmark`); else await api.put(`/v1/posts/${post.id}/bookmark`);
+      setBookmarked(!bookmarked);
+    } catch { setInteractionMessage('Không lưu được bài viết. Hãy thử lại.'); }
+    finally { setInteracting(false); }
+  };
+  const handleRepost = async () => {
+    if (!user) { router.push('/login'); return; }
+    if (!post || interacting) return;
+    setInteracting(true);
+    try {
+      const res = reposted ? await api.delete(`/v1/posts/${post.id}/repost`) : await api.post(`/v1/posts/${post.id}/repost`);
+      setReposted(res.data.data.reposted); setRepostsCount(res.data.data.repostsCount);
+      setInteractionMessage(res.data.data.reposted ? 'Đã đăng lại bài viết.' : 'Đã gỡ bài viết đăng lại.');
+    } catch { setInteractionMessage('Không đăng lại được. Hãy thử lại.'); }
+    finally { setInteracting(false); }
+  };
+  const handleFollow = async () => {
+    if (!user) { router.push('/login'); return; }
+    const authorId = Number(post?.authorId ?? (post as any)?.author_id);
+    if (!authorId || authorId === Number(user.id) || interacting) return;
+    setInteracting(true);
+    try {
+      const res = followingAuthor ? await api.delete(`/v1/authors/${authorId}/follow`) : await api.post(`/v1/authors/${authorId}/follow`);
+      setFollowingAuthor(res.data.data.following); setFollowersCount(res.data.data.followersCount);
+    } catch { setInteractionMessage('Không cập nhật được theo dõi. Hãy thử lại.'); }
+    finally { setInteracting(false); }
+  };
+  const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentText.trim()) return;
-    setComments((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        author: user?.userName || (user as any)?.username || 'Bạn',
-        time: 'Vừa xong',
-        content: commentText.trim(),
-      },
-    ]);
-    setCommentText('');
+    if (!user) { router.push('/login'); return; }
+    if (!commentText.trim() || !post || interacting) return;
+    setInteracting(true); setInteractionMessage('');
+    try {
+      await api.post(`/v1/posts/${post.id}/comments`, { content: commentText.trim() });
+      setCommentText(''); setInteractionMessage('Bình luận đã được gửi và đang chờ duyệt.');
+    } catch { setInteractionMessage('Không gửi được bình luận. Hãy thử lại.'); }
+    finally { setInteracting(false); }
   };
-
   const paragraphs = post?.content ? paragraphsOf(post.content) : [];
 
   if (loading) {
@@ -210,6 +258,7 @@ export default function PostDetailPage() {
   const categoryName =
     categories.find((c) => c.id === (post.categoryId ?? raw.category_id))?.name || 'Tổng hợp';
   const authorName = raw.author_name || post.authorName || 'Ban biên tập';
+  const authorUsername = post.author?.username || raw.author?.username || raw.author_name || post.authorName;
   const publishDate = raw.created_at || post.createdAt
     ? new Date(raw.created_at || post.createdAt).toLocaleDateString('vi-VN')
     : 'Mới xuất bản';
@@ -219,48 +268,7 @@ export default function PostDetailPage() {
       <ReadingProgress />
 
       <div className="mx-auto max-w-[1140px] px-4 sm:px-6">
-        <div className="grid gap-10 xl:grid-cols-[60px_minmax(0,1fr)_300px]">
-          {/* Rail hành động dọc — kiểu dev.to/medium, chỉ hiện trên màn lớn */}
-          <aside className="hidden self-start xl:sticky xl:top-24 xl:flex xl:flex-col xl:items-center xl:gap-3">
-            <RailButton
-              onClick={handleLike}
-              active={liked}
-              label={likeCount > 0 ? String(likeCount) : 'Thích'}
-              icon={
-                <Heart
-                  className={`h-5 w-5 ${liked ? 'fill-rose-500 text-rose-500' : ''}`}
-                  weight={liked ? 'fill' : 'regular'}
-                />
-              }
-            />
-            <a
-              href="#comments"
-              className="flex flex-col items-center gap-1 rounded-2xl border border-line bg-surface px-3 py-2.5 text-muted shadow-sm transition hover:border-accent/40 hover:text-accent"
-              aria-label="Xem thảo luận"
-            >
-              <ChatCircleText className="h-5 w-5" />
-              <span className="text-[10px] font-bold">{comments.length}</span>
-            </a>
-            <RailButton
-              onClick={() => setBookmarked(!bookmarked)}
-              active={bookmarked}
-              label="Lưu"
-              icon={
-                <BookmarkSimple
-                  className={`h-5 w-5 ${bookmarked ? 'fill-accent text-accent' : ''}`}
-                  weight={bookmarked ? 'fill' : 'regular'}
-                />
-              }
-            />
-            <RailButton
-              onClick={handleShare}
-              active={copied}
-              label={copied ? 'Đã copy' : 'Chia sẻ'}
-              icon={<ShareNetwork className="h-5 w-5" />}
-            />
-          </aside>
-
-          {/* Cột bài viết */}
+        <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
           <div className="min-w-0">
         {/* Thanh công cụ đọc */}
         <div className="flex items-center justify-between py-5">
@@ -300,12 +308,14 @@ export default function PostDetailPage() {
           </h1>
 
           <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted">
-            <span className="flex items-center gap-2 font-semibold text-ink">
+            <AuthorHoverCard username={authorUsername} name={authorName} className="inline-flex">
+            <Link href={authorUsername ? `/authors/${encodeURIComponent(authorUsername)}` : '#'} className="flex items-center gap-2 font-semibold text-ink hover:underline">
               <span className="grid h-7 w-7 place-items-center rounded-full bg-accent text-[10px] font-bold text-accent-ink">
                 {authorName.charAt(0).toUpperCase()}
               </span>
               {authorName}
-            </span>
+            </Link>
+            </AuthorHoverCard>
             <span>{publishDate}</span>
             <span className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" /> {readTime(post.content)} phút đọc
@@ -347,41 +357,26 @@ export default function PostDetailPage() {
           ))}
         </div>
 
-        {/* Thanh tương tác (mobile + tablet; desktop lớn dùng rail bên trái) */}
-        <div className="mt-12 flex items-center justify-between border-y border-line py-4 xl:hidden">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleLike}
-              aria-pressed={liked}
-              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition ${
-                liked
-                  ? 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400'
-                  : 'border-line bg-surface text-muted hover:text-ink'
-              }`}
-            >
-              <Heart className={`h-4 w-4 ${liked ? 'fill-rose-500 text-rose-500' : ''}`} />
-              <span>{likeCount > 0 ? likeCount + ' lượt thích' : 'Thích bài này'}</span>
-            </button>
-
-            <button
-              onClick={() => setBookmarked(!bookmarked)}
-              aria-pressed={bookmarked}
-              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition ${
-                bookmarked
-                  ? 'border-accent/30 bg-accent-soft text-accent'
-                  : 'border-line bg-surface text-muted hover:text-ink'
-              }`}
-            >
-              <BookmarkSimple
-                className={`h-4 w-4 ${bookmarked ? 'fill-accent text-accent' : ''}`}
-              />
-              <span>{bookmarked ? 'Đã lưu' : 'Lưu bài'}</span>
-            </button>
-          </div>
-
-          <span className="flex items-center gap-1.5 text-xs text-muted">
-            <ChatCircleText className="h-4 w-4" /> {comments.length} thảo luận
-          </span>
+        {/* Tương tác nằm dưới bài viết như giao diện cũ */}
+        <div aria-label="Tương tác bài viết" className="mt-10 flex flex-wrap items-center gap-2 border-y border-line py-4">
+          <button onClick={handleLike} disabled={interacting} aria-pressed={liked} className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition ${liked ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400' : 'border-line bg-surface text-muted hover:text-ink'}`}>
+            <Heart className={`h-4 w-4 ${liked ? 'fill-rose-500 text-rose-500' : ''}`} weight={liked ? 'fill' : 'regular'} /> {likeCount} Thích
+          </button>
+          <a href="#comments" className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-2 text-xs font-semibold text-muted transition hover:text-ink">
+            <ChatCircleText className="h-4 w-4" /> {comments.length} Bình luận
+          </a>
+          <button onClick={handleRepost} disabled={interacting} aria-pressed={reposted} className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition ${reposted ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300' : 'border-line bg-surface text-muted hover:text-ink'}`}>
+            <Repeat className="h-4 w-4" /> {repostsCount} {reposted ? 'Đã đăng lại' : 'Đăng lại'}
+          </button>
+          <button onClick={handleBookmark} disabled={interacting} aria-pressed={bookmarked} className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition ${bookmarked ? 'border-accent/30 bg-accent-soft text-accent' : 'border-line bg-surface text-muted hover:text-ink'}`}>
+            <BookmarkSimple className={`h-4 w-4 ${bookmarked ? 'fill-accent text-accent' : ''}`} weight={bookmarked ? 'fill' : 'regular'} /> {bookmarked ? 'Đã lưu' : 'Lưu'}
+          </button>
+          <button onClick={handleShare} className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-2 text-xs font-semibold text-muted transition hover:text-ink">
+            {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <ShareNetwork className="h-4 w-4" />} {copied ? 'Đã sao chép' : 'Chia sẻ'}
+          </button>
+          {Number(post.authorId ?? raw.author_id) !== Number(user?.id) && <button onClick={handleFollow} disabled={interacting} aria-pressed={followingAuthor} className={`ml-auto inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition ${followingAuthor ? 'border border-line bg-surface text-muted' : 'bg-accent text-accent-ink hover:bg-accent-hover'}`}>
+            {followingAuthor ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />} {followingAuthor ? 'Đang theo dõi' : 'Theo dõi'}{followersCount > 0 ? ` · ${followersCount}` : ''}
+          </button>}
         </div>
 
         {/* Tác giả */}
@@ -393,7 +388,7 @@ export default function PostDetailPage() {
             <p className="text-[11px] font-bold uppercase tracking-widest text-faint">
               Tác giả
             </p>
-            <h3 className="mt-1 font-serif text-lg font-bold text-ink">{authorName}</h3>
+            <AuthorHoverCard username={authorUsername} name={authorName}><Link href={authorUsername ? `/authors/${encodeURIComponent(authorUsername)}` : '#'} className="mt-1 inline-block font-serif text-lg font-bold text-ink hover:underline">{authorName}</Link></AuthorHoverCard>
             <p className="mt-1 text-sm leading-relaxed text-muted">
               Tác giả chia sẻ các góc nhìn và trải nghiệm trên nền tảng Blog Platform.
             </p>
@@ -406,6 +401,7 @@ export default function PostDetailPage() {
             Thảo luận <span className="text-muted">({comments.length})</span>
           </h2>
 
+          {interactionMessage && <p role="status" className="mt-4 text-sm text-accent">{interactionMessage}</p>}
           <form onSubmit={handleAddComment} className="mt-5 space-y-3">
             <textarea
               rows={3}
@@ -418,7 +414,7 @@ export default function PostDetailPage() {
             <div className="flex justify-end">
               <button
                 type="submit"
-                disabled={!commentText.trim()}
+                disabled={interacting || !commentText.trim()}
                 className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-xs font-bold text-accent-ink transition hover:bg-accent-hover disabled:opacity-40"
               >
                 <PaperPlaneTilt className="h-3.5 w-3.5" />
@@ -447,7 +443,7 @@ export default function PostDetailPage() {
           </div>
 
           {/* Sidebar phải: tác giả + đọc tiếp + CTA */}
-          <aside className="hidden min-w-0 self-start xl:sticky xl:top-24 xl:block xl:space-y-6">
+          <aside className="hidden min-w-0 self-start 2xl:sticky 2xl:top-24 2xl:block 2xl:space-y-6">
             {/* Thẻ tác giả gọn */}
             <div className="rounded-3xl border border-line bg-surface p-5 shadow-sm">
               <div className="flex items-center gap-3">
@@ -458,9 +454,7 @@ export default function PostDetailPage() {
                   <span className="block text-[10px] font-bold uppercase tracking-widest text-faint">
                     Tác giả
                   </span>
-                  <span className="block truncate font-serif text-base font-bold text-ink">
-                    {authorName}
-                  </span>
+                  <AuthorHoverCard username={authorUsername} name={authorName}><Link href={authorUsername ? `/authors/${encodeURIComponent(authorUsername)}` : '#'} className="block truncate font-serif text-base font-bold text-ink hover:underline">{authorName}</Link></AuthorHoverCard>
                 </span>
               </div>
               <p className="mt-3 text-xs leading-relaxed text-muted">
@@ -526,32 +520,5 @@ export default function PostDetailPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-function RailButton({
-  onClick,
-  active,
-  label,
-  icon,
-}: {
-  onClick: () => void;
-  active?: boolean;
-  label: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      aria-pressed={active}
-      className={`flex flex-col items-center gap-1 rounded-2xl border px-3 py-2.5 shadow-sm transition ${
-        active
-          ? 'border-accent/50 bg-accent-soft text-accent'
-          : 'border-line bg-surface text-muted hover:border-accent/40 hover:text-accent'
-      }`}
-    >
-      {icon}
-      <span className="text-[10px] font-bold">{label}</span>
-    </button>
   );
 }

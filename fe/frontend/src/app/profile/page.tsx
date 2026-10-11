@@ -4,6 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Check, CircleNotch as CircleNotch, Envelope as Envelope, Key as Key, Shield, UserCircle as UserCircle, WarningCircle as WarningCircle } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/axios';
+import Link from 'next/link';
+import { isAxiosError } from 'axios';
+import { tokenStorage } from '@/services/tokenStorage';
+import { profileApi } from '@/services/profileApi';
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -52,6 +56,7 @@ export default function ProfilePage() {
   // Đổi mật khẩu kết nối trực tiếp vào PUT /v1/profile/password của Backend
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (updatingPassword) return;
     if (!currentPassword || !newPassword || !confirmPassword) {
       setPasswordMessage({ type: 'error', text: 'Vui lòng nhập đầy đủ các trường mật khẩu.' });
       return;
@@ -66,36 +71,37 @@ export default function ProfilePage() {
       setPasswordMessage({ type: 'error', text: 'Mật khẩu mới phải chứa ít nhất 8 ký tự.' });
       return;
     }
+    if (newPassword === currentPassword) {
+      setPasswordMessage({ type: 'error', text: 'Mật khẩu mới phải khác mật khẩu hiện tại.' });
+      return;
+    }
 
     setUpdatingPassword(true);
     setPasswordMessage(null);
 
     try {
       // Gọi đúng endpoint PUT /api/v1/profile/password đã định nghĩa trong ProfileController
-      const res = await api.put('/v1/profile/password', {
+      await profileApi.changePassword({
         currentPassword,
         newPassword,
+        newPassword_confirmation: confirmPassword,
       });
 
-      setPasswordMessage({
-        type: 'success',
-        text: res.data?.message || 'Đổi mật khẩu thành công!',
-      });
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setTimeout(() => setPasswordMessage(null), 4000);
-    } catch (err: any) {
-      const errData = err?.response?.data;
-      const validationDetail =
-        errData?.errors?.newPassword ||
-        errData?.data?.newPassword ||
-        errData?.message ||
-        'Đổi mật khẩu thất bại. Vui lòng kiểm tra lại mật khẩu hiện tại!';
-      
+      tokenStorage.clear();
+      window.location.replace('/login?passwordChanged=1');
+    } catch (err: unknown) {
+      const errData = isAxiosError(err) ? err.response?.data : null;
+      const validationDetail = errData?.errors
+        ? Object.values(errData.errors).flat().find((message) => typeof message === 'string')
+        : null;
       setPasswordMessage({
         type: 'error',
-        text: typeof validationDetail === 'string' ? validationDetail : JSON.stringify(validationDetail),
+        text: isAxiosError(err) && err.response?.status === 429
+          ? 'Bạn thử quá nhiều lần. Vui lòng đợi một phút rồi thử lại.'
+          : typeof validationDetail === 'string' ? validationDetail : errData?.message || 'Không thể đổi mật khẩu. Vui lòng thử lại.',
       });
     } finally {
       setUpdatingPassword(false);
@@ -251,7 +257,11 @@ export default function ProfilePage() {
                 Đổi mật khẩu
               </h2>
               <p className="text-xs text-muted mt-1">
-                Tối thiểu 8 ký tự (gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt).
+                Mật khẩu mới có ít nhất 8 ký tự và khác mật khẩu hiện tại. Sau khi đổi, bạn cần đăng nhập lại trên các thiết bị.
+              </p>
+              <p className="text-xs text-muted mt-2">
+                Chưa có mật khẩu vì đăng ký bằng Google?{' '}
+                <Link href="/forgot-password" className="text-accent underline">Tạo mật khẩu qua email</Link>.
               </p>
             </div>
 
@@ -296,7 +306,8 @@ export default function ProfilePage() {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Ít nhất 8 ký tự, đủ 4 nhóm"
+                  placeholder="Nhập mật khẩu mới, ít nhất 8 ký tự"
+                  minLength={8}
                   autoComplete="new-password"
                   className="w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:bg-white focus:outline-none dark:bg-surface/[0.03] transition"
                   required
