@@ -47,6 +47,8 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        $this->call(VarietyPostsSeeder::class);
+
         if (env('ADMIN_EMAIL') && env('ADMIN_PASSWORD')) {
             User::updateOrCreate(['email' => env('ADMIN_EMAIL')], [
                 'username' => env('ADMIN_USERNAME', 'admin'), 'password' => env('ADMIN_PASSWORD'), 'role' => 'Admin', 'status' => 'Active',
